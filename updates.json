@@ -1,0 +1,12 @@
+{
+  "addons": {
+    "fiyat-takipci@github.io": {
+      "updates": [
+        {
+          "version": "1.2.0",
+          "update_link": "https://github.com/s3lm4n/firefox-app/releases/download/v1.2.0/fiyat-takipci-1.2.0.xpi"
+        }
+      ]
+    }
+  }
+}

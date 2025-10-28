@@ -1,0 +1,80 @@
+{
+  "manifest_version": 2,
+  "name": "Fiyat Takipçisi Pro",
+  "version": "2.0.0",
+  "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri ve 50+ site desteği",
+  "author": "Selman Ali Dokumacı",
+  "homepage_url": "https://github.com/s3lm4n/firefox-app",
+  
+  "applications": {
+    "gecko": {
+      "id": "fiyat-takipci-pro@github.io",
+      "strict_min_version": "109.0"
+    }
+  },
+  
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "notifications",
+    "alarms",
+    "tabs",
+    "<all_urls>"
+  ],
+  
+  "background": {
+    "scripts": [
+      "lib/helpers.js",
+      "lib/sites.js",
+      "lib/parser.js",
+      "background.js"
+    ],
+    "persistent": false
+  },
+  
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Fiyat Takipçisi Pro",
+    "browser_style": false
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "lib/helpers.js",
+        "lib/sites.js",
+        "lib/parser.js",
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  
+  "content_security_policy": "script-src 'self'; object-src 'self'",
+  
+  "browser_specific_settings": {
+    "gecko": {
+      "update_url": "https://raw.githubusercontent.com/s3lm4n/firefox-app/main/updates.json"
+    }
+  }
+}
