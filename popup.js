@@ -1,4 +1,4 @@
-// Popup Script v2.0
+// Popup Script v2.0 - FIXED VERSION
 // UI mantığı ve kullanıcı etkileşimleri
 
 (function() {
@@ -9,6 +9,7 @@
   let currentProduct = null;
   let products = [];
   let settings = null;
+  let debugLogs = [];
   
   // DOM Elements
   const els = {
@@ -37,17 +38,46 @@
     
     // Settings
     darkModeToggle: document.getElementById('darkModeToggle'),
-    settingsBtn: document.getElementById('settingsBtn'),
+    debugBtn: document.getElementById('debugBtn'),
     autoCheckToggle: document.getElementById('autoCheckToggle'),
     checkInterval: document.getElementById('checkInterval'),
     notificationsToggle: document.getElementById('notificationsToggle'),
     notifyDownToggle: document.getElementById('notifyDownToggle'),
-    notifyUpToggle: document.getElementById('notifyUpToggle')
+    notifyUpToggle: document.getElementById('notifyUpToggle'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+    
+    // Debug
+    debugConsole: document.getElementById('debugConsole'),
+    clearDebug: document.getElementById('clearDebug'),
+    exportDebug: document.getElementById('exportDebug'),
+    
+    // Scroll
+    contentArea: document.getElementById('contentArea'),
+    scrollBtn: document.getElementById('scrollBtn')
   };
+  
+  // Debug logging function
+  function addDebugLog(message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString('tr-TR');
+    const log = { message, type, timestamp };
+    debugLogs.push(log);
+    
+    // Keep last 100 logs
+    if (debugLogs.length > 100) {
+      debugLogs.shift();
+    }
+    
+    // Update console if visible
+    const debugLine = document.createElement('div');
+    debugLine.className = `debug-line ${type}`;
+    debugLine.textContent = `[${timestamp}] ${message}`;
+    els.debugConsole.appendChild(debugLine);
+    els.debugConsole.scrollTop = els.debugConsole.scrollHeight;
+  }
   
   // Initialize
   async function init() {
-    logger.info('Initializing popup...');
+    addDebugLog('Popup başlatılıyor...', 'info');
     
     // Dark mode'u yükle
     const darkMode = await PriceTrackerHelpers.getStorage('darkMode', false);
@@ -58,6 +88,19 @@
     
     // Ayarları yükle
     settings = await browser.runtime.sendMessage({ action: 'getSettings' });
+    if (!settings) {
+      settings = {
+        checkInterval: 30,
+        notifications: true,
+        notifyOnPriceDown: true,
+        notifyOnPriceUp: false,
+        autoCheck: true
+      };
+      addDebugLog('Varsayılan ayarlar yüklendi', 'warn');
+    } else {
+      addDebugLog('Ayarlar yüklendi', 'success');
+    }
+    
     loadSettings();
     
     // Event listeners
@@ -72,7 +115,7 @@
     // Stats'ı güncelle
     updateStats();
     
-    logger.success('Popup initialized');
+    addDebugLog('Popup hazır', 'success');
   }
   
   // Event listeners
@@ -85,8 +128,8 @@
     // Dark mode toggle
     els.darkModeToggle.addEventListener('click', toggleDarkMode);
     
-    // Settings button
-    els.settingsBtn.addEventListener('click', () => switchTab('settings'));
+    // Debug button
+    els.debugBtn.addEventListener('click', () => switchTab('debug'));
     
     // Add button
     els.addButton.addEventListener('click', addToTracking);
@@ -104,7 +147,43 @@
     els.notifyUpToggle.addEventListener('click', () => toggleSetting('notifyOnPriceUp'));
     
     // Check interval
-    els.checkInterval.addEventListener('change', updateCheckInterval);
+    els.checkInterval.addEventListener('change', () => {
+      addDebugLog(`Kontrol aralığı değiştirildi: ${els.checkInterval.value} dakika`, 'info');
+    });
+    
+    // Save settings button
+    els.saveSettingsBtn.addEventListener('click', saveSettings);
+    
+    // Debug actions
+    els.clearDebug.addEventListener('click', () => {
+      debugLogs = [];
+      els.debugConsole.innerHTML = '<div class="debug-line success">[DEBUG] Konsol temizlendi</div>';
+      addDebugLog('Konsol temizlendi', 'success');
+    });
+    
+    els.exportDebug.addEventListener('click', exportDebugLogs);
+    
+    // Scroll button
+    els.scrollBtn.addEventListener('click', () => {
+      els.contentArea.scrollTo({
+        top: els.contentArea.scrollHeight,
+        behavior: 'smooth'
+      });
+    });
+    
+    // Scroll visibility
+    els.contentArea.addEventListener('scroll', () => {
+      const scrollTop = els.contentArea.scrollTop;
+      const scrollHeight = els.contentArea.scrollHeight;
+      const clientHeight = els.contentArea.clientHeight;
+      
+      // Show button if not at bottom and content is scrollable
+      if (scrollHeight > clientHeight && scrollTop < scrollHeight - clientHeight - 50) {
+        els.scrollBtn.classList.add('visible');
+      } else {
+        els.scrollBtn.classList.remove('visible');
+      }
+    });
   }
   
   // Tab switching
@@ -117,6 +196,8 @@
       const isActive = content.id === tabName + 'Tab';
       content.classList.toggle('active', isActive);
     });
+    
+    addDebugLog(`Tab değiştirildi: ${tabName}`, 'info');
   }
   
   // Dark mode
@@ -124,6 +205,7 @@
     const isDark = document.body.classList.toggle('dark-mode');
     els.darkModeToggle.textContent = isDark ? '☀️' : '🌙';
     await PriceTrackerHelpers.setStorage('darkMode', isDark);
+    addDebugLog(`Dark mode: ${isDark ? 'Açık' : 'Kapalı'}`, 'info');
   }
   
   // Check current page
@@ -132,11 +214,16 @@
       els.homeLoading.style.display = 'flex';
       els.currentPageSection.style.display = 'none';
       
+      addDebugLog('Aktif sayfa kontrol ediliyor...', 'info');
+      
       const tabs = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
         els.homeLoading.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>Aktif sekme bulunamadı</div></div>';
+        addDebugLog('Aktif sekme bulunamadı', 'error');
         return;
       }
+      
+      addDebugLog(`Sayfa taranıyor: ${tabs[0].url}`, 'info');
       
       const response = await browser.tabs.sendMessage(tabs[0].id, {
         action: 'getProductInfo'
@@ -144,6 +231,8 @@
       
       if (response && response.price) {
         currentProduct = response;
+        
+        addDebugLog(`Ürün bulundu: ${response.name} - ${response.price} ${response.currency}`, 'success');
         
         // UI'ı güncelle
         els.currentProductName.textContent = response.name;
@@ -167,12 +256,17 @@
           els.addButton.innerHTML = '<span>✅</span><span>Zaten Takipte</span>';
           els.addButton.style.background = '#10b981';
           els.addButton.style.color = 'white';
+        } else {
+          els.addButton.innerHTML = '<span>➕</span><span>Takibe Al</span>';
+          els.addButton.style.background = 'white';
+          els.addButton.style.color = 'var(--primary)';
         }
         
         els.homeLoading.style.display = 'none';
         els.currentPageSection.style.display = 'block';
         
       } else {
+        addDebugLog('Bu sayfada ürün bulunamadı', 'warn');
         els.homeLoading.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">🔍</div>
@@ -183,7 +277,7 @@
       }
       
     } catch (error) {
-      logger.error('Error checking current page:', error);
+      addDebugLog(`Hata: ${error.message}`, 'error');
       els.homeLoading.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">⚠️</div>
@@ -197,10 +291,11 @@
   // Load products
   async function loadProducts() {
     products = await PriceTrackerHelpers.getStorage('trackedProducts', []);
+    addDebugLog(`${products.length} ürün yüklendi`, 'info');
     renderProductList();
   }
   
-  // Render product list
+  // Render product list - FİYAT GÖSTERMEDE DÜZELTİLDİ
   function renderProductList() {
     els.listCount.textContent = products.length;
     
@@ -216,11 +311,15 @@
     }
     
     els.productList.innerHTML = products.map((product, index) => {
-      const change = product.previousPrice ? 
-        PriceTrackerHelpers.calculateChange(product.previousPrice, product.price) : null;
+      // Güncel fiyat ve eski fiyat
+      const currentPrice = product.price; // Güncel fiyat
+      const oldPrice = product.previousPrice || product.initialPrice; // Eski fiyat (previousPrice veya initialPrice)
       
-      const initialChange = product.initialPrice ?
-        PriceTrackerHelpers.calculateChange(product.initialPrice, product.price) : null;
+      // Fiyat değişimi hesapla
+      let change = null;
+      if (oldPrice && Math.abs(currentPrice - oldPrice) > 0.01) {
+        change = PriceTrackerHelpers.calculateChange(oldPrice, currentPrice);
+      }
       
       return `
         <div class="product-card" data-index="${index}">
@@ -231,25 +330,24 @@
             <span class="site-badge">${PriceTrackerHelpers.escapeHtml(product.site)}</span>
           </div>
           
-          <div class="card-price">
-            <span class="current-price">${PriceTrackerHelpers.formatPrice(product.price, product.currency)}</span>
-            ${product.previousPrice ? `<span class="old-price">${PriceTrackerHelpers.formatPrice(product.previousPrice, product.currency)}</span>` : ''}
+          <div class="card-price-section">
+            <div class="card-price">
+              <span class="current-price">${PriceTrackerHelpers.formatPrice(currentPrice, product.currency)}</span>
+              ${oldPrice && Math.abs(currentPrice - oldPrice) > 0.01 ? `
+                <div class="old-price-badge">
+                  <span class="old-price-label">Eski:</span>
+                  <span class="old-price-value">${PriceTrackerHelpers.formatPrice(oldPrice, product.currency)}</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            ${change ? `
+              <div class="price-change ${change.isDecrease ? 'down' : 'up'}">
+                <span>${change.isDecrease ? '🔻' : '🔺'}</span>
+                <span>${change.formatted} ${product.currency} (${change.percentFormatted})</span>
+              </div>
+            ` : ''}
           </div>
-          
-          ${change ? `
-            <div class="price-change ${change.isDecrease ? 'down' : 'up'}">
-              <span>${change.isDecrease ? '🔻' : '🔺'}</span>
-              <span>${change.formatted} ${product.currency} (${change.percentFormatted})</span>
-            </div>
-          ` : ''}
-          
-          ${initialChange && Math.abs(initialChange.absolute) > 0.01 ? `
-            <div class="price-change ${initialChange.isDecrease ? 'down' : 'up'}">
-              <span>İlk fiyattan:</span>
-              <span>${initialChange.percentFormatted}</span>
-              ${initialChange.isDecrease ? `<span>• Tasarruf: ${Math.abs(initialChange.absolute).toFixed(2)} ${product.currency}</span>` : ''}
-            </div>
-          ` : ''}
           
           <div class="card-meta">
             ${product.lastCheck ? `Son kontrol: ${PriceTrackerHelpers.formatDate(product.lastCheck)}` : 'Henüz kontrol edilmedi'}
@@ -259,6 +357,10 @@
             <button class="btn-action btn-visit" data-url="${PriceTrackerHelpers.escapeHtml(product.url)}">
               <span>🔗</span>
               <span>Aç</span>
+            </button>
+            <button class="btn-action btn-check" data-index="${index}">
+              <span>🔄</span>
+              <span>Kontrol</span>
             </button>
             <button class="btn-action btn-remove" data-index="${index}">
               <span>🗑️</span>
@@ -274,6 +376,14 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         browser.tabs.create({ url: btn.dataset.url });
+        addDebugLog(`Ürün sayfası açıldı: ${btn.dataset.url}`, 'info');
+      });
+    });
+    
+    els.productList.querySelectorAll('.btn-check').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        checkSingleProduct(parseInt(btn.dataset.index));
       });
     });
     
@@ -295,11 +405,56 @@
     });
   }
   
+  // Check single product
+  async function checkSingleProduct(index) {
+    const product = products[index];
+    if (!product) return;
+    
+    addDebugLog(`Ürün kontrol ediliyor: ${product.name}`, 'info');
+    
+    // Button'u disable et
+    const btn = document.querySelector(`.btn-check[data-index="${index}"]`);
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span><span>Kontrol...</span>';
+    }
+    
+    try {
+      const result = await browser.runtime.sendMessage({
+        action: 'checkSingleProduct',
+        product: product
+      });
+      
+      if (result && result.product) {
+        products[index] = result.product;
+        await PriceTrackerHelpers.setStorage('trackedProducts', products);
+        
+        if (result.updated) {
+          addDebugLog(`Fiyat güncellendi: ${result.product.name} - ${result.product.price} ${result.product.currency}`, 'success');
+        } else {
+          addDebugLog(`Fiyat değişmedi: ${result.product.name}`, 'info');
+        }
+        
+        renderProductList();
+        updateStats();
+      } else {
+        addDebugLog(`Ürün kontrol edilemedi: ${product.name}`, 'error');
+      }
+    } catch (error) {
+      addDebugLog(`Hata: ${error.message}`, 'error');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔄</span><span>Kontrol</span>';
+      }
+    }
+  }
+  
   // Add to tracking
   async function addToTracking() {
     if (!currentProduct) return;
     
-    logger.info('Adding product to tracking...');
+    addDebugLog('Ürün takibe alınıyor...', 'info');
     
     const existing = products.findIndex(p => p.url === currentProduct.url);
     
@@ -308,17 +463,19 @@
       products[existing] = {
         ...currentProduct,
         initialPrice: products[existing].initialPrice || currentProduct.price,
+        previousPrice: products[existing].price, // Mevcut fiyatı previousPrice olarak sakla
         addedDate: products[existing].addedDate || Date.now()
       };
-      logger.info('Product updated');
+      addDebugLog('Ürün güncellendi', 'info');
     } else {
       // Ekle
       products.push({
         ...currentProduct,
         initialPrice: currentProduct.price,
+        previousPrice: null, // İlk ekleme, eski fiyat yok
         addedDate: Date.now()
       });
-      logger.success('Product added');
+      addDebugLog('Ürün eklendi', 'success');
     }
     
     await PriceTrackerHelpers.setStorage('trackedProducts', products);
@@ -353,32 +510,33 @@
       
       await PriceTrackerHelpers.wait(400);
       
+      const productName = products[index].name;
       products.splice(index, 1);
       await PriceTrackerHelpers.setStorage('trackedProducts', products);
       
-      logger.info('Product removed');
+      addDebugLog(`Ürün silindi: ${productName}`, 'info');
       
       await loadProducts();
       updateStats();
     }
   }
   
-  // Refresh all products
+  // Refresh all products - DÜZELTİLDİ
   async function refreshAllProducts() {
-    logger.info('Refreshing all products...');
+    addDebugLog('Tüm ürünler kontrol ediliyor...', 'info');
     
     els.refreshAll.disabled = true;
-    els.refreshAll.innerHTML = '⏳ Kontrol ediliyor...';
+    els.refreshAll.innerHTML = '⏳ Kontrol...';
     
     try {
       const result = await browser.runtime.sendMessage({ action: 'checkAllPrices' });
       
-      logger.success(`Refresh complete:`, result);
+      addDebugLog(`Kontrol tamamlandı: ${result.checked} kontrol, ${result.updated} güncelleme, ${result.errors} hata`, 'success');
       
       els.refreshAll.innerHTML = `✅ Tamamlandı!`;
       
       setTimeout(() => {
-        els.refreshAll.innerHTML = '🔄 Tümünü Kontrol';
+        els.refreshAll.innerHTML = '🔄 Kontrol Et';
         els.refreshAll.disabled = false;
       }, 2000);
       
@@ -386,11 +544,11 @@
       updateStats();
       
     } catch (error) {
-      logger.error('Refresh error:', error);
+      addDebugLog(`Hata: ${error.message}`, 'error');
       els.refreshAll.innerHTML = '❌ Hata';
       
       setTimeout(() => {
-        els.refreshAll.innerHTML = '🔄 Tümünü Kontrol';
+        els.refreshAll.innerHTML = '🔄 Kontrol Et';
         els.refreshAll.disabled = false;
       }, 2000);
     }
@@ -398,12 +556,13 @@
   
   // Export products
   function exportProducts() {
-    logger.info('Exporting products...');
+    addDebugLog('Veriler dışa aktarılıyor...', 'info');
     
     const data = {
       exportDate: new Date().toISOString(),
       version: '2.0.0',
-      products: products
+      products: products,
+      settings: settings
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -414,7 +573,20 @@
     a.click();
     URL.revokeObjectURL(url);
     
-    logger.success('Export complete');
+    addDebugLog('Dışa aktarma tamamlandı', 'success');
+  }
+  
+  // Export debug logs
+  function exportDebugLogs() {
+    const blob = new Blob([JSON.stringify(debugLogs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `debug-logs-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    addDebugLog('Debug logları kaydedildi', 'success');
   }
   
   // Update stats
@@ -453,11 +625,11 @@
     els.notificationsToggle.classList.toggle('active', settings.notifications);
     els.notifyDownToggle.classList.toggle('active', settings.notifyOnPriceDown);
     els.notifyUpToggle.classList.toggle('active', settings.notifyOnPriceUp);
-    els.checkInterval.value = settings.checkInterval;
+    els.checkInterval.value = settings.checkInterval || 30;
   }
   
   // Toggle setting
-  async function toggleSetting(key) {
+  function toggleSetting(key) {
     const toggle = {
       autoCheck: els.autoCheckToggle,
       notifications: els.notificationsToggle,
@@ -469,31 +641,36 @@
     settings[key] = newValue;
     toggle.classList.toggle('active', newValue);
     
-    await browser.runtime.sendMessage({
-      action: 'updateSettings',
-      settings: { [key]: newValue }
-    });
-    
-    logger.info(`Setting ${key} updated to ${newValue}`);
+    addDebugLog(`Ayar değiştirildi: ${key} = ${newValue}`, 'info');
   }
   
-  // Update check interval
-  async function updateCheckInterval() {
-    const value = parseInt(els.checkInterval.value);
+  // Save settings - KAYIT SİSTEMİ EKLENDİ
+  async function saveSettings() {
+    addDebugLog('Ayarlar kaydediliyor...', 'info');
     
-    if (value < 5 || value > 1440) {
-      els.checkInterval.value = settings.checkInterval;
-      return;
-    }
+    // Değerleri topla
+    settings.autoCheck = els.autoCheckToggle.classList.contains('active');
+    settings.notifications = els.notificationsToggle.classList.contains('active');
+    settings.notifyOnPriceDown = els.notifyDownToggle.classList.contains('active');
+    settings.notifyOnPriceUp = els.notifyUpToggle.classList.contains('active');
+    settings.checkInterval = parseInt(els.checkInterval.value) || 30;
     
-    settings.checkInterval = value;
-    
+    // Background'a gönder
     await browser.runtime.sendMessage({
       action: 'updateSettings',
-      settings: { checkInterval: value }
+      settings: settings
     });
     
-    logger.info(`Check interval updated to ${value} minutes`);
+    // Button feedback
+    els.saveSettingsBtn.innerHTML = '<span>✅</span><span>Kaydedildi!</span>';
+    els.saveSettingsBtn.style.background = '#10b981';
+    
+    addDebugLog('Ayarlar kaydedildi', 'success');
+    
+    setTimeout(() => {
+      els.saveSettingsBtn.innerHTML = '<span>💾</span><span>Ayarları Kaydet</span>';
+      els.saveSettingsBtn.style.background = '';
+    }, 2000);
   }
   
   // Initialize on load

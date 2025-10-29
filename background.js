@@ -119,22 +119,30 @@
     return await checkSingleProduct(product);
   }
   
-  // Tek bir ürünü kontrol et
+  // Tek bir ürünü kontrol et - DÜZELTİLDİ
   async function checkSingleProduct(product) {
     try {
       // Rate limit kontrolü
-      await rateLimiter.checkLimit();
+      try {
+        await rateLimiter.checkLimit();
+      } catch (rateLimitError) {
+        logger.warn('Rate limit reached, waiting...');
+        await PriceTrackerHelpers.wait(2000);
+      }
       
       logger.info(`Checking: ${PriceTrackerHelpers.truncate(product.name, 40)}`);
       
       // Fiyatı çek
-      const newPrice = await fetchProductPrice(product.url);
+      const newPriceData = await fetchProductPrice(product.url);
       
-      if (!newPrice || isNaN(newPrice)) {
+      if (!newPriceData || !newPriceData.price || isNaN(newPriceData.price)) {
         logger.warn(`Could not fetch price for: ${product.site}`);
-        return { updated: false, product: null };
+        // Yine de ürünü döndür (lastCheck güncellemek için)
+        product.lastCheck = Date.now();
+        return { updated: false, product: product };
       }
       
+      const newPrice = newPriceData.price;
       const oldPrice = product.price;
       const hasChanged = Math.abs(newPrice - oldPrice) > 0.01;
       
@@ -156,10 +164,15 @@
           product.priceHistory = product.priceHistory.slice(-30);
         }
         
-        // Ürünü güncelle
-        product.previousPrice = oldPrice;
-        product.price = newPrice;
+        // Ürünü güncelle - ESKİ FİYATI previousPrice'a kaydet
+        product.previousPrice = oldPrice;  // Eski fiyat
+        product.price = newPrice;          // Yeni fiyat (güncel)
         product.lastCheck = Date.now();
+        
+        // Ürün adını da güncelle (değişmiş olabilir)
+        if (newPriceData.name && newPriceData.name.length > 10) {
+          product.name = newPriceData.name;
+        }
         
         // Bildirim gönder
         if (settings.notifications) {
@@ -179,13 +192,16 @@
     }
   }
   
-  // Ürün fiyatını fetch et
+  // Ürün fiyatını fetch et - DÜZELTİLDİ: Daha fazla bilgi döndür
   async function fetchProductPrice(url) {
     try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Cache-Control': 'no-cache'
         },
         cache: 'no-store'
       });
@@ -203,7 +219,7 @@
       // PriceParser ile extract et
       const productInfo = await PriceParser.extractProductInfo(doc, url);
       
-      return productInfo ? productInfo.price : null;
+      return productInfo; // Tüm bilgiyi döndür (price, name, vb.)
       
     } catch (error) {
       logger.error('Fetch error:', error);

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiyat Takipçisi Pro - Ayarlar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #667eea;
+    }
+    
+    .setting-group {
+      margin-bottom: 30px;
+    }
+    
+    .setting-label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    .setting-description {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .toggle-wrapper:hover {
+      background: #f3f4f6;
+    }
+    
+    .toggle {
+      width: 56px;
+      height: 30px;
+      background: #d1d5db;
+      border-radius: 15px;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    
+    .toggle.active {
+      background: #667eea;
+    }
+    
+    .toggle-slider {
+      width: 26px;
+      height: 26px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .toggle.active .toggle-slider {
+      transform: translateX(26px);
+    }
+    
+    .toggle-text {
+      flex: 1;
+    }
+    
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.2s;
+    }
+    
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .input-group input {
+      flex: 1;
+    }
+    
+    .input-suffix {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #1f2937;
+    }
+    
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .info-box p {
+      font-size: 14px;
+      color: #1e40af;
+      line-height: 1.6;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 15px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .supported-sites {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    
+    .site-badge {
+      background: #f3f4f6;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1f2937;
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    .site-badge:hover {
+      border-color: #667eea;
+      background: #eef2ff;
+      color: #667eea;
+      transform: scale(1.05);
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: white;
+      padding: 20px 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    
+    .toast-icon {
+      font-size: 24px;
+    }
+    
+    .toast-message {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 10px;
+      }
+      
+      .card {
+        padding: 25px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>
+        <span>🏷️</span>
+        <span>Fiyat Takipçisi Pro</span>
+      </h1>
+      <p>Gelişmiş Ayarlar ve Yapılandırma</p>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalProducts">0</div>
+        <div class="stat-label">Takip Edilen Ürün</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalSavings">0₺</div>
+        <div class="stat-label">Toplam Tasarruf</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalChecks">0</div>
+        <div class="stat-label">Yapılan Kontrol</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="supportedSites">50+</div>
+        <div class="stat-label">Desteklenen Site</div>
+      </div>
+    </div>
+    
+    <!-- Kontrol Ayarları -->
+    <div class="card">
+      <h2 class="section-title">⚙️ Kontrol Ayarları</h2>
+      
+      <div class="setting-group">
+        <div class="toggle-wrapper" id="autoCheckWrapper">
+          <div class="toggle active" id="autoCheckToggle">
+            <div class="toggle-slider"></div>
+          </div>
+          <div class="toggle-text">
+            <div class="setting-label">Otomatik Fiyat Kontrolü</div>
+            <div class="setting-description">Belirlenen aralıklarla otomatik olarak fiyatları kontrol et</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <label class="setting-label">Kontrol Aralığı</label>
+        <div class="setting-description">Fiyatların ne sıklıkla kontrol edileceğini belirleyin (dakika cinsinden)</div>
+        <div class="input-group">
+          <input type="number" id="checkInterval" value="30" min="5" max="1440">
+          <span class="input-suffix">dakika</span>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <label class="setting-label">Maksimum Yeniden Deneme</label>
+        <div class="setting-description">Başarısız kontrollerde kaç kez tekrar denenecek</div>
+        <div class="input-group">
+          <input type="number" id="maxRetries" value="3" min="1" max="10">
+          <span class="input-suffix">deneme</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Bildirim Ayarları -->
+    <div class="card">
+      <h2 class="section-title">🔔 Bildirim Ayarları</h2>
+      
+      <div class="setting-group">
+        <div class="toggle-wrapper" id="notificationsWrapper">
+          <div class="toggle active" id="notificationsToggle">
+            <div class="toggle-slider"></div>
+          </div>
+          <div class="toggle-text">
+            <div class="setting-label">Bildirimleri Etkinleştir</div>
+            <div class="setting-description">Fiyat değişikliklerinde masaüstü bildirimi al</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <div class="toggle-wrapper" id="notifyDownWrapper">
+          <div class="toggle active" id="notifyDownToggle">
+            <div class="toggle-slider"></div>
+          </div>
+          <div class="toggle-text">
+            <div class="setting-label">Fiyat Düştüğünde Bildir</div>
+            <div class="setting-description">Ürün fiyatı düştüğünde bildirim gönder (önerilen)</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="setting-group">
+        <div class="toggle-wrapper" id="notifyUpWrapper">
+          <div class="toggle" id="notifyUpToggle">
+            <div class="toggle-slider"></div>
+          </div>
+          <div class="toggle-text">
+            <div class="setting-label">Fiyat Arttığında Bildir</div>
+            <div class="setting-description">Ürün fiyatı arttığında da bildirim gönder</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Veri Yönetimi -->
+    <div class="card">
+      <h2 class="section-title">💾 Veri Yönetimi</h2>
+      
+      <div class="info-box">
+        <p><strong>Önemli:</strong> Dışa aktarma ile verilerinizi yedekleyebilirsiniz. İçe aktarma önceden dışa aktarılmış bir JSON dosyasını yükler.</p>
+      </div>
+      
+      <div class="button-group">
+        <button class="btn btn-primary" id="exportBtn">
+          <span>📥</span>
+          <span>Veriyi Dışa Aktar</span>
+        </button>
+        <button class="btn btn-primary" id="importBtn">
+          <span>📤</span>
+          <span>Veriyi İçe Aktar</span>
+        </button>
+        <button class="btn btn-secondary" id="clearHistoryBtn">
+          <span>🧹</span>
+          <span>Fiyat Geçmişini Temizle</span>
+        </button>
+        <button class="btn btn-danger" id="clearAllBtn">
+          <span>⚠️</span>
+          <span>Tüm Verileri Sil</span>
+        </button>
+      </div>
+      
+      <input type="file" id="importFile" accept=".json" style="display: none;">
+    </div>
+    
+    <!-- Desteklenen Siteler -->
+    <div class="card">
+      <h2 class="section-title">🌐 Desteklenen Siteler</h2>
+      <div class="supported-sites" id="sitesList"></div>
+    </div>
+    
+    <!-- Hakkında -->
+    <div class="card">
+      <h2 class="section-title">ℹ️ Hakkında</h2>
+      <p style="margin-bottom: 15px; line-height: 1.8; color: #4b5563;">
+        <strong>Fiyat Takipçisi Pro v2.0</strong> ile e-ticaret sitelerindeki ürünlerin fiyatlarını otomatik olarak takip edebilir, 
+        fiyat düştüğünde anında haberdar olabilirsiniz. Akıllı algoritmalar sayesinde 50'den fazla e-ticaret sitesini destekler.
+      </p>
+      <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+        Geliştirici: Selman Ali Dokumacı<br>
+        Lisans: MIT License<br>
+        GitHub: <a href="https://github.com/s3lm4n/firefox-app" target="_blank" style="color: #667eea;">github.com/s3lm4n/firefox-app</a>
+      </p>
+    </div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <div class="toast-icon">✅</div>
+    <div class="toast-message" id="toastMessage">Ayarlar kaydedildi</div>
+  </div>
+  
+  <script src="lib/helpers.js"></script>
+  <script src="lib/sites.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
