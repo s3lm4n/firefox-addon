@@ -29,12 +29,14 @@
     
     body {
       width: 450px;
-      max-height: 650px;
+      height: 600px; /* SABİT YÜKSEKLİK */
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
       background: var(--bg-light);
       color: var(--text-light);
       overflow: hidden;
       transition: background 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
     }
     
     body.dark-mode {
@@ -42,12 +44,13 @@
       color: var(--text-dark);
     }
     
-    /* Header */
+    /* Header - SABİT */
     .header {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       padding: 20px;
       color: white;
       position: relative;
+      flex-shrink: 0;
     }
     
     .header-top {
@@ -130,15 +133,13 @@
       letter-spacing: 0.5px;
     }
     
-    /* Tabs - SOL ÜST KÖŞEDE */
+    /* Tabs - SABİT */
     .tabs {
       display: flex;
       background: var(--bg-light);
       border-bottom: 1px solid var(--border-light);
-      position: sticky;
-      top: 0;
-      z-index: 10;
       gap: 0;
+      flex-shrink: 0;
     }
     
     body.dark-mode .tabs {
@@ -178,60 +179,40 @@
       background: rgba(102, 126, 234, 0.08);
     }
     
-    /* Content */
-    .content {
-      max-height: 500px;
+    /* Content Container - SCROLLABLE */
+    .content-container {
+      flex: 1;
       overflow-y: auto;
-      padding: 15px;
+      overflow-x: hidden;
       position: relative;
-      scroll-behavior: smooth;
     }
     
-    .content::-webkit-scrollbar {
-      width: 6px;
+    /* SCROLLBAR STİLİ - TÜM İÇERİK */
+    .content-container::-webkit-scrollbar {
+      width: 8px;
     }
     
-    .content::-webkit-scrollbar-track {
+    .content-container::-webkit-scrollbar-track {
       background: var(--border-light);
     }
     
-    body.dark-mode .content::-webkit-scrollbar-track {
+    body.dark-mode .content-container::-webkit-scrollbar-track {
       background: var(--border-dark);
     }
     
-    .content::-webkit-scrollbar-thumb {
+    .content-container::-webkit-scrollbar-thumb {
       background: var(--primary);
-      border-radius: 3px;
+      border-radius: 4px;
     }
     
-    /* Scroll Button */
-    .scroll-to-bottom {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 44px;
-      height: 44px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      transition: all 0.3s;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
+    .content-container::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
     }
     
-    .scroll-to-bottom.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    
-    .scroll-to-bottom:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    /* Content */
+    .content {
+      padding: 15px;
+      min-height: 100%;
     }
     
     /* Tab contents */
@@ -700,6 +681,10 @@
       box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
     }
     
+    .save-settings-btn:active {
+      transform: translateY(0);
+    }
+    
     /* Debug Console */
     .debug-console {
       background: #1a1a1a;
@@ -734,6 +719,38 @@
       display: flex;
       gap: 8px;
       margin-top: 10px;
+    }
+    
+    /* Success Toast */
+    .success-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--success);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .success-toast.show {
+      display: flex;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
@@ -770,7 +787,7 @@
     </div>
   </div>
   
-  <!-- Tabs - SOL ÜST KÖŞEDE AYARLAR -->
+  <!-- Tabs -->
   <div class="tabs">
     <button class="tab" data-tab="settings">
       <span>⚙️</span>
@@ -790,107 +807,113 @@
     </button>
   </div>
   
-  <!-- Scroll to Bottom Button -->
-  <button class="scroll-to-bottom" id="scrollBtn" title="Aşağı Kaydır">⬇️</button>
+  <!-- Content Container - SCROLLABLE -->
+  <div class="content-container">
+    <div class="content">
+      <!-- Home Tab -->
+      <div class="tab-content active" id="homeTab">
+        <div id="currentPageSection" style="display: none;">
+          <div class="current-page">
+            <div class="product-name" id="currentProductName"></div>
+            <div class="product-price">
+              <span id="currentProductPrice"></span>
+              <span class="confidence-badge" id="confidenceBadge"></span>
+            </div>
+            <button class="btn-primary" id="addButton">
+              <span>➕</span>
+              <span>Takibe Al</span>
+            </button>
+          </div>
+        </div>
+        
+        <div id="homeLoading" class="loading">
+          <div class="spinner"></div>
+          <div>Sayfa taranıyor...</div>
+        </div>
+      </div>
+      
+      <!-- List Tab -->
+      <div class="tab-content" id="listTab">
+        <div class="list-header">
+          <h3 class="list-title">
+            <span>Takip Edilen</span>
+            <span>(<span id="listCount">0</span>)</span>
+          </h3>
+          <div class="list-actions">
+            <button class="btn-small btn-refresh" id="refreshAll">🔄 Kontrol Et</button>
+            <button class="btn-small btn-export" id="exportData">📥 Dışa Aktar</button>
+          </div>
+        </div>
+        <div id="productList"></div>
+      </div>
+      
+      <!-- Settings Tab -->
+      <div class="tab-content" id="settingsTab">
+        <div class="settings-section">
+          <h3 class="section-title">Kontrol Ayarları</h3>
+          
+          <div class="setting-item">
+            <div class="setting-label">Otomatik Kontrol</div>
+            <div class="toggle active" id="autoCheckToggle">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">Kontrol Aralığı (dakika)</div>
+            <input type="number" id="checkInterval" value="30" min="5" max="1440">
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <h3 class="section-title">Bildirimler</h3>
+          
+          <div class="setting-item">
+            <div class="setting-label">Bildirimleri Aç</div>
+            <div class="toggle active" id="notificationsToggle">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">Fiyat Düştüğünde Bildir</div>
+            <div class="toggle active" id="notifyDownToggle">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">Fiyat Arttığında Bildir</div>
+            <div class="toggle" id="notifyUpToggle">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- KAYDET BUTONU -->
+        <button class="save-settings-btn" id="saveSettingsBtn">
+          <span>💾</span>
+          <span>Ayarları Kaydet</span>
+        </button>
+      </div>
+      
+      <!-- Debug Tab -->
+      <div class="tab-content" id="debugTab">
+        <div class="debug-console" id="debugConsole">
+          <div class="debug-line success">[DEBUG] Konsol başlatıldı...</div>
+        </div>
+        <div class="debug-actions">
+          <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
+          <button class="btn-small btn-export" id="exportDebug">📥 Logları Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
   
-  <!-- Content -->
-  <div class="content" id="contentArea">
-    <!-- Home Tab -->
-    <div class="tab-content active" id="homeTab">
-      <div id="currentPageSection" style="display: none;">
-        <div class="current-page">
-          <div class="product-name" id="currentProductName"></div>
-          <div class="product-price">
-            <span id="currentProductPrice"></span>
-            <span class="confidence-badge" id="confidenceBadge"></span>
-          </div>
-          <button class="btn-primary" id="addButton">
-            <span>➕</span>
-            <span>Takibe Al</span>
-          </button>
-        </div>
-      </div>
-      
-      <div id="homeLoading" class="loading">
-        <div class="spinner"></div>
-        <div>Sayfa taranıyor...</div>
-      </div>
-    </div>
-    
-    <!-- List Tab -->
-    <div class="tab-content" id="listTab">
-      <div class="list-header">
-        <h3 class="list-title">
-          <span>Takip Edilen</span>
-          <span>(<span id="listCount">0</span>)</span>
-        </h3>
-        <div class="list-actions">
-          <button class="btn-small btn-refresh" id="refreshAll">🔄 Kontrol Et</button>
-          <button class="btn-small btn-export" id="exportData">📥 Dışa Aktar</button>
-        </div>
-      </div>
-      <div id="productList"></div>
-    </div>
-    
-    <!-- Settings Tab -->
-    <div class="tab-content" id="settingsTab">
-      <div class="settings-section">
-        <h3 class="section-title">Kontrol Ayarları</h3>
-        
-        <div class="setting-item">
-          <div class="setting-label">Otomatik Kontrol</div>
-          <div class="toggle active" id="autoCheckToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Kontrol Aralığı (dakika)</div>
-          <input type="number" id="checkInterval" value="30" min="5" max="1440">
-        </div>
-      </div>
-      
-      <div class="settings-section">
-        <h3 class="section-title">Bildirimler</h3>
-        
-        <div class="setting-item">
-          <div class="setting-label">Bildirimleri Aç</div>
-          <div class="toggle active" id="notificationsToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Fiyat Düştüğünde Bildir</div>
-          <div class="toggle active" id="notifyDownToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Fiyat Arttığında Bildir</div>
-          <div class="toggle" id="notifyUpToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-      </div>
-      
-      <button class="save-settings-btn" id="saveSettingsBtn">
-        <span>💾</span>
-        <span>Ayarları Kaydet</span>
-      </button>
-    </div>
-    
-    <!-- Debug Tab -->
-    <div class="tab-content" id="debugTab">
-      <div class="debug-console" id="debugConsole">
-        <div class="debug-line success">[DEBUG] Konsol başlatıldı...</div>
-      </div>
-      <div class="debug-actions">
-        <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
-        <button class="btn-small btn-export" id="exportDebug">📥 Logları Kaydet</button>
-      </div>
-    </div>
+  <!-- Success Toast -->
+  <div class="success-toast" id="successToast">
+    <span>✅</span>
+    <span id="toastMessage">Kaydedildi!</span>
   </div>
   
   <script src="lib/helpers.js"></script>
