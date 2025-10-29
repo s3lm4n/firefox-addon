@@ -29,14 +29,12 @@
     
     body {
       width: 450px;
-      height: 600px; /* SABİT YÜKSEKLİK */
+      max-height: 650px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
       background: var(--bg-light);
       color: var(--text-light);
       overflow: hidden;
       transition: background 0.3s, color 0.3s;
-      display: flex;
-      flex-direction: column;
     }
     
     body.dark-mode {
@@ -44,13 +42,12 @@
       color: var(--text-dark);
     }
     
-    /* Header - SABİT */
+    /* Header */
     .header {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       padding: 20px;
       color: white;
       position: relative;
-      flex-shrink: 0;
     }
     
     .header-top {
@@ -108,7 +105,7 @@
     /* Stats */
     .stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr); /* 2 STAT */
       gap: 10px;
     }
     
@@ -133,13 +130,15 @@
       letter-spacing: 0.5px;
     }
     
-    /* Tabs - SABİT */
+    /* Tabs - SOL ÜST KÖŞEDE */
     .tabs {
       display: flex;
       background: var(--bg-light);
       border-bottom: 1px solid var(--border-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
       gap: 0;
-      flex-shrink: 0;
     }
     
     body.dark-mode .tabs {
@@ -179,40 +178,60 @@
       background: rgba(102, 126, 234, 0.08);
     }
     
-    /* Content Container - SCROLLABLE */
-    .content-container {
-      flex: 1;
+    /* Content */
+    .content {
+      max-height: 500px;
       overflow-y: auto;
-      overflow-x: hidden;
+      padding: 15px;
       position: relative;
+      scroll-behavior: smooth;
     }
     
-    /* SCROLLBAR STİLİ - TÜM İÇERİK */
-    .content-container::-webkit-scrollbar {
-      width: 8px;
+    .content::-webkit-scrollbar {
+      width: 6px;
     }
     
-    .content-container::-webkit-scrollbar-track {
+    .content::-webkit-scrollbar-track {
       background: var(--border-light);
     }
     
-    body.dark-mode .content-container::-webkit-scrollbar-track {
+    body.dark-mode .content::-webkit-scrollbar-track {
       background: var(--border-dark);
     }
     
-    .content-container::-webkit-scrollbar-thumb {
+    .content::-webkit-scrollbar-thumb {
       background: var(--primary);
-      border-radius: 4px;
+      border-radius: 3px;
     }
     
-    .content-container::-webkit-scrollbar-thumb:hover {
-      background: var(--primary-dark);
+    /* Scroll Button */
+    .scroll-to-bottom {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
     }
     
-    /* Content */
-    .content {
-      padding: 15px;
-      min-height: 100%;
+    .scroll-to-bottom.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .scroll-to-bottom:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
     
     /* Tab contents */
@@ -298,6 +317,52 @@
     }
     
     /* Products List */
+    .search-box {
+      position: relative;
+      margin-bottom: 15px;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 12px 40px 12px 15px;
+      border: 2px solid var(--border-light);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--bg-light);
+      color: var(--text-light);
+      transition: all 0.2s;
+    }
+    
+    body.dark-mode .search-box input {
+      background: #2d2d3a;
+      border-color: var(--border-dark);
+      color: var(--text-dark);
+    }
+    
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-clear-search {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 5px;
+      transition: color 0.2s;
+    }
+    
+    .btn-clear-search:hover {
+      color: var(--danger);
+    }
+    
     .list-header {
       display: flex;
       justify-content: space-between;
@@ -390,6 +455,31 @@
       justify-content: space-between;
       align-items: start;
       margin-bottom: 10px;
+    }
+    
+    .card-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+    
+    .star-btn.favorited {
+      filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.6));
     }
     
     .card-name {
@@ -681,76 +771,44 @@
       box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
     }
     
-    .save-settings-btn:active {
-      transform: translateY(0);
-    }
-    
-    /* Debug Console */
-    .debug-console {
-      background: #1a1a1a;
-      color: #00ff00;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      padding: 15px;
-      border-radius: 8px;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-    }
-    
-    .debug-line {
-      margin-bottom: 4px;
-      line-height: 1.4;
-    }
-    
-    .debug-line.error {
-      color: #ff4444;
-    }
-    
-    .debug-line.success {
-      color: #00ff00;
-    }
-    
-    .debug-line.warn {
-      color: #ffaa00;
-    }
-    
-    .debug-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    
-    /* Success Toast */
-    .success-toast {
+    /* Scroll Button */
+    .scroll-to-bottom {
       position: fixed;
-      bottom: 20px;
+      bottom: 80px;
       right: 20px;
-      background: var(--success);
+      width: 48px;
+      height: 48px;
+      background: var(--primary);
       color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-      display: none;
-      align-items: center;
-      gap: 8px;
-      z-index: 1000;
-      animation: slideIn 0.3s ease;
-    }
-    
-    .success-toast.show {
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+      z-index: 100;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.8);
     }
     
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .scroll-to-bottom.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1);
+    }
+    
+    .scroll-to-bottom:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      background: var(--primary-dark);
+    }
+    
+    .scroll-to-bottom:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -767,18 +825,13 @@
       </div>
       <div class="header-actions">
         <button class="icon-btn" id="darkModeToggle" title="Dark Mode">🌙</button>
-        <button class="icon-btn" id="debugBtn" title="Debug Konsolu">🐛</button>
       </div>
     </div>
     
     <div class="stats">
       <div class="stat">
         <div class="stat-value" id="totalProducts">0</div>
-        <div class="stat-label">Ürün</div>
-      </div>
-      <div class="stat">
-        <div class="stat-value" id="totalSavings">0₺</div>
-        <div class="stat-label">Tasarruf</div>
+        <div class="stat-label">Takip Edilen</div>
       </div>
       <div class="stat">
         <div class="stat-value" id="lastCheck">-</div>
@@ -787,7 +840,7 @@
     </div>
   </div>
   
-  <!-- Tabs -->
+  <!-- Tabs - SOL ÜST KÖŞEDE AYARLAR -->
   <div class="tabs">
     <button class="tab" data-tab="settings">
       <span>⚙️</span>
@@ -807,113 +860,107 @@
     </button>
   </div>
   
-  <!-- Content Container - SCROLLABLE -->
-  <div class="content-container">
-    <div class="content">
-      <!-- Home Tab -->
-      <div class="tab-content active" id="homeTab">
-        <div id="currentPageSection" style="display: none;">
-          <div class="current-page">
-            <div class="product-name" id="currentProductName"></div>
-            <div class="product-price">
-              <span id="currentProductPrice"></span>
-              <span class="confidence-badge" id="confidenceBadge"></span>
-            </div>
-            <button class="btn-primary" id="addButton">
-              <span>➕</span>
-              <span>Takibe Al</span>
-            </button>
+  <!-- Scroll to Bottom Button -->
+  <button class="scroll-to-bottom" id="scrollBtn" title="Aşağı Kaydır">⬇️</button>
+  
+  <!-- Content -->
+  <div class="content" id="contentArea">
+    <!-- Home Tab -->
+    <div class="tab-content active" id="homeTab">
+      <div id="currentPageSection" style="display: none;">
+        <div class="current-page">
+          <div class="product-name" id="currentProductName"></div>
+          <div class="product-price">
+            <span id="currentProductPrice"></span>
+            <span class="confidence-badge" id="confidenceBadge"></span>
           </div>
-        </div>
-        
-        <div id="homeLoading" class="loading">
-          <div class="spinner"></div>
-          <div>Sayfa taranıyor...</div>
+          <button class="btn-primary" id="addButton">
+            <span>➕</span>
+            <span>Takibe Al</span>
+          </button>
         </div>
       </div>
       
-      <!-- List Tab -->
-      <div class="tab-content" id="listTab">
-        <div class="list-header">
-          <h3 class="list-title">
-            <span>Takip Edilen</span>
-            <span>(<span id="listCount">0</span>)</span>
-          </h3>
-          <div class="list-actions">
-            <button class="btn-small btn-refresh" id="refreshAll">🔄 Kontrol Et</button>
-            <button class="btn-small btn-export" id="exportData">📥 Dışa Aktar</button>
-          </div>
-        </div>
-        <div id="productList"></div>
-      </div>
-      
-      <!-- Settings Tab -->
-      <div class="tab-content" id="settingsTab">
-        <div class="settings-section">
-          <h3 class="section-title">Kontrol Ayarları</h3>
-          
-          <div class="setting-item">
-            <div class="setting-label">Otomatik Kontrol</div>
-            <div class="toggle active" id="autoCheckToggle">
-              <div class="toggle-slider"></div>
-            </div>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-label">Kontrol Aralığı (dakika)</div>
-            <input type="number" id="checkInterval" value="30" min="5" max="1440">
-          </div>
-        </div>
-        
-        <div class="settings-section">
-          <h3 class="section-title">Bildirimler</h3>
-          
-          <div class="setting-item">
-            <div class="setting-label">Bildirimleri Aç</div>
-            <div class="toggle active" id="notificationsToggle">
-              <div class="toggle-slider"></div>
-            </div>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-label">Fiyat Düştüğünde Bildir</div>
-            <div class="toggle active" id="notifyDownToggle">
-              <div class="toggle-slider"></div>
-            </div>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-label">Fiyat Arttığında Bildir</div>
-            <div class="toggle" id="notifyUpToggle">
-              <div class="toggle-slider"></div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- KAYDET BUTONU -->
-        <button class="save-settings-btn" id="saveSettingsBtn">
-          <span>💾</span>
-          <span>Ayarları Kaydet</span>
-        </button>
-      </div>
-      
-      <!-- Debug Tab -->
-      <div class="tab-content" id="debugTab">
-        <div class="debug-console" id="debugConsole">
-          <div class="debug-line success">[DEBUG] Konsol başlatıldı...</div>
-        </div>
-        <div class="debug-actions">
-          <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
-          <button class="btn-small btn-export" id="exportDebug">📥 Logları Kaydet</button>
-        </div>
+      <div id="homeLoading" class="loading">
+        <div class="spinner"></div>
+        <div>Sayfa taranıyor...</div>
       </div>
     </div>
-  </div>
-  
-  <!-- Success Toast -->
-  <div class="success-toast" id="successToast">
-    <span>✅</span>
-    <span id="toastMessage">Kaydedildi!</span>
+    
+    <!-- List Tab -->
+    <div class="tab-content" id="listTab">
+      <div class="list-header">
+        <h3 class="list-title">
+          <span>Takip Edilen</span>
+          <span>(<span id="listCount">0</span>)</span>
+        </h3>
+        <div class="list-actions">
+          <button class="btn-small btn-refresh" id="refreshAll">🔄 Kontrol Et</button>
+          <button class="btn-small btn-export" id="exportData">📥 Dışa Aktar</button>
+        </div>
+      </div>
+      <div id="productList"></div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div class="tab-content" id="settingsTab">
+      <div class="settings-section">
+        <h3 class="section-title">Kontrol Ayarları</h3>
+        
+        <div class="setting-item">
+          <div class="setting-label">Otomatik Kontrol</div>
+          <div class="toggle active" id="autoCheckToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">Kontrol Aralığı (dakika)</div>
+          <input type="number" id="checkInterval" value="30" min="5" max="1440">
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3 class="section-title">Bildirimler</h3>
+        
+        <div class="setting-item">
+          <div class="setting-label">Bildirimleri Aç</div>
+          <div class="toggle active" id="notificationsToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">Fiyat Düştüğünde Bildir</div>
+          <div class="toggle active" id="notifyDownToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">Fiyat Arttığında Bildir</div>
+          <div class="toggle" id="notifyUpToggle">
+            <div class="toggle-slider"></div>
+          </div>
+        </div>
+      </div>
+      
+      <button class="save-settings-btn" id="saveSettingsBtn">
+        <span>💾</span>
+        <span>Ayarları Kaydet</span>
+      </button>
+    </div>
+    
+    <!-- Debug Tab -->
+    <div class="tab-content" id="debugTab">
+      <div class="debug-console" id="debugConsole">
+        <div class="debug-line success">[DEBUG] Konsol başlatıldı...</div>
+      </div>
+      <div class="debug-actions">
+        <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
+        <button class="btn-small btn-export" id="exportDebug">📥 Logları Kaydet</button>
+      </div>
+    </div>
   </div>
   
   <script src="lib/helpers.js"></script>

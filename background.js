@@ -41,15 +41,18 @@
     logger.success('Background script initialized');
   }
   
-  // Alarm kur
+  // Alarm kur - DÜZELTİLDİ
   function setupAlarm() {
-    browser.alarms.clear('checkPrices');
-    
-    browser.alarms.create('checkPrices', {
-      periodInMinutes: settings.checkInterval
+    // Önce mevcut alarm'ı temizle
+    browser.alarms.clear('checkPrices').then(() => {
+      // Yeni alarm kur
+      browser.alarms.create('checkPrices', {
+        periodInMinutes: settings.checkInterval,
+        when: Date.now() + 60000 // 1 dakika sonra ilk çalışma
+      });
+      
+      logger.info(`✅ Alarm kuruldu: Her ${settings.checkInterval} dakikada bir kontrol`);
     });
-    
-    logger.info(`Alarm set for every ${settings.checkInterval} minutes`);
   }
   
   // Alarm tetiklendiğinde
