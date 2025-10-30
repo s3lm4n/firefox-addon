@@ -35,18 +35,25 @@
     contentArea: document.getElementById('contentArea')
   };
   
-  // Debug logging
+  // Debug logging (optimized to limit memory usage)
   function addDebugLog(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString('tr-TR');
     const log = { message, type, timestamp };
     debugLogs.push(log);
     
-    if (debugLogs.length > 100) debugLogs.shift();
+    // Limit to 50 logs instead of 100 to reduce memory
+    if (debugLogs.length > 50) debugLogs.shift();
     
     const debugLine = document.createElement('div');
     debugLine.className = `debug-line ${type}`;
     debugLine.textContent = `[${timestamp}] ${message}`;
     els.debugConsole.appendChild(debugLine);
+    
+    // Also limit DOM children
+    if (els.debugConsole.children.length > 50) {
+      els.debugConsole.removeChild(els.debugConsole.firstChild);
+    }
+    
     els.debugConsole.scrollTop = els.debugConsole.scrollHeight;
   }
   
@@ -323,9 +330,14 @@
     });
   }
   
-  // Find closest match using Levenshtein distance
+  // Find closest match using Levenshtein distance (optimized with early exit)
   function findClosestMatch(query, products) {
-    const levenshtein = (a, b) => {
+    const levenshtein = (a, b, threshold) => {
+      // Early exit if length difference exceeds threshold
+      if (Math.abs(a.length - b.length) > threshold) {
+        return threshold + 1;
+      }
+      
       const matrix = [];
       for (let i = 0; i <= b.length; i++) {
         matrix[i] = [i];
@@ -333,7 +345,9 @@
       for (let j = 0; j <= a.length; j++) {
         matrix[0][j] = j;
       }
+      
       for (let i = 1; i <= b.length; i++) {
+        let minRowValue = Infinity;
         for (let j = 1; j <= a.length; j++) {
           if (b.charAt(i - 1) === a.charAt(j - 1)) {
             matrix[i][j] = matrix[i - 1][j - 1];
@@ -344,6 +358,11 @@
               matrix[i - 1][j] + 1
             );
           }
+          minRowValue = Math.min(minRowValue, matrix[i][j]);
+        }
+        // Early exit if current row minimum exceeds threshold
+        if (minRowValue > threshold) {
+          return threshold + 1;
         }
       }
       return matrix[b.length][a.length];
@@ -351,14 +370,18 @@
     
     let closest = null;
     let minDistance = Infinity;
+    const maxAllowedDistance = Math.floor(query.length / 2);
+    const queryLower = query.toLowerCase();
     
-    products.forEach(p => {
-      const distance = levenshtein(query.toLowerCase(), p.name.toLowerCase().substring(0, query.length + 5));
-      if (distance < minDistance && distance < query.length / 2) {
+    for (const p of products) {
+      const compareStr = p.name.toLowerCase().substring(0, query.length + 5);
+      // Use maxAllowedDistance as threshold for consistent early exit
+      const distance = levenshtein(queryLower, compareStr, maxAllowedDistance);
+      if (distance < minDistance && distance <= maxAllowedDistance) {
         minDistance = distance;
         closest = p;
       }
-    });
+    }
     
     return closest;
   }

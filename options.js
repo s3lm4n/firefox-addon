@@ -145,29 +145,25 @@
     logger.info(`Setting ${key} updated to ${value}`);
   }
   
-  // Update stats
+  // Update stats (optimized - single loop instead of multiple)
   function updateStats() {
     els.totalProducts.textContent = products.length;
     
-    // Calculate savings
+    // Calculate savings and checks in a single loop
     let totalSavings = 0;
-    products.forEach(product => {
+    let totalChecks = 0;
+    
+    for (const product of products) {
       if (product.initialPrice && product.price < product.initialPrice) {
         totalSavings += (product.initialPrice - product.price);
       }
-    });
-    
-    els.totalSavings.textContent = totalSavings > 0 ? 
-      `${totalSavings.toFixed(2)}₺` : '0₺';
-    
-    // Count total checks
-    let totalChecks = 0;
-    products.forEach(product => {
       if (product.priceHistory) {
         totalChecks += product.priceHistory.length;
       }
-    });
+    }
     
+    els.totalSavings.textContent = totalSavings > 0 ? 
+      `${totalSavings.toFixed(2)}₺` : '0₺';
     els.totalChecks.textContent = totalChecks;
     
     // Supported sites
