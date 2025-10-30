@@ -24,17 +24,17 @@
       --text-dark: #e5e7eb;
       --border-light: #e5e7eb;
       --border-dark: #374151;
-      --shadow: rgba(0, 0, 0, 0.1);
     }
     
     body {
-      width: 450px;
-      max-height: 650px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      width: 480px;
+      height: 650px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-light);
       color: var(--text-light);
       overflow: hidden;
-      transition: background 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
     }
     
     body.dark-mode {
@@ -45,16 +45,16 @@
     /* Header */
     .header {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-      padding: 20px;
+      padding: 16px 20px;
       color: white;
-      position: relative;
+      flex-shrink: 0;
     }
     
     .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     
     .logo {
@@ -64,33 +64,32 @@
     }
     
     .logo-icon {
-      font-size: 32px;
+      font-size: 28px;
     }
     
     .logo-text h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      margin-bottom: 2px;
     }
     
     .logo-text .version {
-      font-size: 11px;
+      font-size: 10px;
       opacity: 0.8;
     }
     
     .header-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
     
     .icon-btn {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border: none;
       background: rgba(255,255,255,0.2);
       border-radius: 8px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -99,46 +98,75 @@
     
     .icon-btn:hover {
       background: rgba(255,255,255,0.3);
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
     
-    /* Stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr); /* 2 STAT */
-      gap: 10px;
+    /* Stats Row */
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
     
-    .stat {
+    .stat-compact {
+      flex: 0 0 auto;
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(10px);
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 80px;
     }
     
     .stat-value {
-      font-size: 24px;
+      font-size: 18px;
       font-weight: bold;
-      margin-bottom: 4px;
     }
     
     .stat-label {
-      font-size: 11px;
+      font-size: 9px;
       opacity: 0.9;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-top: 2px;
     }
     
-    /* Tabs - SOL ÜST KÖŞEDE */
+    .search-header {
+      flex: 1;
+      position: relative;
+    }
+    
+    .search-header input {
+      width: 100%;
+      padding: 8px 32px 8px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      background: rgba(255,255,255,0.9);
+      color: #1f2937;
+    }
+    
+    .search-header input::placeholder {
+      color: #9ca3af;
+    }
+    
+    .search-header .search-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 14px;
+      color: #6b7280;
+    }
+    
+    /* Tabs */
     .tabs {
       display: flex;
       background: var(--bg-light);
       border-bottom: 1px solid var(--border-light);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      gap: 0;
+      flex-shrink: 0;
     }
     
     body.dark-mode .tabs {
@@ -147,24 +175,20 @@
     }
     
     .tab {
-      padding: 14px 20px;
+      padding: 12px 16px;
       background: transparent;
       border: none;
       border-bottom: 3px solid transparent;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: #6b7280;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      justify-content: center;
       gap: 6px;
-      flex: 0 0 auto;
-    }
-    
-    .tab:first-child {
-      margin-right: auto;
+      flex: 1;
+      justify-content: center;
     }
     
     .tab:hover {
@@ -180,10 +204,10 @@
     
     /* Content */
     .content {
-      max-height: 500px;
+      flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       padding: 15px;
-      position: relative;
       scroll-behavior: smooth;
     }
     
@@ -204,39 +228,10 @@
       border-radius: 3px;
     }
     
-    /* Scroll Button */
-    .scroll-to-bottom {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 44px;
-      height: 44px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      transition: all 0.3s;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    .scroll-to-bottom.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    
-    .scroll-to-bottom:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    }
-    
     /* Tab contents */
     .tab-content {
       display: none;
+      min-height: 100%;
     }
     
     .tab-content.active {
@@ -245,61 +240,69 @@
     }
     
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { opacity: 0; transform: translateY(-5px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Current Page */
+    /* Home Tab */
+    .home-section {
+      margin-bottom: 15px;
+    }
+    
     .current-page {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
-      padding: 20px;
+      padding: 18px;
       border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 20px var(--shadow);
+      margin-bottom: 15px;
     }
     
     .product-name {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 12px;
-      line-height: 1.5;
-      max-height: 65px;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      max-height: 60px;
       overflow: hidden;
     }
     
     .product-price {
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 800;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       display: flex;
       align-items: baseline;
       gap: 8px;
     }
     
     .confidence-badge {
-      font-size: 12px;
+      font-size: 11px;
       padding: 4px 8px;
       background: rgba(255,255,255,0.25);
       border-radius: 6px;
       font-weight: 600;
     }
     
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    
     .btn-primary {
-      width: 100%;
-      padding: 14px;
+      flex: 1;
+      padding: 12px;
       background: white;
       color: var(--primary);
       border: none;
       border-radius: 10px;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
     }
     
     .btn-primary:hover {
@@ -307,111 +310,87 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
     
-    .btn-primary:active {
-      transform: translateY(0);
+    .btn-secondary {
+      flex: 1;
+      padding: 12px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: 2px solid white;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
     
-    .btn-primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.3);
     }
     
-    /* Products List */
-    .search-box {
+    /* List Search */
+    .list-search {
       position: relative;
       margin-bottom: 15px;
     }
     
-    .search-box input {
+    .list-search input {
       width: 100%;
-      padding: 12px 40px 12px 15px;
+      padding: 10px 35px 10px 12px;
       border: 2px solid var(--border-light);
       border-radius: 10px;
-      font-size: 14px;
+      font-size: 13px;
       background: var(--bg-light);
       color: var(--text-light);
       transition: all 0.2s;
     }
     
-    body.dark-mode .search-box input {
+    body.dark-mode .list-search input {
       background: #2d2d3a;
       border-color: var(--border-dark);
       color: var(--text-dark);
     }
     
-    .search-box input:focus {
+    .list-search input:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
-    .btn-clear-search {
+    .list-search .clear-btn {
       position: absolute;
-      right: 10px;
+      right: 8px;
       top: 50%;
       transform: translateY(-50%);
       background: none;
       border: none;
       color: #9ca3af;
       cursor: pointer;
-      font-size: 18px;
-      padding: 5px;
+      font-size: 16px;
+      padding: 4px;
       transition: color 0.2s;
     }
     
-    .btn-clear-search:hover {
+    .list-search .clear-btn:hover {
       color: var(--danger);
     }
     
-    .list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-    
-    .list-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-light);
-    }
-    
-    body.dark-mode .list-title {
-      color: var(--text-dark);
-    }
-    
-    .list-actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .btn-small {
-      padding: 6px 12px;
-      font-size: 11px;
-      border: none;
+    .search-suggestion {
+      padding: 10px 12px;
+      background: #fef3c7;
+      border-left: 3px solid #f59e0b;
       border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
+      font-size: 12px;
+      color: #92400e;
+      margin-bottom: 10px;
     }
     
-    .btn-small:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-refresh {
-      background: var(--primary);
-      color: white;
-    }
-    
-    .btn-refresh:hover:not(:disabled) {
-      background: var(--primary-dark);
-    }
-    
-    .btn-export {
-      background: var(--success);
-      color: white;
+    body.dark-mode .search-suggestion {
+      background: #451a03;
+      color: #fef3c7;
     }
     
     /* Product Card */
@@ -419,10 +398,10 @@
       background: var(--bg-light);
       border: 1px solid var(--border-light);
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
       transition: all 0.3s;
-      cursor: pointer;
+      cursor: default;
     }
     
     body.dark-mode .product-card {
@@ -431,16 +410,26 @@
     }
     
     .product-card:hover {
-      box-shadow: 0 4px 15px var(--shadow);
-      transform: translateX(4px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       border-color: var(--primary);
     }
     
-    .product-card.removing {
-      animation: slideOutRight 0.4s ease forwards;
+    .product-card.highlight {
+      border-color: var(--warning);
+      background: rgba(245, 158, 11, 0.05);
+      animation: pulse 1.5s ease-in-out;
     }
     
-    @keyframes slideOutRight {
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    .product-card.removing {
+      animation: slideOut 0.4s ease forwards;
+    }
+    
+    @keyframes slideOut {
       to {
         opacity: 0;
         transform: translateX(100%);
@@ -453,68 +442,40 @@
     .card-header {
       display: flex;
       justify-content: space-between;
-      align-items: start;
-      margin-bottom: 10px;
-    }
-    
-    .card-name-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-    
-    .star-btn {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 0;
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
-    
-    .star-btn:hover {
-      transform: scale(1.2);
-    }
-    
-    .star-btn.favorited {
-      filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.6));
+      margin-bottom: 8px;
     }
     
     .card-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      line-height: 1.4;
-      max-height: 42px;
+      line-height: 1.3;
+      max-height: 38px;
       overflow: hidden;
       flex: 1;
+      margin-right: 8px;
     }
     
     .site-badge {
-      padding: 4px 8px;
+      padding: 3px 8px;
       background: var(--primary);
       color: white;
       border-radius: 6px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      margin-left: 8px;
       flex-shrink: 0;
-    }
-    
-    .card-price-section {
-      margin-bottom: 10px;
+      height: fit-content;
     }
     
     .card-price {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
+      margin-bottom: 8px;
     }
     
     .current-price {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
       color: var(--primary);
     }
@@ -522,35 +483,27 @@
     .old-price-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
+      gap: 4px;
+      padding: 3px 8px;
       background: rgba(107, 114, 128, 0.1);
-      border-radius: 8px;
-      font-size: 12px;
+      border-radius: 6px;
+      font-size: 11px;
       color: #6b7280;
-    }
-    
-    .old-price-label {
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 10px;
-      letter-spacing: 0.5px;
     }
     
     .old-price-value {
       text-decoration: line-through;
-      font-weight: 700;
+      font-weight: 600;
     }
     
     .price-change {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
+      gap: 3px;
+      padding: 3px 6px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      margin-top: 6px;
     }
     
     .price-change.down {
@@ -564,29 +517,29 @@
     }
     
     .card-meta {
-      font-size: 11px;
+      font-size: 10px;
       color: #9ca3af;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     
     .card-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
     
     .btn-action {
       flex: 1;
-      padding: 10px;
+      padding: 8px;
       border: none;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
     }
     
     .btn-visit {
@@ -596,7 +549,7 @@
     
     .btn-visit:hover {
       background: var(--primary-dark);
-      transform: scale(1.05);
+      transform: scale(1.03);
     }
     
     .btn-check {
@@ -606,7 +559,7 @@
     
     .btn-check:hover {
       background: #d97706;
-      transform: scale(1.05);
+      transform: scale(1.03);
     }
     
     .btn-remove {
@@ -616,30 +569,7 @@
     
     .btn-remove:hover {
       background: #dc2626;
-      transform: scale(1.05);
-    }
-    
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #9ca3af;
-    }
-    
-    .empty-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
-    
-    .empty-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    
-    .empty-text {
-      font-size: 13px;
+      transform: scale(1.03);
     }
     
     /* Loading */
@@ -649,13 +579,13 @@
       align-items: center;
       justify-content: center;
       padding: 40px;
-      gap: 15px;
+      gap: 12px;
     }
     
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid var(--border-light);
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border-light);
       border-top-color: var(--primary);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -665,150 +595,84 @@
       to { transform: rotate(360deg); }
     }
     
-    /* Settings */
-    .settings-section {
-      margin-bottom: 25px;
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: #9ca3af;
     }
     
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
+    .empty-icon {
+      font-size: 56px;
       margin-bottom: 12px;
-      color: var(--text-light);
+      opacity: 0.5;
     }
     
-    body.dark-mode .section-title {
-      color: var(--text-dark);
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
     }
     
-    .setting-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: var(--bg-light);
-      border: 1px solid var(--border-light);
+    .empty-text {
+      font-size: 12px;
+    }
+    
+    /* Debug Console */
+    .debug-console {
+      background: #1a1a2e;
       border-radius: 8px;
-      margin-bottom: 8px;
+      padding: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      margin-bottom: 12px;
     }
     
-    body.dark-mode .setting-item {
-      background: #2d2d3a;
-      border-color: var(--border-dark);
+    .debug-line {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     
-    .setting-label {
-      font-size: 13px;
-      font-weight: 500;
-    }
+    .debug-line.info { color: #3b82f6; }
+    .debug-line.success { color: #10b981; }
+    .debug-line.warn { color: #f59e0b; }
+    .debug-line.error { color: #ef4444; }
     
-    .toggle {
-      width: 48px;
-      height: 26px;
-      background: #d1d5db;
-      border-radius: 13px;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    
-    .toggle.active {
-      background: var(--primary);
-    }
-    
-    .toggle-slider {
-      width: 22px;
-      height: 22px;
-      background: white;
-      border-radius: 50%;
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      transition: transform 0.3s;
-    }
-    
-    .toggle.active .toggle-slider {
-      transform: translateX(22px);
-    }
-    
-    input[type="number"] {
-      width: 80px;
-      padding: 8px;
-      border: 1px solid var(--border-light);
-      border-radius: 6px;
-      font-size: 13px;
-      background: var(--bg-light);
-      color: var(--text-light);
-    }
-    
-    body.dark-mode input[type="number"] {
-      background: #2d2d3a;
-      border-color: var(--border-dark);
-      color: var(--text-dark);
-    }
-    
-    .save-settings-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--success);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
+    .debug-actions {
       display: flex;
-      align-items: center;
-      justify-content: center;
       gap: 8px;
-      margin-top: 20px;
     }
     
-    .save-settings-btn:hover {
-      background: #059669;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    .btn-small {
+      padding: 8px 14px;
+      font-size: 11px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
     }
     
-    /* Scroll Button */
-    .scroll-to-bottom {
-      position: fixed;
-      bottom: 80px;
-      right: 20px;
-      width: 48px;
-      height: 48px;
+    .btn-refresh {
       background: var(--primary);
       color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 24px;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-      transition: all 0.3s;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      visibility: hidden;
-      transform: scale(0.8);
+      flex: 1;
     }
     
-    .scroll-to-bottom.visible {
-      opacity: 1;
-      visibility: visible;
-      transform: scale(1);
-    }
-    
-    .scroll-to-bottom:hover {
-      transform: scale(1.1);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    .btn-refresh:hover {
       background: var(--primary-dark);
     }
     
-    .scroll-to-bottom:active {
-      transform: scale(0.95);
+    .btn-export {
+      background: var(--success);
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-export:hover {
+      background: #059669;
     }
   </style>
 </head>
@@ -820,32 +684,32 @@
         <div class="logo-icon">🏷️</div>
         <div class="logo-text">
           <h1>Fiyat Takipçisi Pro</h1>
-          <div class="version">v2.0.0</div>
+          <div class="version">v2.1.0</div>
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="darkModeToggle" title="Dark Mode">🌙</button>
+        <button class="icon-btn" id="settingsBtn" title="Ayarlar">⚙️</button>
       </div>
     </div>
     
-    <div class="stats">
-      <div class="stat">
+    <div class="stats-row">
+      <div class="stat-compact">
         <div class="stat-value" id="totalProducts">0</div>
-        <div class="stat-label">Takip Edilen</div>
+        <div class="stat-label">Takip</div>
       </div>
-      <div class="stat">
+      <div class="stat-compact">
         <div class="stat-value" id="lastCheck">-</div>
-        <div class="stat-label">Son Kontrol</div>
+        <div class="stat-label">Son</div>
+      </div>
+      <div class="search-header">
+        <input type="text" id="priceSearchInput" placeholder="Link ile fiyat sorgula...">
+        <span class="search-icon">🔍</span>
       </div>
     </div>
   </div>
   
-  <!-- Tabs - SOL ÜST KÖŞEDE AYARLAR -->
+  <!-- Tabs -->
   <div class="tabs">
-    <button class="tab" data-tab="settings">
-      <span>⚙️</span>
-      <span>Ayarlar</span>
-    </button>
     <button class="tab active" data-tab="home">
       <span>🏠</span>
       <span>Ana Sayfa</span>
@@ -860,9 +724,6 @@
     </button>
   </div>
   
-  <!-- Scroll to Bottom Button -->
-  <button class="scroll-to-bottom" id="scrollBtn" title="Aşağı Kaydır">⬇️</button>
-  
   <!-- Content -->
   <div class="content" id="contentArea">
     <!-- Home Tab -->
@@ -874,10 +735,16 @@
             <span id="currentProductPrice"></span>
             <span class="confidence-badge" id="confidenceBadge"></span>
           </div>
-          <button class="btn-primary" id="addButton">
-            <span>➕</span>
-            <span>Takibe Al</span>
-          </button>
+          <div class="btn-group">
+            <button class="btn-primary" id="addButton">
+              <span>➕</span>
+              <span>Takibe Al</span>
+            </button>
+            <button class="btn-secondary" id="refreshAllBtn">
+              <span>🔄</span>
+              <span>Hepsini Kontrol</span>
+            </button>
+          </div>
         </div>
       </div>
       
@@ -889,72 +756,18 @@
     
     <!-- List Tab -->
     <div class="tab-content" id="listTab">
-      <div class="list-header">
-        <h3 class="list-title">
-          <span>Takip Edilen</span>
-          <span>(<span id="listCount">0</span>)</span>
-        </h3>
-        <div class="list-actions">
-          <button class="btn-small btn-refresh" id="refreshAll">🔄 Kontrol Et</button>
-          <button class="btn-small btn-export" id="exportData">📥 Dışa Aktar</button>
-        </div>
+      <div class="list-search">
+        <input type="text" id="listSearchInput" placeholder="Listede ara...">
+        <button class="clear-btn" id="clearListSearch">✕</button>
       </div>
+      <div id="searchSuggestion" style="display: none;"></div>
       <div id="productList"></div>
-    </div>
-    
-    <!-- Settings Tab -->
-    <div class="tab-content" id="settingsTab">
-      <div class="settings-section">
-        <h3 class="section-title">Kontrol Ayarları</h3>
-        
-        <div class="setting-item">
-          <div class="setting-label">Otomatik Kontrol</div>
-          <div class="toggle active" id="autoCheckToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Kontrol Aralığı (dakika)</div>
-          <input type="number" id="checkInterval" value="30" min="5" max="1440">
-        </div>
-      </div>
-      
-      <div class="settings-section">
-        <h3 class="section-title">Bildirimler</h3>
-        
-        <div class="setting-item">
-          <div class="setting-label">Bildirimleri Aç</div>
-          <div class="toggle active" id="notificationsToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Fiyat Düştüğünde Bildir</div>
-          <div class="toggle active" id="notifyDownToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-        
-        <div class="setting-item">
-          <div class="setting-label">Fiyat Arttığında Bildir</div>
-          <div class="toggle" id="notifyUpToggle">
-            <div class="toggle-slider"></div>
-          </div>
-        </div>
-      </div>
-      
-      <button class="save-settings-btn" id="saveSettingsBtn">
-        <span>💾</span>
-        <span>Ayarları Kaydet</span>
-      </button>
     </div>
     
     <!-- Debug Tab -->
     <div class="tab-content" id="debugTab">
       <div class="debug-console" id="debugConsole">
-        <div class="debug-line success">[DEBUG] Konsol başlatıldı...</div>
+        <div class="debug-line success">[INFO] Debug konsolu başlatıldı</div>
       </div>
       <div class="debug-actions">
         <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
