@@ -20,6 +20,9 @@
   let settings = null;
   let rateLimiter = null;
   
+  // Request deduplication - prevent multiple fetches to same URL
+  const pendingRequests = new Map();
+  
   // Initialize
   async function initialize() {
     logger.info('Initializing background script...');
@@ -195,39 +198,56 @@
     }
   }
   
-  // Ürün fiyatını fetch et - DÜZELTİLDİ: Daha fazla bilgi döndür
+  // Ürün fiyatını fetch et - DÜZELTİLDİ: Daha fazla bilgi döndür + Request deduplication
   async function fetchProductPrice(url) {
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-          'Cache-Control': 'no-cache'
-        },
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-      
-      const html = await response.text();
-      
-      // Basit DOM parser
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // PriceParser ile extract et
-      const productInfo = await PriceParser.extractProductInfo(doc, url);
-      
-      return productInfo; // Tüm bilgiyi döndür (price, name, vb.)
-      
-    } catch (error) {
-      logger.error('Fetch error:', error);
-      return null;
+    // Check if request is already pending for this URL
+    if (pendingRequests.has(url)) {
+      logger.info(`Reusing pending request for ${url}`);
+      return await pendingRequests.get(url);
     }
+    
+    // Create new request promise
+    const requestPromise = (async () => {
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Cache-Control': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const html = await response.text();
+        
+        // Basit DOM parser
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // PriceParser ile extract et
+        const productInfo = await PriceParser.extractProductInfo(doc, url);
+        
+        return productInfo; // Tüm bilgiyi döndür (price, name, vb.)
+        
+      } catch (error) {
+        logger.error('Fetch error:', error);
+        return null;
+      } finally {
+        // Clean up pending request
+        pendingRequests.delete(url);
+      }
+    })();
+    
+    // Store pending request
+    pendingRequests.set(url, requestPromise);
+    
+    return await requestPromise;
   }
   
   // Fiyat bildirimi gönder

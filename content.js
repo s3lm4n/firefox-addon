@@ -109,10 +109,10 @@
     scheduleAutoCheck();
   }
   
-  // SPA detection - URL değişikliklerini izle
+  // SPA detection - URL değişikliklerini izle (optimized with throttle)
   let lastUrl = window.location.href;
   
-  const urlObserver = new MutationObserver(() => {
+  const checkUrlChange = PriceTrackerHelpers.throttle(() => {
     const currentUrl = window.location.href;
     if (currentUrl !== lastUrl) {
       logger.info('URL changed, clearing cache');
@@ -121,11 +121,14 @@
       cacheTimestamp = 0;
       scheduleAutoCheck();
     }
-  });
+  }, 500); // Throttle to 500ms
   
-  urlObserver.observe(document.body, {
+  const urlObserver = new MutationObserver(checkUrlChange);
+  
+  // Observe only title and head changes (much cheaper than body subtree)
+  urlObserver.observe(document.querySelector('title') || document.head, {
     childList: true,
-    subtree: true
+    characterData: true
   });
   
   // Performans monitoring
