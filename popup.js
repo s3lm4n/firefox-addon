@@ -332,10 +332,10 @@
   
   // Find closest match using Levenshtein distance (optimized with early exit)
   function findClosestMatch(query, products) {
-    const levenshtein = (a, b, maxDistance) => {
-      // Early exit if length difference exceeds maxDistance
-      if (Math.abs(a.length - b.length) > maxDistance) {
-        return maxDistance + 1;
+    const levenshtein = (a, b, threshold) => {
+      // Early exit if length difference exceeds threshold
+      if (Math.abs(a.length - b.length) > threshold) {
+        return threshold + 1;
       }
       
       const matrix = [];
@@ -361,8 +361,8 @@
           minRowValue = Math.min(minRowValue, matrix[i][j]);
         }
         // Early exit if current row minimum exceeds threshold
-        if (minRowValue > maxDistance) {
-          return maxDistance + 1;
+        if (minRowValue > threshold) {
+          return threshold + 1;
         }
       }
       return matrix[b.length][a.length];
@@ -375,7 +375,8 @@
     
     for (const p of products) {
       const compareStr = p.name.toLowerCase().substring(0, query.length + 5);
-      const distance = levenshtein(queryLower, compareStr, minDistance);
+      // Use maxAllowedDistance as threshold for consistent early exit
+      const distance = levenshtein(queryLower, compareStr, maxAllowedDistance);
       if (distance < minDistance && distance <= maxAllowedDistance) {
         minDistance = distance;
         closest = p;
