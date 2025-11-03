@@ -1,6 +1,4 @@
-// Options Page Script
-// Ayarlar sayfası mantığı
-
+// Options Page Script v3.0 - Fully Modernized
 (function() {
   'use strict';
   
@@ -15,19 +13,27 @@
     totalProducts: document.getElementById('totalProducts'),
     totalSavings: document.getElementById('totalSavings'),
     totalChecks: document.getElementById('totalChecks'),
-    supportedSites: document.getElementById('supportedSites'),
     
-    // Settings
+    // Tabs
+    navTabs: document.querySelectorAll('.nav-tab'),
+    tabContents: document.querySelectorAll('.tab-content'),
+    
+    // Settings - Auto Check
     autoCheckToggle: document.getElementById('autoCheckToggle'),
     autoCheckWrapper: document.getElementById('autoCheckWrapper'),
     checkInterval: document.getElementById('checkInterval'),
     maxRetries: document.getElementById('maxRetries'),
+    
+    // Settings - Notifications
     notificationsToggle: document.getElementById('notificationsToggle'),
     notificationsWrapper: document.getElementById('notificationsWrapper'),
     notifyDownToggle: document.getElementById('notifyDownToggle'),
     notifyDownWrapper: document.getElementById('notifyDownWrapper'),
     notifyUpToggle: document.getElementById('notifyUpToggle'),
     notifyUpWrapper: document.getElementById('notifyUpWrapper'),
+    
+    // Theme
+    themeOptions: document.querySelectorAll('.theme-option'),
     
     // Actions
     exportBtn: document.getElementById('exportBtn'),
@@ -36,17 +42,22 @@
     clearHistoryBtn: document.getElementById('clearHistoryBtn'),
     clearAllBtn: document.getElementById('clearAllBtn'),
     
-    // Sites
-    sitesList: document.getElementById('sitesList'),
-    
     // Toast
     toast: document.getElementById('toast'),
+    toastIcon: document.getElementById('toastIcon'),
     toastMessage: document.getElementById('toastMessage')
   };
   
   // Initialize
   async function init() {
     logger.info('Initializing options page...');
+    
+    // Load dark mode
+    const darkMode = await PriceTrackerHelpers.getStorage('darkMode', false);
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+      updateThemeOptions('dark');
+    }
     
     // Load settings
     settings = await browser.runtime.sendMessage({ action: 'getSettings' });
@@ -67,8 +78,13 @@
     // Setup UI
     loadSettings();
     updateStats();
-    loadSupportedSites();
     setupEventListeners();
+    setupKeyboardNavigation();
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
     
     logger.success('Options page initialized');
   }
@@ -86,6 +102,11 @@
   
   // Setup event listeners
   function setupEventListeners() {
+    // Tab navigation
+    els.navTabs.forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+    
     // Toggles
     els.autoCheckWrapper.addEventListener('click', () => toggleSetting('autoCheck', els.autoCheckToggle));
     els.notificationsWrapper.addEventListener('click', () => toggleSetting('notifications', els.notificationsToggle));
@@ -96,12 +117,63 @@
     els.checkInterval.addEventListener('change', () => updateSetting('checkInterval', parseInt(els.checkInterval.value)));
     els.maxRetries.addEventListener('change', () => updateSetting('maxRetries', parseInt(els.maxRetries.value)));
     
+    // Theme options
+    els.themeOptions.forEach(option => {
+      option.addEventListener('click', () => switchTheme(option.dataset.theme));
+    });
+    
     // Buttons
     els.exportBtn.addEventListener('click', exportData);
     els.importBtn.addEventListener('click', () => els.importFile.click());
     els.importFile.addEventListener('change', importData);
     els.clearHistoryBtn.addEventListener('click', clearHistory);
     els.clearAllBtn.addEventListener('click', clearAll);
+  }
+  
+  // Keyboard navigation
+  function setupKeyboardNavigation() {
+    const tabs = Array.from(els.navTabs);
+    
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('keydown', (e) => {
+        let newIndex = index;
+        
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          newIndex = (index + 1) % tabs.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          newIndex = (index - 1 + tabs.length) % tabs.length;
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          newIndex = 0;
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          newIndex = tabs.length - 1;
+        }
+        
+        if (newIndex !== index) {
+          switchTab(tabs[newIndex].dataset.tab);
+          tabs[newIndex].focus();
+        }
+      });
+    });
+  }
+  
+  // Switch tab
+  function switchTab(tabName) {
+    els.navTabs.forEach(tab => {
+      const isActive = tab.dataset.tab === tabName;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive);
+    });
+    
+    els.tabContents.forEach(content => {
+      const isActive = content.id === tabName + 'Tab';
+      content.classList.toggle('active', isActive);
+    });
+    
+    logger.info(`Switched to tab: ${tabName}`);
   }
   
   // Toggle setting
@@ -115,7 +187,7 @@
       settings: { [key]: newValue }
     });
     
-    showToast(`${key} ${newValue ? 'etkinleştirildi' : 'devre dışı bırakıldı'}`);
+    showToast(`${key} ${newValue ? 'etkinleştirildi' : 'devre dışı bırakıldı'}`, 'success');
     logger.info(`Setting ${key} updated to ${newValue}`);
   }
   
@@ -141,11 +213,35 @@
       settings: { [key]: value }
     });
     
-    showToast('Ayarlar kaydedildi');
+    showToast('Ayarlar kaydedildi', 'success');
     logger.info(`Setting ${key} updated to ${value}`);
   }
   
-  // Update stats (optimized - single loop instead of multiple)
+  // Switch theme
+  async function switchTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('dark-mode', isDark);
+    await PriceTrackerHelpers.setStorage('darkMode', isDark);
+    
+    updateThemeOptions(theme);
+    
+    // Re-initialize icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+    
+    showToast(`${isDark ? 'Koyu' : 'Açık'} tema etkinleştirildi`, 'success');
+    logger.info(`Theme switched to: ${theme}`);
+  }
+  
+  // Update theme options UI
+  function updateThemeOptions(activeTheme) {
+    els.themeOptions.forEach(option => {
+      option.classList.toggle('active', option.dataset.theme === activeTheme);
+    });
+  }
+  
+  // Update stats
   function updateStats() {
     els.totalProducts.textContent = products.length;
     
@@ -165,30 +261,12 @@
     els.totalSavings.textContent = totalSavings > 0 ? 
       `${totalSavings.toFixed(2)}₺` : '0₺';
     els.totalChecks.textContent = totalChecks;
-    
-    // Supported sites
-    const sites = SiteHelper.getSupportedSites();
-    els.supportedSites.textContent = `${sites.length}`;
-  }
-  
-  // Load supported sites
-  function loadSupportedSites() {
-    const sites = SiteHelper.getSupportedSites();
-    
-    els.sitesList.innerHTML = sites
-      .sort((a, b) => a.name.localeCompare(b.name, 'tr'))
-      .map(site => `
-        <div class="site-badge" title="${site.domain}">
-          ${site.name}
-        </div>
-      `)
-      .join('');
   }
   
   // Export data
   function exportData() {
     const data = {
-      version: '2.0.0',
+      version: '2.1.0',
       exportDate: new Date().toISOString(),
       products: products,
       settings: settings
@@ -202,7 +280,7 @@
     a.click();
     URL.revokeObjectURL(url);
     
-    showToast('Veriler dışa aktarıldı');
+    showToast('Veriler dışa aktarıldı', 'success');
     logger.success('Data exported');
   }
   
@@ -211,13 +289,17 @@
     const file = event.target.files[0];
     if (!file) return;
     
+    // Show loading
+    els.importBtn.disabled = true;
+    els.importBtn.innerHTML = '<div class="spinner"></div><span>İçe Aktarılıyor...</span>';
+    
     try {
       const text = await file.text();
       const data = JSON.parse(text);
       
       // Validate
       if (!data.products || !Array.isArray(data.products)) {
-        throw new Error('Invalid data format');
+        throw new Error('Geçersiz veri formatı');
       }
       
       // Confirm
@@ -227,7 +309,10 @@
         `Devam edilsin mi?`
       );
       
-      if (!confirmed) return;
+      if (!confirmed) {
+        resetImportButton();
+        return;
+      }
       
       // Merge products (avoid duplicates by URL)
       const existingUrls = new Set(products.map(p => p.url));
@@ -253,16 +338,27 @@
       }
       
       updateStats();
-      showToast(`${addedCount} yeni ürün içe aktarıldı`);
+      showToast(`${addedCount} yeni ürün içe aktarıldı`, 'success');
       logger.success(`Imported ${addedCount} products`);
       
     } catch (error) {
       showToast('İçe aktarma başarısız: ' + error.message, 'error');
       logger.error('Import error:', error);
+    } finally {
+      resetImportButton();
     }
     
     // Reset file input
     event.target.value = '';
+  }
+  
+  // Reset import button
+  function resetImportButton() {
+    els.importBtn.disabled = false;
+    els.importBtn.innerHTML = '<i data-lucide="upload"></i><span>İçe Aktar</span>';
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   }
   
   // Clear history
@@ -275,6 +371,10 @@
     
     if (!confirmed) return;
     
+    // Show loading
+    els.clearHistoryBtn.disabled = true;
+    els.clearHistoryBtn.innerHTML = '<div class="spinner"></div><span>Temizleniyor...</span>';
+    
     products.forEach(product => {
       product.priceHistory = [];
       product.previousPrice = null;
@@ -282,7 +382,17 @@
     
     await PriceTrackerHelpers.setStorage('trackedProducts', products);
     updateStats();
-    showToast('Fiyat geçmişi temizlendi');
+    
+    // Reset button
+    setTimeout(() => {
+      els.clearHistoryBtn.disabled = false;
+      els.clearHistoryBtn.innerHTML = '<i data-lucide="clock"></i><span>Fiyat Geçmişini Temizle</span>';
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 1000);
+    
+    showToast('Fiyat geçmişi temizlendi', 'success');
     logger.info('Price history cleared');
   }
   
@@ -309,6 +419,10 @@
     
     if (!doubleConfirmed) return;
     
+    // Show loading
+    els.clearAllBtn.disabled = true;
+    els.clearAllBtn.innerHTML = '<div class="spinner"></div><span>Siliniyor...</span>';
+    
     // Clear storage
     await browser.storage.local.clear();
     
@@ -333,7 +447,16 @@
     loadSettings();
     updateStats();
     
-    showToast('Tüm veriler silindi');
+    // Reset button
+    setTimeout(() => {
+      els.clearAllBtn.disabled = false;
+      els.clearAllBtn.innerHTML = '<i data-lucide="alert-triangle"></i><span>Tüm Verileri Sil</span>';
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 1000);
+    
+    showToast('Tüm veriler silindi', 'success');
     logger.warn('All data cleared');
   }
   
@@ -341,9 +464,14 @@
   function showToast(message, type = 'success') {
     els.toastMessage.textContent = message;
     
-    const icon = type === 'success' ? '✅' : '❌';
-    els.toast.querySelector('.toast-icon').textContent = icon;
+    const icons = {
+      success: '✅',
+      error: '❌',
+      info: 'ℹ️',
+      warning: '⚠️'
+    };
     
+    els.toastIcon.textContent = icons[type] || icons.success;
     els.toast.classList.add('show');
     
     setTimeout(() => {

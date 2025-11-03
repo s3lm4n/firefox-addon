@@ -12,42 +12,143 @@
     }
     
     :root {
-      --primary: #667eea;
-      --primary-dark: #5568d3;
-      --secondary: #764ba2;
-      --success: #10b981;
+      /* Primary - Soft Indigo */
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      
+      /* Accent - Modern Purple */
+      --secondary: #8b5cf6;
+      --secondary-dark: #7c3aed;
+      
+      /* Semantic Colors */
+      --success: #22c55e;
+      --success-dark: #16a34a;
       --danger: #ef4444;
+      --danger-dark: #dc2626;
       --warning: #f59e0b;
+      --warning-dark: #d97706;
+      --info: #3b82f6;
+      
+      /* Neutral Palette */
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      
+      /* Dark Mode */
+      --dark-bg: #0f172a;
+      --dark-surface: #1e293b;
+      --dark-border: #334155;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Dynamic values */
       --bg-light: #ffffff;
-      --bg-dark: #1a1a2e;
-      --text-light: #1f2937;
-      --text-dark: #e5e7eb;
-      --border-light: #e5e7eb;
-      --border-dark: #374151;
+      --text-light: var(--gray-900);
+      --border-light: var(--gray-200);
     }
     
     body {
       width: 480px;
       height: 650px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       background: var(--bg-light);
       color: var(--text-light);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transition: background var(--transition-base), color var(--transition-base);
     }
     
     body.dark-mode {
-      background: var(--bg-dark);
-      color: var(--text-dark);
+      --bg-light: var(--dark-bg);
+      --text-light: var(--gray-100);
+      --border-light: var(--dark-border);
+      background: var(--dark-bg);
+      color: var(--gray-100);
     }
     
-    /* Header */
+    /* Screen reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    /* Focus visible */
+    *:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+    
+    /* Header - Glassmorphic */
     .header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      background: linear-gradient(135deg, 
+        rgba(99, 102, 241, 0.95) 0%, 
+        rgba(139, 92, 246, 0.95) 100%);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.18);
       padding: 16px 20px;
       color: white;
       flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 50%
+      );
+      animation: headerGlow 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes headerGlow {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-10%, -10%) scale(1.1); }
+    }
+    
+    .header > * {
+      position: relative;
+      z-index: 1;
     }
     
     .header-top {
@@ -64,17 +165,26 @@
     }
     
     .logo-icon {
-      font-size: 28px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(10px);
     }
     
     .logo-text h1 {
       font-size: 18px;
       font-weight: 700;
+      letter-spacing: -0.02em;
     }
     
     .logo-text .version {
       font-size: 10px;
       opacity: 0.8;
+      font-weight: 500;
     }
     
     .header-actions {
@@ -86,19 +196,59 @@
       width: 32px;
       height: 32px;
       border: none;
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
+      color: white;
+      position: relative;
     }
     
     .icon-btn:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
       transform: scale(1.05);
+    }
+    
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* Theme toggle animation */
+    .theme-toggle {
+      overflow: hidden;
+    }
+    
+    .theme-icon-light,
+    .theme-icon-dark {
+      transition: all var(--transition-base);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    body:not(.dark-mode) .theme-icon-light {
+      opacity: 1;
+      transform: translate(-50%, -50%) rotate(0deg);
+    }
+    
+    body:not(.dark-mode) .theme-icon-dark {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(180deg) scale(0);
+    }
+    
+    body.dark-mode .theme-icon-light {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(-180deg) scale(0);
+    }
+    
+    body.dark-mode .theme-icon-dark {
+      opacity: 1;
+      display: block !important;
+      transform: translate(-50%, -50%) rotate(0deg);
     }
     
     /* Stats Row */
@@ -110,14 +260,20 @@
     
     .stat-compact {
       flex: 0 0 auto;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       padding: 8px 12px;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       display: flex;
       flex-direction: column;
       align-items: center;
       min-width: 80px;
+      transition: all var(--transition-fast);
+    }
+    
+    .stat-compact:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
     }
     
     .stat-value {
@@ -142,14 +298,21 @@
       width: 100%;
       padding: 8px 32px 8px 12px;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 12px;
-      background: rgba(255,255,255,0.9);
-      color: #1f2937;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--gray-900);
+      transition: all var(--transition-fast);
+    }
+    
+    .search-header input:focus {
+      outline: none;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
     }
     
     .search-header input::placeholder {
-      color: #9ca3af;
+      color: var(--gray-500);
     }
     
     .search-header .search-icon {
@@ -157,9 +320,15 @@
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 14px;
-      color: #6b7280;
+      color: var(--gray-500);
+      pointer-events: none;
     }
+    
+    /* Icon sizes */
+    .icon-xs { width: 14px; height: 14px; stroke-width: 2.5; }
+    .icon-sm { width: 16px; height: 16px; stroke-width: 2.5; }
+    .icon-md { width: 20px; height: 20px; stroke-width: 2; }
+    .icon-lg { width: 24px; height: 24px; stroke-width: 2; }
     
     /* Tabs */
     .tabs {
@@ -167,11 +336,7 @@
       background: var(--bg-light);
       border-bottom: 1px solid var(--border-light);
       flex-shrink: 0;
-    }
-    
-    body.dark-mode .tabs {
-      background: var(--bg-dark);
-      border-bottom-color: var(--border-dark);
+      transition: all var(--transition-base);
     }
     
     .tab {
@@ -182,24 +347,40 @@
       cursor: pointer;
       font-size: 12px;
       font-weight: 600;
-      color: #6b7280;
-      transition: all 0.2s;
+      color: var(--gray-500);
+      transition: all var(--transition-fast);
       display: flex;
       align-items: center;
       gap: 6px;
       flex: 1;
       justify-content: center;
+      position: relative;
+    }
+    
+    .tab::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--primary);
+      transform: scaleX(0);
+      transition: transform var(--transition-fast);
     }
     
     .tab:hover {
       color: var(--primary);
-      background: rgba(102, 126, 234, 0.05);
+      background: rgba(99, 102, 241, 0.05);
     }
     
     .tab.active {
       color: var(--primary);
-      border-bottom-color: var(--primary);
-      background: rgba(102, 126, 234, 0.08);
+      background: rgba(99, 102, 241, 0.08);
+    }
+    
+    .tab.active::after {
+      transform: scaleX(1);
     }
     
     /* Content */
@@ -219,13 +400,13 @@
       background: var(--border-light);
     }
     
-    body.dark-mode .content::-webkit-scrollbar-track {
-      background: var(--border-dark);
-    }
-    
     .content::-webkit-scrollbar-thumb {
       background: var(--primary);
       border-radius: 3px;
+    }
+    
+    .content::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
     }
     
     /* Tab contents */
@@ -244,17 +425,20 @@
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Home Tab */
-    .home-section {
-      margin-bottom: 15px;
-    }
-    
+    /* Current Page Section */
     .current-page {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
       padding: 18px;
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       margin-bottom: 15px;
+      box-shadow: var(--shadow-lg);
+      transition: all var(--transition-base);
+    }
+    
+    .current-page:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
     }
     
     .product-name {
@@ -278,9 +462,10 @@
     .confidence-badge {
       font-size: 11px;
       padding: 4px 8px;
-      background: rgba(255,255,255,0.25);
-      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: var(--radius-sm);
       font-weight: 600;
+      backdrop-filter: blur(5px);
     }
     
     .btn-group {
@@ -294,11 +479,11 @@
       background: white;
       color: var(--primary);
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-weight: 700;
       font-size: 13px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -307,20 +492,24 @@
     
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
     }
     
     .btn-secondary {
       flex: 1;
       padding: 12px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       color: white;
       border: 2px solid white;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-weight: 700;
       font-size: 13px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -328,7 +517,99 @@
     }
     
     .btn-secondary:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+    
+    /* Skeleton Loading */
+    .skeleton-container {
+      padding: 15px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .skeleton-card {
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    
+    .skeleton-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .skeleton-line,
+    .skeleton-circle,
+    .skeleton-btn,
+    .skeleton-price {
+      background: linear-gradient(
+        90deg,
+        var(--gray-200) 0%,
+        var(--gray-100) 50%,
+        var(--gray-200) 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+    
+    body.dark-mode .skeleton-line,
+    body.dark-mode .skeleton-circle,
+    body.dark-mode .skeleton-btn,
+    body.dark-mode .skeleton-price {
+      background: linear-gradient(
+        90deg,
+        var(--dark-border) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        var(--dark-border) 100%
+      );
+      background-size: 200% 100%;
+    }
+    
+    .skeleton-title {
+      height: 16px;
+      width: 70%;
+      margin-bottom: 8px;
+    }
+    
+    .skeleton-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+    
+    .skeleton-price {
+      height: 28px;
+      width: 120px;
+      margin: 12px 0;
+      border-radius: var(--radius-md);
+    }
+    
+    .skeleton-meta {
+      height: 12px;
+      width: 50%;
+      margin-bottom: 10px;
+    }
+    
+    .skeleton-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .skeleton-btn {
+      flex: 1;
+      height: 36px;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
     
     /* List Search */
@@ -341,23 +622,17 @@
       width: 100%;
       padding: 10px 35px 10px 12px;
       border: 2px solid var(--border-light);
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-size: 13px;
       background: var(--bg-light);
       color: var(--text-light);
-      transition: all 0.2s;
-    }
-    
-    body.dark-mode .list-search input {
-      background: #2d2d3a;
-      border-color: var(--border-dark);
-      color: var(--text-dark);
+      transition: all var(--transition-fast);
     }
     
     .list-search input:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
     .list-search .clear-btn {
@@ -367,25 +642,32 @@
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: #9ca3af;
+      color: var(--gray-400);
       cursor: pointer;
-      font-size: 16px;
-      padding: 4px;
-      transition: color 0.2s;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
     }
     
     .list-search .clear-btn:hover {
       color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
     }
     
     .search-suggestion {
       padding: 10px 12px;
       background: #fef3c7;
-      border-left: 3px solid #f59e0b;
-      border-radius: 6px;
+      border-left: 3px solid var(--warning);
+      border-radius: var(--radius-sm);
       font-size: 12px;
       color: #92400e;
       margin-bottom: 10px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    
+    .search-suggestion:hover {
+      background: #fde68a;
     }
     
     body.dark-mode .search-suggestion {
@@ -397,21 +679,17 @@
     .product-card {
       background: var(--bg-light);
       border: 1px solid var(--border-light);
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       padding: 14px;
       margin-bottom: 10px;
-      transition: all 0.3s;
+      transition: all var(--transition-base);
       cursor: default;
     }
     
-    body.dark-mode .product-card {
-      background: #2d2d3a;
-      border-color: var(--border-dark);
-    }
-    
     .product-card:hover {
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+      transform: translateY(-2px);
     }
     
     .product-card.highlight {
@@ -426,16 +704,25 @@
     }
     
     .product-card.removing {
-      animation: slideOut 0.4s ease forwards;
+      animation: cardRemove 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
     }
     
-    @keyframes slideOut {
-      to {
+    @keyframes cardRemove {
+      0% {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+      }
+      40% {
+        transform: scale(0.98) translateX(-8px);
+      }
+      100% {
         opacity: 0;
-        transform: translateX(100%);
+        transform: scale(0.9) translateX(120%);
         max-height: 0;
-        margin: 0;
-        padding: 0;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-width: 0;
       }
     }
     
@@ -459,11 +746,13 @@
       padding: 3px 8px;
       background: var(--primary);
       color: white;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       font-size: 9px;
       font-weight: 700;
       flex-shrink: 0;
       height: fit-content;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
     
     .card-price {
@@ -480,15 +769,19 @@
       color: var(--primary);
     }
     
+    body.dark-mode .current-price {
+      color: var(--primary-light);
+    }
+    
     .old-price-badge {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       padding: 3px 8px;
       background: rgba(107, 114, 128, 0.1);
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       font-size: 11px;
-      color: #6b7280;
+      color: var(--gray-500);
     }
     
     .old-price-value {
@@ -501,13 +794,13 @@
       align-items: center;
       gap: 3px;
       padding: 3px 6px;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       font-size: 11px;
       font-weight: 700;
     }
     
     .price-change.down {
-      background: rgba(16, 185, 129, 0.1);
+      background: rgba(34, 197, 94, 0.1);
       color: var(--success);
     }
     
@@ -516,9 +809,36 @@
       color: var(--danger);
     }
     
+    /* Mini Chart */
+    .mini-chart-container {
+      margin: 8px 0;
+      padding: 8px;
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      transition: all var(--transition-fast);
+    }
+    
+    .mini-chart-container:hover {
+      background: var(--gray-100);
+    }
+    
+    body.dark-mode .mini-chart-container {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    body.dark-mode .mini-chart-container:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .mini-chart {
+      width: 100%;
+      height: 30px;
+      display: block;
+    }
+    
     .card-meta {
       font-size: 10px;
-      color: #9ca3af;
+      color: var(--gray-400);
       margin-bottom: 10px;
     }
     
@@ -531,15 +851,23 @@
       flex: 1;
       padding: 8px;
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
+    }
+    
+    .btn-action:hover i {
+      transform: scale(1.15);
+    }
+    
+    .btn-action:active {
+      transform: scale(0.95);
     }
     
     .btn-visit {
@@ -549,7 +877,7 @@
     
     .btn-visit:hover {
       background: var(--primary-dark);
-      transform: scale(1.03);
+      box-shadow: var(--shadow-md);
     }
     
     .btn-check {
@@ -558,8 +886,17 @@
     }
     
     .btn-check:hover {
-      background: #d97706;
-      transform: scale(1.03);
+      background: var(--warning-dark);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn-check:hover i {
+      animation: spin 0.8s linear;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
     
     .btn-remove {
@@ -568,50 +905,34 @@
     }
     
     .btn-remove:hover {
-      background: #dc2626;
-      transform: scale(1.03);
-    }
-    
-    /* Loading */
-    .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      gap: 12px;
-    }
-    
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--border-light);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+      background: var(--danger-dark);
+      box-shadow: var(--shadow-md);
     }
     
     /* Empty State */
     .empty-state {
       text-align: center;
       padding: 50px 20px;
-      color: #9ca3af;
+      color: var(--gray-400);
     }
     
     .empty-icon {
       font-size: 56px;
       margin-bottom: 12px;
       opacity: 0.5;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
     
     .empty-title {
       font-size: 15px;
       font-weight: 600;
       margin-bottom: 6px;
+      color: var(--text-light);
     }
     
     .empty-text {
@@ -620,25 +941,40 @@
     
     /* Debug Console */
     .debug-console {
-      background: #1a1a2e;
-      border-radius: 8px;
+      background: var(--gray-900);
+      border-radius: var(--radius-md);
       padding: 12px;
       max-height: 400px;
       overflow-y: auto;
       font-family: 'Courier New', monospace;
       font-size: 11px;
       margin-bottom: 12px;
+      box-shadow: var(--shadow-md);
+    }
+    
+    body.dark-mode .debug-console {
+      background: #000;
+    }
+    
+    .debug-console::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .debug-console::-webkit-scrollbar-thumb {
+      background: var(--gray-600);
+      border-radius: 2px;
     }
     
     .debug-line {
       padding: 4px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      line-height: 1.4;
     }
     
-    .debug-line.info { color: #3b82f6; }
-    .debug-line.success { color: #10b981; }
-    .debug-line.warn { color: #f59e0b; }
-    .debug-line.error { color: #ef4444; }
+    .debug-line.info { color: var(--info); }
+    .debug-line.success { color: var(--success); }
+    .debug-line.warn { color: var(--warning); }
+    .debug-line.error { color: var(--danger); }
     
     .debug-actions {
       display: flex;
@@ -649,10 +985,13 @@
       padding: 8px 14px;
       font-size: 11px;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       cursor: pointer;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     
     .btn-refresh {
@@ -663,6 +1002,7 @@
     
     .btn-refresh:hover {
       background: var(--primary-dark);
+      box-shadow: var(--shadow-md);
     }
     
     .btn-export {
@@ -672,62 +1012,145 @@
     }
     
     .btn-export:hover {
-      background: #059669;
+      background: var(--success-dark);
+      box-shadow: var(--shadow-md);
+    }
+    
+    /* Confetti Animation */
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+    
+    .confetti {
+      position: fixed;
+      pointer-events: none;
+    }
+    
+    /* High Contrast Mode */
+    @media (prefers-contrast: high) {
+      :root {
+        --primary: #4338ca;
+        --success: #15803d;
+        --danger: #b91c1c;
+        --warning: #b45309;
+      }
+      
+      .btn-primary,
+      .btn-action {
+        border: 2px solid currentColor;
+      }
+    }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 <body>
   <!-- Header -->
-  <div class="header">
+  <div class="header" role="banner">
     <div class="header-top">
-      <div class="logo">
-        <div class="logo-icon">🏷️</div>
+      <div class="logo" role="img" aria-label="Fiyat Takipçisi Pro Logo">
+        <div class="logo-icon">
+          <i data-lucide="tag" class="icon-lg"></i>
+        </div>
         <div class="logo-text">
-          <h1>Fiyat Takipçisi Pro</h1>
-          <div class="version">v2.1.0</div>
+          <h1 id="app-title">Fiyat Takipçisi Pro</h1>
+          <div class="version" aria-label="Sürüm 2.1.0">v2.1.0</div>
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="settingsBtn" title="Ayarlar">⚙️</button>
+        <button class="icon-btn theme-toggle" 
+                id="themeToggle" 
+                aria-label="Tema değiştir"
+                title="Tema">
+          <i data-lucide="sun" class="icon-md theme-icon-light"></i>
+          <i data-lucide="moon" class="icon-md theme-icon-dark" style="display: none;"></i>
+        </button>
+        <button class="icon-btn" 
+                id="settingsBtn" 
+                aria-label="Ayarları aç"
+                title="Ayarlar">
+          <i data-lucide="settings" class="icon-md"></i>
+        </button>
       </div>
     </div>
     
     <div class="stats-row">
-      <div class="stat-compact">
-        <div class="stat-value" id="totalProducts">0</div>
+      <div class="stat-compact" role="status" aria-label="Toplam takip edilen ürün">
+        <div class="stat-value" id="totalProducts" aria-live="polite">0</div>
         <div class="stat-label">Takip</div>
       </div>
-      <div class="stat-compact">
-        <div class="stat-value" id="lastCheck">-</div>
+      <div class="stat-compact" role="status" aria-label="Son kontrol zamanı">
+        <div class="stat-value" id="lastCheck" aria-live="polite">-</div>
         <div class="stat-label">Son</div>
       </div>
       <div class="search-header">
-        <input type="text" id="priceSearchInput" placeholder="Link ile fiyat sorgula...">
-        <span class="search-icon">🔍</span>
+        <label for="priceSearchInput" class="sr-only">Link ile fiyat sorgula</label>
+        <input type="text" 
+               id="priceSearchInput" 
+               placeholder="Link ile fiyat sorgula..."
+               aria-describedby="search-hint">
+        <span class="search-icon">
+          <i data-lucide="search" class="icon-sm"></i>
+        </span>
+        <span id="search-hint" class="sr-only">Ürün URL'si girin ve fiyat bilgisi alın</span>
       </div>
     </div>
   </div>
   
   <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" data-tab="home">
-      <span>🏠</span>
+  <nav class="tabs" role="tablist" aria-label="Ana navigasyon">
+    <button class="tab active" 
+            data-tab="home"
+            role="tab"
+            aria-selected="true"
+            aria-controls="homeTab"
+            id="home-tab">
+      <i data-lucide="home" class="icon-sm"></i>
       <span>Ana Sayfa</span>
     </button>
-    <button class="tab" data-tab="list">
-      <span>📊</span>
+    <button class="tab" 
+            data-tab="list"
+            role="tab"
+            aria-selected="false"
+            aria-controls="listTab"
+            id="list-tab">
+      <i data-lucide="list" class="icon-sm"></i>
       <span>Liste</span>
     </button>
-    <button class="tab" data-tab="debug">
-      <span>🐛</span>
+    <button class="tab" 
+            data-tab="debug"
+            role="tab"
+            aria-selected="false"
+            aria-controls="debugTab"
+            id="debug-tab">
+      <i data-lucide="bug" class="icon-sm"></i>
       <span>Debug</span>
     </button>
-  </div>
+  </nav>
   
   <!-- Content -->
-  <div class="content" id="contentArea">
+  <div class="content" id="contentArea" role="main">
     <!-- Home Tab -->
-    <div class="tab-content active" id="homeTab">
+    <div class="tab-content active" 
+         id="homeTab"
+         role="tabpanel"
+         aria-labelledby="home-tab">
       <div id="currentPageSection" style="display: none;">
         <div class="current-page">
           <div class="product-name" id="currentProductName"></div>
@@ -736,46 +1159,94 @@
             <span class="confidence-badge" id="confidenceBadge"></span>
           </div>
           <div class="btn-group">
-            <button class="btn-primary" id="addButton">
-              <span>➕</span>
+            <button class="btn-primary" id="addButton" aria-label="Ürünü takibe al">
+              <i data-lucide="plus-circle" class="icon-sm"></i>
               <span>Takibe Al</span>
             </button>
-            <button class="btn-secondary" id="refreshAllBtn">
-              <span>🔄</span>
+            <button class="btn-secondary" id="refreshAllBtn" aria-label="Tüm ürünleri kontrol et">
+              <i data-lucide="refresh-cw" class="icon-sm"></i>
               <span>Hepsini Kontrol</span>
             </button>
           </div>
         </div>
       </div>
       
-      <div id="homeLoading" class="loading">
-        <div class="spinner"></div>
+      <div id="skeletonLoading" class="skeleton-container" style="display: none;" aria-live="polite" aria-label="Yükleniyor">
+        <div class="skeleton-card">
+          <div class="skeleton-header">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-circle"></div>
+          </div>
+          <div class="skeleton-price"></div>
+          <div class="skeleton-line skeleton-meta"></div>
+          <div class="skeleton-actions">
+            <div class="skeleton-btn"></div>
+            <div class="skeleton-btn"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div id="homeLoading" class="loading" aria-live="polite" aria-label="Sayfa taranıyor">
+        <div class="empty-icon">🔍</div>
         <div>Sayfa taranıyor...</div>
       </div>
     </div>
     
     <!-- List Tab -->
-    <div class="tab-content" id="listTab">
+    <div class="tab-content" 
+         id="listTab"
+         role="tabpanel"
+         aria-labelledby="list-tab">
       <div class="list-search">
-        <input type="text" id="listSearchInput" placeholder="Listede ara...">
-        <button class="clear-btn" id="clearListSearch">✕</button>
+        <label for="listSearchInput" class="sr-only">Listede ara</label>
+        <input type="text" 
+               id="listSearchInput" 
+               placeholder="Listede ara..."
+               aria-label="Ürün listesinde arama yapın">
+        <button class="clear-btn" 
+                id="clearListSearch" 
+                aria-label="Aramayı temizle">
+          <i data-lucide="x" class="icon-sm"></i>
+        </button>
       </div>
-      <div id="searchSuggestion" style="display: none;"></div>
-      <div id="productList"></div>
+      <div id="searchSuggestion" 
+           class="search-suggestion" 
+           style="display: none;"
+           role="status"
+           aria-live="polite"></div>
+      <div id="productList" role="list" aria-label="Takip edilen ürünler"></div>
     </div>
     
     <!-- Debug Tab -->
-    <div class="tab-content" id="debugTab">
-      <div class="debug-console" id="debugConsole">
+    <div class="tab-content" 
+         id="debugTab"
+         role="tabpanel"
+         aria-labelledby="debug-tab">
+      <div class="debug-console" 
+           id="debugConsole"
+           role="log"
+           aria-label="Debug konsolu"
+           aria-live="polite">
         <div class="debug-line success">[INFO] Debug konsolu başlatıldı</div>
       </div>
       <div class="debug-actions">
-        <button class="btn-small btn-refresh" id="clearDebug">🗑️ Temizle</button>
-        <button class="btn-small btn-export" id="exportDebug">📥 Logları Kaydet</button>
+        <button class="btn-small btn-refresh" 
+                id="clearDebug"
+                aria-label="Debug konsolu temizle">
+          <i data-lucide="trash-2" class="icon-xs"></i>
+          <span>Temizle</span>
+        </button>
+        <button class="btn-small btn-export" 
+                id="exportDebug"
+                aria-label="Debug loglarını kaydet">
+          <i data-lucide="download" class="icon-xs"></i>
+          <span>Logları Kaydet</span>
+        </button>
       </div>
     </div>
   </div>
   
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="lib/helpers.js"></script>
   <script src="lib/sites.js"></script>
   <script src="lib/parser.js"></script>

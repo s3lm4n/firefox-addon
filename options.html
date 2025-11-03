@@ -12,21 +12,63 @@
     }
     
     :root {
-      --primary: #667eea;
-      --primary-dark: #5568d3;
-      --secondary: #764ba2;
-      --success: #10b981;
+      /* Primary Colors */
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary: #8b5cf6;
+      --secondary-dark: #7c3aed;
+      
+      /* Semantic Colors */
+      --success: #22c55e;
+      --success-dark: #16a34a;
       --danger: #ef4444;
+      --danger-dark: #dc2626;
       --warning: #f59e0b;
+      --warning-dark: #d97706;
       --info: #3b82f6;
+      
+      /* Neutral Palette */
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      
+      /* Dark Mode */
+      --dark-bg: #0f172a;
+      --dark-surface: #1e293b;
+      --dark-border: #334155;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+      
+      /* Border Radius */
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      
+      /* Transitions */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       min-height: 100vh;
       padding: 30px 20px;
-      transition: all 0.3s;
+      transition: all var(--transition-base);
     }
     
     body.dark-mode {
@@ -64,25 +106,67 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
+      letter-spacing: -0.02em;
     }
     
     .header p {
       font-size: 16px;
       opacity: 0.9;
+      font-weight: 500;
     }
     
-    /* Navigation */
-    .nav-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
       animation: fadeIn 0.6s ease 0.2s both;
     }
     
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 100%);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      transition: all var(--transition-base);
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .stat-value {
+      font-size: 34px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      animation: fadeIn 0.6s ease 0.3s both;
     }
     
     .nav-tab {
@@ -92,12 +176,12 @@
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       border: 2px solid transparent;
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       color: white;
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all var(--transition-fast);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -113,17 +197,28 @@
       background: white;
       color: var(--primary);
       border-color: white;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .nav-tab i {
+      width: 18px;
+      height: 18px;
     }
     
     /* Cards */
     .card {
       background: white;
-      border-radius: 16px;
+      border-radius: var(--radius-xl);
       padding: 30px;
       margin-bottom: 25px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      box-shadow: var(--shadow-xl);
       animation: fadeInUp 0.6s ease;
+      transition: all var(--transition-base);
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.2);
     }
     
     @keyframes fadeInUp {
@@ -138,7 +233,7 @@
     }
     
     body.dark-mode .card {
-      background: #2d2d3a;
+      background: var(--dark-surface);
       color: #e5e7eb;
     }
     
@@ -154,20 +249,30 @@
       gap: 10px;
     }
     
+    body.dark-mode .section-title {
+      color: var(--primary-light);
+    }
+    
+    .section-title i {
+      width: 24px;
+      height: 24px;
+    }
+    
     /* Settings Grid */
     .settings-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 15px;
-      margin-bottom: 25px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
     }
     
     .setting-item {
-      background: #f9fafb;
+      background: var(--gray-50);
       padding: 16px;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       border: 2px solid transparent;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
+      cursor: pointer;
     }
     
     body.dark-mode .setting-item {
@@ -177,6 +282,7 @@
     .setting-item:hover {
       border-color: var(--primary);
       transform: translateX(3px);
+      box-shadow: var(--shadow-sm);
     }
     
     .setting-header {
@@ -189,7 +295,8 @@
     .setting-label {
       font-size: 14px;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--gray-900);
+      margin-bottom: 4px;
     }
     
     body.dark-mode .setting-label {
@@ -198,19 +305,24 @@
     
     .setting-description {
       font-size: 12px;
-      color: #6b7280;
+      color: var(--gray-500);
       line-height: 1.4;
+    }
+    
+    body.dark-mode .setting-description {
+      color: var(--gray-400);
     }
     
     /* Toggle Switch */
     .toggle {
       width: 52px;
       height: 28px;
-      background: #d1d5db;
+      background: var(--gray-300);
       border-radius: 14px;
       position: relative;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background var(--transition-base);
+      flex-shrink: 0;
     }
     
     .toggle.active {
@@ -225,7 +337,7 @@
       position: absolute;
       top: 2px;
       left: 2px;
-      transition: transform 0.3s;
+      transition: transform var(--transition-base);
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     
@@ -239,18 +351,19 @@
     select {
       width: 100%;
       padding: 12px 14px;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md);
       font-size: 14px;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
       background: white;
-      color: #1f2937;
+      color: var(--gray-900);
+      font-family: inherit;
     }
     
     body.dark-mode input,
     body.dark-mode select {
       background: #1f2937;
-      border-color: #374151;
+      border-color: var(--dark-border);
       color: #e5e7eb;
     }
     
@@ -258,91 +371,40 @@
     select:focus {
       outline: none;
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
-    /* Color Picker */
-    .color-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-      gap: 10px;
-    }
-    
-    .color-option {
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      cursor: pointer;
-      border: 3px solid transparent;
-      transition: all 0.2s;
-      position: relative;
-    }
-    
-    .color-option:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-    
-    .color-option.active {
-      border-color: white;
-      box-shadow: 0 0 0 3px var(--primary);
-    }
-    
-    .color-option.active::after {
-      content: '✓';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    /* Shortcuts */
-    .shortcut-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: #f9fafb;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    
-    body.dark-mode .shortcut-item {
-      background: #1f2937;
-    }
-    
-    .shortcut-key {
-      padding: 6px 12px;
-      background: white;
-      border: 2px solid #d1d5db;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--primary);
-    }
-    
-    body.dark-mode .shortcut-key {
-      background: #374151;
-      border-color: #4b5563;
+    input:hover,
+    select:hover {
+      border-color: var(--primary-light);
     }
     
     /* Buttons */
     .btn {
       padding: 14px 26px;
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      font-family: inherit;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn i {
+      width: 18px;
+      height: 18px;
     }
     
     .btn-primary {
@@ -352,8 +414,7 @@
     
     .btn-primary:hover {
       background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
     }
     
     .btn-success {
@@ -362,9 +423,8 @@
     }
     
     .btn-success:hover {
-      background: #059669;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+      background: var(--success-dark);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
     }
     
     .btn-danger {
@@ -373,8 +433,8 @@
     }
     
     .btn-danger:hover {
-      background: #dc2626;
-      transform: translateY(-2px);
+      background: var(--danger-dark);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
     }
     
     .btn-group {
@@ -384,82 +444,28 @@
       margin-top: 20px;
     }
     
-    /* Stats */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-bottom: 30px;
+    /* Info Box */
+    .info-box {
+      background: #dbeafe;
+      border-left: 4px solid var(--info);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 18px;
     }
     
-    .stat-card {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-      color: white;
-      padding: 22px;
-      border-radius: 14px;
-      text-align: center;
-      transition: transform 0.2s;
+    body.dark-mode .info-box {
+      background: #1e3a8a;
+      color: #dbeafe;
     }
     
-    .stat-card:hover {
-      transform: translateY(-4px);
+    .info-box p {
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 0;
     }
     
-    .stat-value {
-      font-size: 34px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-      opacity: 0.9;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: white;
-      padding: 18px 24px;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.3s;
-      pointer-events: none;
-      z-index: 1000;
-    }
-    
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-    
-    .toast-icon {
-      font-size: 22px;
-    }
-    
-    .toast-message {
-      font-weight: 600;
-      color: #1f2937;
-    }
-    
-    /* Tab Content */
-    .tab-content {
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.4s ease;
+    .info-box strong {
+      font-weight: 700;
     }
     
     /* Theme Preview */
@@ -473,10 +479,10 @@
       flex: 1;
       min-width: 200px;
       padding: 20px;
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       cursor: pointer;
       border: 3px solid transparent;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
     }
     
     .theme-option:hover {
@@ -485,12 +491,12 @@
     
     .theme-option.active {
       border-color: var(--primary);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
     }
     
     .theme-light {
       background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-      color: #1f2937;
+      color: var(--gray-900);
     }
     
     .theme-dark {
@@ -498,56 +504,119 @@
       color: #e5e7eb;
     }
     
-    /* Language Options */
-    .lang-option {
-      padding: 12px 18px;
-      background: #f3f4f6;
-      border-radius: 8px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
+    .theme-option h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     
-    body.dark-mode .lang-option {
+    .theme-option p {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: white;
+      padding: 18px 24px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all var(--transition-base);
+      pointer-events: none;
+      z-index: 1000;
+      min-width: 300px;
+    }
+    
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    
+    .toast-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    
+    .toast-message {
+      font-weight: 600;
+      color: var(--gray-900);
+      flex: 1;
+    }
+    
+    body.dark-mode .toast {
+      background: var(--dark-surface);
+      color: #e5e7eb;
+    }
+    
+    body.dark-mode .toast-message {
+      color: #e5e7eb;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    /* Keyboard Shortcuts */
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      margin-bottom: 10px;
+      transition: all var(--transition-fast);
+    }
+    
+    .shortcut-item:hover {
+      background: var(--gray-100);
+      transform: translateX(3px);
+    }
+    
+    body.dark-mode .shortcut-item {
       background: #1f2937;
     }
     
-    .lang-option:hover {
-      border-color: var(--primary);
+    body.dark-mode .shortcut-item:hover {
+      background: var(--dark-border);
     }
     
-    .lang-option.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-    
-    .lang-flag {
-      font-size: 24px;
-    }
-    
-    /* Info Box */
-    .info-box {
-      background: #dbeafe;
-      border-left: 4px solid var(--info);
-      padding: 14px;
-      border-radius: 8px;
-      margin-bottom: 18px;
-    }
-    
-    body.dark-mode .info-box {
-      background: #1e3a8a;
-      color: #dbeafe;
-    }
-    
-    .info-box p {
+    .shortcut-key {
+      padding: 6px 12px;
+      background: white;
+      border: 2px solid var(--gray-300);
+      border-radius: var(--radius-sm);
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
       font-size: 13px;
-      line-height: 1.5;
+      color: var(--primary);
+      box-shadow: 0 2px 0 var(--gray-200);
     }
     
+    body.dark-mode .shortcut-key {
+      background: var(--dark-border);
+      border-color: var(--gray-600);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+    }
+    
+    /* Responsive */
     @media (max-width: 768px) {
       body {
         padding: 20px 10px;
@@ -564,13 +633,56 @@
       .settings-grid {
         grid-template-columns: 1fr;
       }
+      
+      .nav-tabs {
+        flex-direction: column;
+      }
+      
+      .nav-tab {
+        min-width: 100%;
+      }
+    }
+    
+    /* High Contrast Mode */
+    @media (prefers-contrast: high) {
+      .btn {
+        border: 2px solid currentColor;
+      }
+    }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1><span>🏷️</span><span>Fiyat Takipçisi Pro</span></h1>
+      <h1>
+        <i data-lucide="tag"></i>
+        <span>Fiyat Takipçisi Pro</span>
+      </h1>
       <p>Gelişmiş Ayarlar ve Konfigürasyon Paneli</p>
     </div>
     
@@ -595,36 +707,54 @@
     </div>
     
     <!-- Navigation -->
-    <div class="nav-tabs">
-      <button class="nav-tab active" data-tab="general">
-        <span>⚙️</span>
+    <div class="nav-tabs" role="tablist">
+      <button class="nav-tab active" 
+              data-tab="general"
+              role="tab"
+              aria-selected="true">
+        <i data-lucide="settings"></i>
         <span>Genel</span>
       </button>
-      <button class="nav-tab" data-tab="appearance">
-        <span>🎨</span>
+      <button class="nav-tab" 
+              data-tab="appearance"
+              role="tab"
+              aria-selected="false">
+        <i data-lucide="palette"></i>
         <span>Görünüm</span>
       </button>
-      <button class="nav-tab" data-tab="shortcuts">
-        <span>⌨️</span>
+      <button class="nav-tab" 
+              data-tab="shortcuts"
+              role="tab"
+              aria-selected="false">
+        <i data-lucide="keyboard"></i>
         <span>Kısayollar</span>
       </button>
-      <button class="nav-tab" data-tab="data">
-        <span>💾</span>
+      <button class="nav-tab" 
+              data-tab="data"
+              role="tab"
+              aria-selected="false">
+        <i data-lucide="database"></i>
         <span>Veri</span>
       </button>
-      <button class="nav-tab" data-tab="about">
-        <span>ℹ️</span>
+      <button class="nav-tab" 
+              data-tab="about"
+              role="tab"
+              aria-selected="false">
+        <i data-lucide="info"></i>
         <span>Hakkında</span>
       </button>
     </div>
     
     <!-- General Tab -->
-    <div class="tab-content active" id="generalTab">
+    <div class="tab-content active" id="generalTab" role="tabpanel">
       <div class="card">
-        <h2 class="section-title"><span>🔄</span>Otomatik Kontrol</h2>
+        <h2 class="section-title">
+          <i data-lucide="refresh-cw"></i>
+          Otomatik Kontrol
+        </h2>
         
         <div class="settings-grid">
-          <div class="setting-item">
+          <div class="setting-item" id="autoCheckWrapper">
             <div class="setting-header">
               <div>
                 <div class="setting-label">Otomatik Kontrol Aktif</div>
@@ -639,16 +769,35 @@
           <div class="setting-item">
             <div class="setting-label">Kontrol Aralığı (dakika)</div>
             <div class="setting-description">Fiyatların ne sıklıkla kontrol edileceği</div>
-            <input type="number" id="checkInterval" value="30" min="5" max="1440">
+            <input type="number" 
+                   id="checkInterval" 
+                   value="30" 
+                   min="5" 
+                   max="1440"
+                   aria-label="Kontrol aralığı dakika cinsinden">
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-label">Maksimum Yeniden Deneme</div>
+            <div class="setting-description">Hata durumunda kaç kez tekrar denenecek</div>
+            <input type="number" 
+                   id="maxRetries" 
+                   value="3" 
+                   min="1" 
+                   max="10"
+                   aria-label="Maksimum yeniden deneme sayısı">
           </div>
         </div>
       </div>
       
       <div class="card">
-        <h2 class="section-title"><span>🔔</span>Bildirimler</h2>
+        <h2 class="section-title">
+          <i data-lucide="bell"></i>
+          Bildirimler
+        </h2>
         
         <div class="settings-grid">
-          <div class="setting-item">
+          <div class="setting-item" id="notificationsWrapper">
             <div class="setting-header">
               <div>
                 <div class="setting-label">Bildirimleri Aç</div>
@@ -660,7 +809,7 @@
             </div>
           </div>
           
-          <div class="setting-item">
+          <div class="setting-item" id="notifyDownWrapper">
             <div class="setting-header">
               <div>
                 <div class="setting-label">Fiyat Düştüğünde</div>
@@ -672,7 +821,7 @@
             </div>
           </div>
           
-          <div class="setting-item">
+          <div class="setting-item" id="notifyUpWrapper">
             <div class="setting-header">
               <div>
                 <div class="setting-label">Fiyat Arttığında</div>
@@ -685,96 +834,43 @@
           </div>
         </div>
       </div>
-      
-      <div class="card">
-        <h2 class="section-title"><span>🌍</span>Dil ve Bölge</h2>
-        
-        <div class="settings-grid">
-          <div class="setting-item lang-option active">
-            <span class="lang-flag">🇹🇷</span>
-            <div>
-              <div class="setting-label">Türkçe</div>
-              <div class="setting-description">Turkish</div>
-            </div>
-          </div>
-          
-          <div class="setting-item lang-option">
-            <span class="lang-flag">🇬🇧</span>
-            <div>
-              <div class="setting-label">English</div>
-              <div class="setting-description">English</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
     
     <!-- Appearance Tab -->
-    <div class="tab-content" id="appearanceTab">
+    <div class="tab-content" id="appearanceTab" role="tabpanel">
       <div class="card">
-        <h2 class="section-title"><span>🌗</span>Tema</h2>
+        <h2 class="section-title">
+          <i data-lucide="moon"></i>
+          Tema
+        </h2>
         
         <div class="theme-preview">
           <div class="theme-option theme-light active" data-theme="light">
-            <h3 style="margin-bottom: 10px;">☀️ Açık Tema</h3>
+            <h3>
+              <i data-lucide="sun"></i>
+              Açık Tema
+            </h3>
             <p>Gündüz kullanımı için optimize edildi</p>
           </div>
           
           <div class="theme-option theme-dark" data-theme="dark">
-            <h3 style="margin-bottom: 10px;">🌙 Koyu Tema</h3>
+            <h3>
+              <i data-lucide="moon"></i>
+              Koyu Tema
+            </h3>
             <p>Gece kullanımı için göz dostu</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <h2 class="section-title"><span>🎨</span>Renk Şeması</h2>
-        
-        <div class="color-grid">
-          <div class="color-option active" data-color="#667eea" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
-          <div class="color-option" data-color="#3b82f6" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);"></div>
-          <div class="color-option" data-color="#10b981" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);"></div>
-          <div class="color-option" data-color="#f59e0b" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);"></div>
-          <div class="color-option" data-color="#ef4444" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);"></div>
-          <div class="color-option" data-color="#8b5cf6" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);"></div>
-        </div>
-      </div>
-      
-      <div class="card">
-        <h2 class="section-title"><span>✨</span>Animasyonlar</h2>
-        
-        <div class="settings-grid">
-          <div class="setting-item">
-            <div class="setting-header">
-              <div>
-                <div class="setting-label">Geçiş Animasyonları</div>
-                <div class="setting-description">Sayfa geçişlerinde animasyon</div>
-              </div>
-              <div class="toggle active" id="animationsToggle">
-                <div class="toggle-slider"></div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="setting-item">
-            <div class="setting-header">
-              <div>
-                <div class="setting-label">Mouse Scroll Desteği</div>
-                <div class="setting-description">Yumuşak kaydırma efektleri</div>
-              </div>
-              <div class="toggle active" id="smoothScrollToggle">
-                <div class="toggle-slider"></div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
     
     <!-- Shortcuts Tab -->
-    <div class="tab-content" id="shortcutsTab">
+    <div class="tab-content" id="shortcutsTab" role="tabpanel">
       <div class="card">
-        <h2 class="section-title"><span>⌨️</span>Klavye Kısayolları</h2>
+        <h2 class="section-title">
+          <i data-lucide="keyboard"></i>
+          Klavye Kısayolları
+        </h2>
         
         <div class="info-box">
           <p><strong>Not:</strong> Kısayollar Firefox'un kısıtlamaları nedeniyle sınırlıdır. Gelecek güncellemelerde daha fazla özelleştirme gelecek.</p>
@@ -803,44 +899,59 @@
           </div>
           <div class="shortcut-key">Ctrl+Shift+S</div>
         </div>
+        
+        <div class="shortcut-item">
+          <div>
+            <div class="setting-label">Hızlı Arama</div>
+            <div class="setting-description">Liste sekmesinde arama alanına odaklan</div>
+          </div>
+          <div class="shortcut-key">Ctrl+K / Cmd+K</div>
+        </div>
       </div>
     </div>
     
     <!-- Data Tab -->
-    <div class="tab-content" id="dataTab">
+    <div class="tab-content" id="dataTab" role="tabpanel">
       <div class="card">
-        <h2 class="section-title"><span>📥</span>Veri Yönetimi</h2>
+        <h2 class="section-title">
+          <i data-lucide="download"></i>
+          Veri Yönetimi
+        </h2>
         
         <div class="info-box">
-          <p><strong>Yedekleme:</strong> Verilerinizi düzenli olarak yedeklemenizi öneriyiz. Dışa aktarma ile tüm ürünleriniz ve ayarlarınız CSV/JSON formatında kaydedilir.</p>
+          <p><strong>Yedekleme:</strong> Verilerinizi düzenli olarak yedeklemenizi öneriyiz. Dışa aktarma ile tüm ürünleriniz ve ayarlarınız JSON formatında kaydedilir.</p>
         </div>
         
         <div class="btn-group">
-          <button class="btn btn-primary" id="exportCSV">
-            <span>📊</span>
-            <span>CSV Olarak Dışa Aktar</span>
-          </button>
-          <button class="btn btn-primary" id="exportJSON">
-            <span>📋</span>
+          <button class="btn btn-primary" id="exportBtn">
+            <i data-lucide="download"></i>
             <span>JSON Olarak Dışa Aktar</span>
           </button>
           <button class="btn btn-primary" id="importBtn">
-            <span>📤</span>
+            <i data-lucide="upload"></i>
             <span>İçe Aktar</span>
           </button>
+          <input type="file" id="importFile" accept=".json" style="display: none;">
         </div>
       </div>
       
       <div class="card">
-        <h2 class="section-title"><span>🗑️</span>Veri Temizleme</h2>
+        <h2 class="section-title">
+          <i data-lucide="trash-2"></i>
+          Veri Temizleme
+        </h2>
+        
+        <div class="info-box" style="background: #fee2e2; border-color: var(--danger); color: #991b1b;">
+          <p><strong>Dikkat:</strong> Bu işlemler geri alınamaz. Devam etmeden önce verilerinizi yedeklemenizi öneririz.</p>
+        </div>
         
         <div class="btn-group">
-          <button class="btn btn-danger" id="clearHistory">
-            <span>🧹</span>
+          <button class="btn btn-danger" id="clearHistoryBtn">
+            <i data-lucide="clock"></i>
             <span>Fiyat Geçmişini Temizle</span>
           </button>
-          <button class="btn btn-danger" id="clearAll">
-            <span>⚠️</span>
+          <button class="btn btn-danger" id="clearAllBtn">
+            <i data-lucide="alert-triangle"></i>
             <span>Tüm Verileri Sil</span>
           </button>
         </div>
@@ -848,17 +959,49 @@
     </div>
     
     <!-- About Tab -->
-    <div class="tab-content" id="aboutTab">
+    <div class="tab-content" id="aboutTab" role="tabpanel">
       <div class="card">
-        <h2 class="section-title"><span>ℹ️</span>Hakkında</h2>
+        <h2 class="section-title">
+          <i data-lucide="info"></i>
+          Hakkında
+        </h2>
         
         <p style="margin-bottom: 20px; line-height: 1.8; font-size: 15px;">
           <strong>Fiyat Takipçisi Pro v2.1</strong> ile e-ticaret sitelerindeki ürünlerin fiyatlarını otomatik olarak takip edebilir, 
           fiyat düştüğünde anında haberdar olabilirsiniz. Akıllı algoritmalar sayesinde 50'den fazla e-ticaret sitesini destekler.
         </p>
         
-        <div style="background: #f3f4f6; padding: 20px; border-radius: 12px; margin-top: 20px;">
+        <div style="background: var(--gray-50); padding: 20px; border-radius: var(--radius-lg); margin-top: 20px;">
           <p style="margin-bottom: 10px;"><strong>Geliştirici:</strong> Selman Ali Dokumacı</p>
           <p style="margin-bottom: 10px;"><strong>Lisans:</strong> MIT License</p>
           <p style="margin-bottom: 10px;"><strong>Versiyon:</strong> 2.1.0</p>
-          <p><strong>GitHub:</strong> <a href="https://github.com/s3lm4n/firefox-app" target="_blank" style="color: var(--primary);">github.com/s3lm
+          <p><strong>GitHub:</strong> <a href="https://github.com/s3lm4n/firefox-app" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">github.com/s3lm4n/firefox-app</a></p>
+        </div>
+        
+        <div class="btn-group" style="margin-top: 24px;">
+          <button class="btn btn-primary" onclick="window.open('https://github.com/s3lm4n/firefox-app/issues', '_blank')">
+            <i data-lucide="github"></i>
+            <span>Hata Bildir</span>
+          </button>
+          <button class="btn btn-success" onclick="window.open('https://github.com/s3lm4n/firefox-app', '_blank')">
+            <i data-lucide="star"></i>
+            <span>GitHub'da Yıldızla</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast Notification -->
+  <div class="toast" id="toast" role="alert" aria-live="polite">
+    <span class="toast-icon" id="toastIcon">✅</span>
+    <span class="toast-message" id="toastMessage"></span>
+  </div>
+  
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="lib/helpers.js"></script>
+  <script src="lib/sites.js"></script>
+  <script src="lib/parser.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Popup Script v2.1 - Enhanced Version
+// Popup Script v3.0 - Fully Modernized with A11y & UX Enhancements
 (function() {
   'use strict';
   
@@ -15,6 +15,7 @@
     tabs: document.querySelectorAll('.tab'),
     tabContents: document.querySelectorAll('.tab-content'),
     homeLoading: document.getElementById('homeLoading'),
+    skeletonLoading: document.getElementById('skeletonLoading'),
     currentPageSection: document.getElementById('currentPageSection'),
     currentProductName: document.getElementById('currentProductName'),
     currentProductPrice: document.getElementById('currentProductPrice'),
@@ -25,6 +26,7 @@
     totalProducts: document.getElementById('totalProducts'),
     lastCheck: document.getElementById('lastCheck'),
     settingsBtn: document.getElementById('settingsBtn'),
+    themeToggle: document.getElementById('themeToggle'),
     priceSearchInput: document.getElementById('priceSearchInput'),
     listSearchInput: document.getElementById('listSearchInput'),
     clearListSearch: document.getElementById('clearListSearch'),
@@ -35,13 +37,12 @@
     contentArea: document.getElementById('contentArea')
   };
   
-  // Debug logging (optimized to limit memory usage)
+  // Debug logging with memory limit
   function addDebugLog(message, type = 'info') {
     const timestamp = new Date().toLocaleTimeString('tr-TR');
     const log = { message, type, timestamp };
     debugLogs.push(log);
     
-    // Limit to 50 logs instead of 100 to reduce memory
     if (debugLogs.length > 50) debugLogs.shift();
     
     const debugLine = document.createElement('div');
@@ -49,7 +50,6 @@
     debugLine.textContent = `[${timestamp}] ${message}`;
     els.debugConsole.appendChild(debugLine);
     
-    // Also limit DOM children
     if (els.debugConsole.children.length > 50) {
       els.debugConsole.removeChild(els.debugConsole.firstChild);
     }
@@ -61,9 +61,11 @@
   async function init() {
     addDebugLog('Popup başlatılıyor...', 'info');
     
+    // Load dark mode preference
     const darkMode = await PriceTrackerHelpers.getStorage('darkMode', false);
     if (darkMode) document.body.classList.add('dark-mode');
     
+    // Load settings
     settings = await browser.runtime.sendMessage({ action: 'getSettings' });
     if (!settings) {
       settings = {
@@ -76,31 +78,45 @@
     }
     
     setupEventListeners();
+    setupKeyboardNavigation();
     await loadProducts();
     await checkCurrentPage();
     updateStats();
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
     
     addDebugLog('Popup hazır', 'success');
   }
   
   // Event listeners
   function setupEventListeners() {
+    // Tab switching
     els.tabs.forEach(tab => {
       tab.addEventListener('click', () => switchTab(tab.dataset.tab));
     });
     
+    // Settings button
     els.settingsBtn.addEventListener('click', () => {
       browser.runtime.openOptionsPage();
       addDebugLog('Ayarlar sayfası açılıyor', 'info');
     });
     
+    // Theme toggle
+    els.themeToggle.addEventListener('click', toggleTheme);
+    
+    // Action buttons
     els.addButton.addEventListener('click', addToTracking);
     els.refreshAllBtn.addEventListener('click', refreshAllProducts);
     
+    // Search inputs
     els.priceSearchInput.addEventListener('input', handlePriceSearch);
     els.listSearchInput.addEventListener('input', handleListSearch);
     els.clearListSearch.addEventListener('click', clearListSearch);
     
+    // Debug actions
     els.clearDebug.addEventListener('click', () => {
       debugLogs = [];
       els.debugConsole.innerHTML = '<div class="debug-line success">[INFO] Konsol temizlendi</div>';
@@ -109,10 +125,61 @@
     els.exportDebug.addEventListener('click', exportDebugLogs);
   }
   
-  // Tab switching
+  // Keyboard navigation
+  function setupKeyboardNavigation() {
+    const tabs = Array.from(els.tabs);
+    
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('keydown', (e) => {
+        let newIndex = index;
+        
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          newIndex = (index + 1) % tabs.length;
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          newIndex = (index - 1 + tabs.length) % tabs.length;
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          newIndex = 0;
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          newIndex = tabs.length - 1;
+        }
+        
+        if (newIndex !== index) {
+          switchTab(tabs[newIndex].dataset.tab);
+          tabs[newIndex].focus();
+        }
+      });
+    });
+    
+    // Escape to close search
+    els.listSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        clearListSearch();
+        els.listSearchInput.blur();
+      }
+    });
+    
+    // Ctrl/Cmd + K for quick search focus
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab && activeTab.dataset.tab === 'list') {
+          els.listSearchInput.focus();
+        }
+      }
+    });
+  }
+  
+  // Tab switching with ARIA updates
   function switchTab(tabName) {
     els.tabs.forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.tab === tabName);
+      const isActive = tab.dataset.tab === tabName;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive);
     });
     
     els.tabContents.forEach(content => {
@@ -123,15 +190,28 @@
     addDebugLog(`Tab: ${tabName}`, 'info');
   }
   
+  // Theme toggle
+  async function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    await PriceTrackerHelpers.setStorage('darkMode', isDark);
+    addDebugLog(`Tema: ${isDark ? 'Koyu' : 'Açık'}`, 'info');
+    
+    // Re-initialize icons for proper color
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+  
   // Check current page
   async function checkCurrentPage() {
     try {
-      els.homeLoading.style.display = 'flex';
+      els.homeLoading.style.display = 'none';
+      els.skeletonLoading.style.display = 'block';
       els.currentPageSection.style.display = 'none';
       
       const tabs = await browser.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
-        els.homeLoading.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><div>Aktif sekme bulunamadı</div></div>';
+        showEmptyState('❌', 'Aktif sekme bulunamadı');
         return;
       }
       
@@ -150,51 +230,65 @@
         const confidence = Math.round(response.confidence * 100);
         els.confidenceBadge.textContent = `${confidence}% güvenilir`;
         
+        // Confidence badge color
         if (confidence >= 85) {
-          els.confidenceBadge.style.background = 'rgba(16, 185, 129, 0.3)';
+          els.confidenceBadge.style.background = 'rgba(34, 197, 94, 0.3)';
         } else if (confidence >= 70) {
           els.confidenceBadge.style.background = 'rgba(245, 158, 11, 0.3)';
         } else {
           els.confidenceBadge.style.background = 'rgba(239, 68, 68, 0.3)';
         }
         
+        // Check if already tracked
         const exists = products.find(p => p.url === response.url);
-        if (exists) {
-          els.addButton.innerHTML = '<span>✅</span><span>Zaten Takipte</span>';
-          els.addButton.style.background = '#10b981';
-          els.addButton.style.color = 'white';
-        } else {
-          els.addButton.innerHTML = '<span>➕</span><span>Takibe Al</span>';
-          els.addButton.style.background = 'white';
-          els.addButton.style.color = 'var(--primary)';
-        }
+        updateAddButton(exists);
         
-        els.homeLoading.style.display = 'none';
+        els.skeletonLoading.style.display = 'none';
         els.currentPageSection.style.display = 'block';
         
         addDebugLog(`Ürün: ${response.name.substring(0, 40)}...`, 'success');
         
       } else {
-        els.homeLoading.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">🔍</div>
-            <div class="empty-title">Ürün Bulunamadı</div>
-            <div class="empty-text">Bu sayfa bir ürün sayfası değil</div>
-          </div>
-        `;
+        showEmptyState('🔍', 'Ürün Bulunamadı', 'Bu sayfa bir ürün sayfası değil');
         addDebugLog('Ürün algılanamadı', 'warn');
       }
       
     } catch (error) {
       addDebugLog(`Hata: ${error.message}`, 'error');
-      els.homeLoading.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">⚠️</div>
-          <div class="empty-title">Hata</div>
-          <div class="empty-text">Sayfa bilgisi alınamadı</div>
-        </div>
-      `;
+      showEmptyState('⚠️', 'Hata', 'Sayfa bilgisi alınamadı');
     }
+  }
+  
+  // Update add button state
+  function updateAddButton(exists) {
+    if (exists) {
+      els.addButton.innerHTML = '<i data-lucide="check-circle" class="icon-sm"></i><span>Zaten Takipte</span>';
+      els.addButton.style.background = 'var(--success)';
+      els.addButton.style.color = 'white';
+      els.addButton.disabled = true;
+    } else {
+      els.addButton.innerHTML = '<i data-lucide="plus-circle" class="icon-sm"></i><span>Takibe Al</span>';
+      els.addButton.style.background = 'white';
+      els.addButton.style.color = 'var(--primary)';
+      els.addButton.disabled = false;
+    }
+    
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+  
+  // Show empty state
+  function showEmptyState(icon, title, text = '') {
+    els.skeletonLoading.style.display = 'none';
+    els.homeLoading.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">${icon}</div>
+        <div class="empty-title">${title}</div>
+        ${text ? `<div class="empty-text">${text}</div>` : ''}
+      </div>
+    `;
+    els.homeLoading.style.display = 'flex';
   }
   
   // Load products
@@ -228,7 +322,6 @@
       );
       
       if (filteredProducts.length === 0) {
-        // Find closest match
         const closest = findClosestMatch(filterText, products);
         if (closest) {
           els.searchSuggestion.innerHTML = `Bunu mu kastettiniz? "<strong>${PriceTrackerHelpers.escapeHtml(closest.name.substring(0, 40))}</strong>..."`;
@@ -238,6 +331,15 @@
             handleListSearch({ target: els.listSearchInput });
           };
         }
+        
+        els.productList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <div class="empty-title">Sonuç Bulunamadı</div>
+            <div class="empty-text">"${PriceTrackerHelpers.escapeHtml(filterText)}" için sonuç yok</div>
+          </div>
+        `;
+        return;
       } else {
         els.searchSuggestion.style.display = 'none';
         highlightIndex = products.indexOf(filteredProducts[0]);
@@ -257,9 +359,12 @@
       }
       
       const isHighlight = originalIndex === highlightIndex;
+      const hasHistory = product.priceHistory && product.priceHistory.length > 1;
       
       return `
-        <div class="product-card ${isHighlight ? 'highlight' : ''}" data-index="${originalIndex}">
+        <div class="product-card ${isHighlight ? 'highlight' : ''}" 
+             data-index="${originalIndex}"
+             role="listitem">
           <div class="card-header">
             <div class="card-name" title="${PriceTrackerHelpers.escapeHtml(product.name)}">
               ${PriceTrackerHelpers.escapeHtml(PriceTrackerHelpers.truncate(product.name, 60))}
@@ -284,27 +389,57 @@
             </div>
           ` : ''}
           
+          ${hasHistory ? `
+            <div class="mini-chart-container">
+              <canvas class="mini-chart" 
+                      id="chart-${originalIndex}" 
+                      width="100" 
+                      height="30"
+                      role="img"
+                      aria-label="Fiyat trend grafiği"></canvas>
+            </div>
+          ` : ''}
+          
           <div class="card-meta">
             ${product.lastCheck ? `Son: ${PriceTrackerHelpers.formatDate(product.lastCheck)}` : 'Kontrol edilmedi'}
           </div>
           
           <div class="card-actions">
-            <button class="btn-action btn-visit" data-url="${PriceTrackerHelpers.escapeHtml(product.url)}">
-              <span>🔗</span>
+            <button class="btn-action btn-visit" 
+                    data-url="${PriceTrackerHelpers.escapeHtml(product.url)}"
+                    aria-label="Ürünü aç">
+              <i data-lucide="external-link" class="icon-xs"></i>
               <span>Aç</span>
             </button>
-            <button class="btn-action btn-check" data-index="${originalIndex}">
-              <span>🔄</span>
+            <button class="btn-action btn-check" 
+                    data-index="${originalIndex}"
+                    aria-label="Fiyatı kontrol et">
+              <i data-lucide="refresh-cw" class="icon-xs"></i>
               <span>Kontrol</span>
             </button>
-            <button class="btn-action btn-remove" data-index="${originalIndex}">
-              <span>🗑️</span>
+            <button class="btn-action btn-remove" 
+                    data-index="${originalIndex}"
+                    aria-label="Ürünü sil">
+              <i data-lucide="trash-2" class="icon-xs"></i>
               <span>Sil</span>
             </button>
           </div>
         </div>
       `;
     }).join('');
+    
+    // Re-initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+    
+    // Render charts after DOM update
+    setTimeout(() => {
+      filteredProducts.forEach((product, idx) => {
+        const originalIndex = products.indexOf(product);
+        renderMiniChart(originalIndex, product);
+      });
+    }, 0);
     
     // Event listeners
     els.productList.querySelectorAll('.btn-visit').forEach(btn => {
@@ -318,7 +453,7 @@
     els.productList.querySelectorAll('.btn-check').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        checkSingleProduct(parseInt(btn.dataset.index));
+        checkSingleProduct(parseInt(btn.dataset.index), btn);
       });
     });
     
@@ -330,10 +465,57 @@
     });
   }
   
-  // Find closest match using Levenshtein distance (optimized with early exit)
+  // Render mini chart
+  function renderMiniChart(index, product) {
+    if (!product.priceHistory || product.priceHistory.length < 2) return;
+    
+    const canvas = document.getElementById(`chart-${index}`);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const prices = [...product.priceHistory.map(h => h.price), product.price];
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const priceRange = maxPrice - minPrice;
+    
+    if (priceRange === 0) return;
+    
+    // Normalize to canvas height
+    const normalized = prices.map(p => 
+      30 - ((p - minPrice) / priceRange) * 25
+    );
+    
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const isDecreasing = prices[prices.length - 1] < prices[0];
+    
+    // Draw line
+    ctx.clearRect(0, 0, 100, 30);
+    ctx.strokeStyle = isDecreasing ? '#22c55e' : '#ef4444';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    normalized.forEach((y, i) => {
+      const x = (i / (normalized.length - 1)) * 100;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    
+    // Draw area fill
+    ctx.lineTo(100, 30);
+    ctx.lineTo(0, 30);
+    ctx.closePath();
+    ctx.fillStyle = isDecreasing
+      ? 'rgba(34, 197, 94, 0.1)'
+      : 'rgba(239, 68, 68, 0.1)';
+    ctx.fill();
+  }
+  
+  // Find closest match using Levenshtein distance
   function findClosestMatch(query, products) {
     const levenshtein = (a, b, threshold) => {
-      // Early exit if length difference exceeds threshold
       if (Math.abs(a.length - b.length) > threshold) {
         return threshold + 1;
       }
@@ -360,7 +542,6 @@
           }
           minRowValue = Math.min(minRowValue, matrix[i][j]);
         }
-        // Early exit if current row minimum exceeds threshold
         if (minRowValue > threshold) {
           return threshold + 1;
         }
@@ -375,7 +556,6 @@
     
     for (const p of products) {
       const compareStr = p.name.toLowerCase().substring(0, query.length + 5);
-      // Use maxAllowedDistance as threshold for consistent early exit
       const distance = levenshtein(queryLower, compareStr, maxAllowedDistance);
       if (distance < minDistance && distance <= maxAllowedDistance) {
         minDistance = distance;
@@ -432,14 +612,16 @@
   }
   
   // Check single product
-  async function checkSingleProduct(index) {
+  async function checkSingleProduct(index, btn) {
     const product = products[index];
     if (!product) return;
     
-    const btn = document.querySelector(`.btn-check[data-index="${index}"]`);
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span><span>Kontrol...</span>';
+      btn.innerHTML = '<i data-lucide="loader-2" class="icon-xs"></i><span>Kontrol...</span>';
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
     }
     
     try {
@@ -462,12 +644,15 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '<span>🔄</span><span>Kontrol</span>';
+        btn.innerHTML = '<i data-lucide="refresh-cw" class="icon-xs"></i><span>Kontrol</span>';
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
       }
     }
   }
   
-  // Add to tracking
+  // Add to tracking with confetti effect
   async function addToTracking() {
     if (!currentProduct) return;
     
@@ -491,6 +676,9 @@
     
     await PriceTrackerHelpers.setStorage('trackedProducts', products);
     
+    // Confetti effect
+    createConfetti();
+    
     browser.notifications.create({
       type: 'basic',
       iconUrl: browser.runtime.getURL('icons/icon48.png'),
@@ -498,11 +686,15 @@
       message: `${currentProduct.name.substring(0, 50)}...`
     });
     
-    els.addButton.innerHTML = '<span>✅</span><span>Eklendi!</span>';
-    els.addButton.style.background = '#10b981';
+    els.addButton.innerHTML = '<i data-lucide="check-circle" class="icon-sm"></i><span>Eklendi!</span>';
+    els.addButton.style.background = 'var(--success)';
+    
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
     
     setTimeout(() => {
-      els.addButton.innerHTML = '<span>✅</span><span>Zaten Takipte</span>';
+      updateAddButton(true);
     }, 2000);
     
     await loadProducts();
@@ -510,38 +702,76 @@
     addDebugLog('Ürün takibe alındı', 'success');
   }
   
-  // Remove product
+  // Confetti effect
+  function createConfetti() {
+    const colors = ['#6366f1', '#8b5cf6', '#22c55e', '#f59e0b'];
+    const confettiCount = 30;
+    
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.cssText = `
+        position: fixed;
+        width: 8px;
+        height: 8px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        left: ${Math.random() * 100}%;
+        top: -10px;
+        border-radius: 50%;
+        animation: confettiFall ${1 + Math.random() * 2}s ease-out forwards;
+        z-index: 9999;
+        pointer-events: none;
+      `;
+      document.body.appendChild(confetti);
+      
+      setTimeout(() => confetti.remove(), 3000);
+    }
+  }
+  
+  // Remove product with animation
   async function removeProduct(index) {
     const card = els.productList.querySelector(`[data-index="${index}"]`);
     
     if (card) {
       card.classList.add('removing');
       await PriceTrackerHelpers.wait(400);
-      
-      products.splice(index, 1);
-      await PriceTrackerHelpers.setStorage('trackedProducts', products);
-      
-      await loadProducts();
-      updateStats();
-      addDebugLog('Ürün silindi', 'info');
     }
+    
+    products.splice(index, 1);
+    await PriceTrackerHelpers.setStorage('trackedProducts', products);
+    
+    await loadProducts();
+    updateStats();
+    
+    addDebugLog('Ürün silindi', 'info');
   }
   
   // Refresh all products
   async function refreshAllProducts() {
     els.refreshAllBtn.disabled = true;
-    els.refreshAllBtn.innerHTML = '<span>⏳</span><span>Kontrol...</span>';
+    els.refreshAllBtn.innerHTML = '<i data-lucide="loader-2" class="icon-sm"></i><span>Kontrol...</span>';
+    
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
     
     addDebugLog('Tüm ürünler kontrol ediliyor', 'info');
     
     try {
       const result = await browser.runtime.sendMessage({ action: 'checkAllPrices' });
       
-      els.refreshAllBtn.innerHTML = '<span>✅</span><span>Tamam!</span>';
+      els.refreshAllBtn.innerHTML = '<i data-lucide="check-circle" class="icon-sm"></i><span>Tamam!</span>';
+      
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
       
       setTimeout(() => {
-        els.refreshAllBtn.innerHTML = '<span>🔄</span><span>Hepsini Kontrol</span>';
+        els.refreshAllBtn.innerHTML = '<i data-lucide="refresh-cw" class="icon-sm"></i><span>Hepsini Kontrol</span>';
         els.refreshAllBtn.disabled = false;
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
       }, 2000);
       
       await loadProducts();
@@ -550,11 +780,18 @@
       addDebugLog(`${result.checked} kontrol, ${result.updated} güncelleme`, 'success');
     } catch (error) {
       addDebugLog(`Hata: ${error.message}`, 'error');
-      els.refreshAllBtn.innerHTML = '<span>❌</span><span>Hata</span>';
+      els.refreshAllBtn.innerHTML = '<i data-lucide="x-circle" class="icon-sm"></i><span>Hata</span>';
+      
+      if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
       
       setTimeout(() => {
-        els.refreshAllBtn.innerHTML = '<span>🔄</span><span>Hepsini Kontrol</span>';
+        els.refreshAllBtn.innerHTML = '<i data-lucide="refresh-cw" class="icon-sm"></i><span>Hepsini Kontrol</span>';
         els.refreshAllBtn.disabled = false;
+        if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
       }, 2000);
     }
   }
@@ -587,6 +824,7 @@
     }
   }
   
+  // Initialize on DOM ready
   document.addEventListener('DOMContentLoaded', init);
   
 })();
