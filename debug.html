@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Console - Fiyat Takipçisi Pro</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-dark: #0f172a;
+        --bg-darker: #020617;
+        --bg-card: #1e293b;
+        --bg-hover: #334155;
+        --text-primary: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --text-tertiary: #64748b;
+        --border: #334155;
+        --primary: #6366f1;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        background: var(--bg-darker);
+        color: var(--text-primary);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .logo {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        backdrop-filter: blur(10px);
+      }
+
+      .header-info h1 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+
+      .header-info p {
+        font-size: 13px;
+        opacity: 0.9;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .btn-primary:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+      }
+
+      /* Stats Grid */
+      .stats-container {
+        background: var(--bg-dark);
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .stat-card {
+        background: var(--bg-card);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        transition: all 0.2s;
+      }
+
+      .stat-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      .stat-value.success {
+        color: var(--success);
+      }
+      .stat-value.danger {
+        color: var(--danger);
+      }
+      .stat-value.warning {
+        color: var(--warning);
+      }
+      .stat-value.info {
+        color: var(--info);
+      }
+
+      .stat-subtitle {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 280px;
+        background: var(--bg-dark);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .filter-section {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .filter-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+      }
+
+      .filter-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .filter-btn {
+        padding: 10px 14px;
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .filter-btn:hover {
+        background: var(--bg-hover);
+        border-color: var(--primary);
+        color: var(--text-primary);
+      }
+
+      .filter-btn.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+      }
+
+      .filter-badge {
+        background: var(--bg-hover);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .filter-btn.active .filter-badge {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Console Area */
+      .console-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-darker);
+      }
+
+      .console-toolbar {
+        background: var(--bg-dark);
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .search-box {
+        position: relative;
+      }
+
+      .search-input {
+        width: 300px;
+        padding: 8px 12px 8px 36px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 13px;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-tertiary);
+      }
+
+      .log-count {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .icon-btn {
+        padding: 8px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+
+      .icon-btn:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--primary);
+      }
+
+      /* Console Output */
+      .console-output {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 24px;
+        font-family: "Monaco", "Menlo", "Consolas", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .console-output::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .console-output::-webkit-scrollbar-track {
+        background: var(--bg-dark);
+      }
+
+      .console-output::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 5px;
+      }
+
+      .console-output::-webkit-scrollbar-thumb:hover {
+        background: var(--bg-hover);
+      }
+
+      .log-entry {
+        display: grid;
+        grid-template-columns: 80px 100px auto;
+        gap: 12px;
+        padding: 10px 16px;
+        border-left: 3px solid transparent;
+        margin-bottom: 2px;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .log-entry:hover {
+        background: var(--bg-card);
+      }
+
+      .log-time {
+        color: var(--text-tertiary);
+        font-size: 12px;
+      }
+
+      .log-source {
+        font-weight: 700;
+        font-size: 12px;
+      }
+
+      .log-message {
+        color: var(--text-primary);
+      }
+
+      .log-entry.info {
+        border-left-color: var(--info);
+      }
+
+      .log-entry.info .log-source {
+        color: var(--info);
+      }
+
+      .log-entry.success {
+        border-left-color: var(--success);
+      }
+
+      .log-entry.success .log-source {
+        color: var(--success);
+      }
+
+      .log-entry.warning {
+        border-left-color: var(--warning);
+        background: rgba(245, 158, 11, 0.05);
+      }
+
+      .log-entry.warning .log-source {
+        color: var(--warning);
+      }
+
+      .log-entry.error {
+        border-left-color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
+      }
+
+      .log-entry.error .log-source {
+        color: var(--danger);
+      }
+
+      .log-entry.error .log-message {
+        color: #fca5a5;
+        font-weight: 600;
+      }
+
+      /* Empty State */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-tertiary);
+        padding: 60px;
+      }
+
+      .empty-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+
+      .empty-text {
+        font-size: 14px;
+        text-align: center;
+      }
+
+      /* Status Indicator */
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--success);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.7;
+          transform: scale(1.2);
+        }
+      }
+
+      .status-text {
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .sidebar {
+          width: 240px;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          display: none;
+        }
+
+        .header {
+          padding: 16px;
+        }
+
+        .search-input {
+          width: 200px;
+        }
+
+        .log-entry {
+          grid-template-columns: 70px 80px auto;
+          gap: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="logo">🐛</div>
+        <div class="header-info">
+          <h1>Debug Console</h1>
+          <p>Fiyat Takipçisi Pro - Real-time Monitoring</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+          <span class="status-text">Aktif</span>
+        </div>
+        <button class="btn btn-primary" id="pauseBtn">
+          <span>⏸</span>
+          <span>Duraklat</span>
+        </button>
+        <button class="btn btn-danger" id="clearBtn">
+          <span>🗑️</span>
+          <span>Temizle</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Toplam Log</div>
+          <div class="stat-value info" id="totalLogs">0</div>
+          <div class="stat-subtitle">Tüm kayıtlar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Hata</div>
+          <div class="stat-value danger" id="errorCount">0</div>
+          <div class="stat-subtitle">Kritik hatalar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Uyarı</div>
+          <div class="stat-value warning" id="warningCount">0</div>
+          <div class="stat-subtitle">Dikkat gerektiren</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Başarılı</div>
+          <div class="stat-value success" id="successCount">0</div>
+          <div class="stat-subtitle">Tamamlanan işlemler</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="filter-section">
+          <div class="filter-title">Seviye Filtreleri</div>
+          <div class="filter-buttons">
+            <button class="filter-btn active" data-filter="all">
+              <span>Tümü</span>
+              <span class="filter-badge" id="allCount">0</span>
+            </button>
+            <button class="filter-btn" data-filter="info">
+              <span>ℹ️ Info</span>
+              <span class="filter-badge" id="infoCount">0</span>
+            </button>
+            <button class="filter-btn" data-filter="success">
+              <span>✅ Success</span>
+              <span class="filter-badge" id="successCountFilter">0</span>
+            </button>
+            <button class="filter-btn" data-filter="warning">
+              <span>⚠️ Warning</span>
+              <span class="filter-badge" id="warningCountFilter">0</span>
+            </button>
+            <button class="filter-btn" data-filter="error">
+              <span>❌ Error</span>
+              <span class="filter-badge" id="errorCountFilter">0</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <div class="filter-title">Kaynak Filtreleri</div>
+          <div class="filter-buttons" id="sourceFilters">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Console Container -->
+      <div class="console-container">
+        <div class="console-toolbar">
+          <div class="toolbar-left">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                class="search-input"
+                id="searchInput"
+                placeholder="Log ara..."
+              />
+            </div>
+            <div class="log-count">
+              <span id="visibleCount">0</span> kayıt gösteriliyor
+            </div>
+          </div>
+          <div class="toolbar-actions">
+            <button class="icon-btn" id="scrollBtn" title="Otomatik Scroll">
+              <span>⬇️</span>
+            </button>
+            <button class="icon-btn" id="exportBtn" title="Dışa Aktar">
+              <span>💾</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="console-output" id="consoleOutput">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">
+              Log kayıtları burada görünecek...<br />Eklenti kullanmaya başlayın
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // State management
+      const state = {
+        logs: [],
+        filteredLogs: [],
+        currentFilter: "all",
+        currentSource: null,
+        searchTerm: "",
+        isPaused: false,
+        autoScroll: true,
+        sources: new Set(),
+      };
+
+      const counts = {
+        total: 0,
+        info: 0,
+        success: 0,
+        warning: 0,
+        error: 0,
+      };
+
+      // Initialize
+      function init() {
+        setupEventListeners();
+        startLogCapture();
+        addLog("System", "info", "Debug console başlatıldı");
+      }
+
+      // Setup event listeners
+      function setupEventListeners() {
+        // Filter buttons
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (btn.dataset.filter) {
+              setFilter(btn.dataset.filter);
+            }
+          });
+        });
+
+        // Action buttons
+        document
+          .getElementById("pauseBtn")
+          .addEventListener("click", togglePause);
+        document
+          .getElementById("clearBtn")
+          .addEventListener("click", clearLogs);
+        document
+          .getElementById("scrollBtn")
+          .addEventListener("click", toggleAutoScroll);
+        document
+          .getElementById("exportBtn")
+          .addEventListener("click", exportLogs);
+        document
+          .getElementById("searchInput")
+          .addEventListener("input", handleSearch);
+      }
+
+      // Start capturing logs
+      function startLogCapture() {
+        // Capture console.log
+        const originalLog = console.log;
+        console.log = function (...args) {
+          originalLog.apply(console, args);
+          if (!state.isPaused) {
+            captureLog("Console", "info", args);
+          }
+        };
+
+        // Capture console.warn
+        const originalWarn = console.warn;
+        console.warn = function (...args) {
+          originalWarn.apply(console, args);
+          if (!state.isPaused) {
+            captureLog("Console", "warning", args);
+          }
+        };
+
+        // Capture console.error
+        const originalError = console.error;
+        console.error = function (...args) {
+          originalError.apply(console, args);
+          if (!state.isPaused) {
+            captureLog("Console", "error", args);
+          }
+        };
+
+        // Simulate some logs for demo
+        simulateLogs();
+      }
+
+      // Capture log entry
+      function captureLog(source, level, args) {
+        const message = args
+          .map((arg) => {
+            if (typeof arg === "object") {
+              return JSON.stringify(arg, null, 2);
+            }
+            return String(arg);
+          })
+          .join(" ");
+
+        addLog(source, level, message);
+      }
+
+      // Add log entry
+      function addLog(source, level, message) {
+        const log = {
+          id: Date.now() + Math.random(),
+          time: new Date(),
+          source,
+          level,
+          message,
+        };
+
+        state.logs.push(log);
+        state.sources.add(source);
+
+        // Update counts
+        counts.total++;
+        counts[level]++;
+
+        // Update UI
+        updateCounts();
+        updateSourceFilters();
+        filterLogs();
+      }
+
+      // Filter logs
+      function filterLogs() {
+        let filtered = state.logs;
+
+        // Apply level filter
+        if (state.currentFilter !== "all") {
+          filtered = filtered.filter(
+            (log) => log.level === state.currentFilter
+          );
+        }
+
+        // Apply source filter
+        if (state.currentSource) {
+          filtered = filtered.filter(
+            (log) => log.source === state.currentSource
+          );
+        }
+
+        // Apply search filter
+        if (state.searchTerm) {
+          const term = state.searchTerm.toLowerCase();
+          filtered = filtered.filter(
+            (log) =>
+              log.message.toLowerCase().includes(term) ||
+              log.source.toLowerCase().includes(term)
+          );
+        }
+
+        state.filteredLogs = filtered;
+        renderLogs();
+      }
+
+      // Render logs
+      function renderLogs() {
+        const output = document.getElementById("consoleOutput");
+
+        if (state.filteredLogs.length === 0) {
+          output.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <div class="empty-text">Filtre kriterlerine uygun log bulunamadı</div>
+                    </div>
+                `;
+          return;
+        }
+
+        output.innerHTML = state.filteredLogs
+          .map(
+            (log) => `
+                <div class="log-entry ${log.level}">
+                    <div class="log-time">${formatTime(log.time)}</div>
+                    <div class="log-source">${log.source}</div>
+                    <div class="log-message">${escapeHtml(log.message)}</div>
+                </div>
+            `
+          )
+          .join("");
+
+        // Auto scroll to bottom
+        if (state.autoScroll) {
+          output.scrollTop = output.scrollHeight;
+        }
+
+        // Update visible count
+        document.getElementById("visibleCount").textContent =
+          state.filteredLogs.length;
+      }
+
+      // Update counts
+      function updateCounts() {
+        document.getElementById("totalLogs").textContent = counts.total;
+        document.getElementById("errorCount").textContent = counts.error;
+        document.getElementById("warningCount").textContent = counts.warning;
+        document.getElementById("successCount").textContent = counts.success;
+
+        document.getElementById("allCount").textContent = counts.total;
+        document.getElementById("infoCount").textContent = counts.info;
+        document.getElementById("successCountFilter").textContent =
+          counts.success;
+        document.getElementById("warningCountFilter").textContent =
+          counts.warning;
+        document.getElementById("errorCountFilter").textContent = counts.error;
+      }
+
+      // Update source filters
+      function updateSourceFilters() {
+        const container = document.getElementById("sourceFilters");
+        container.innerHTML = Array.from(state.sources)
+          .map(
+            (source) => `
+                <button class="filter-btn" data-source="${source}">
+                    <span>${source}</span>
+                </button>
+            `
+          )
+          .join("");
+
+        // Add event listeners
+        container.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setSourceFilter(btn.dataset.source);
+          });
+        });
+      }
+
+      // Set filter
+      function setFilter(filter) {
+        state.currentFilter = filter;
+
+        document.querySelectorAll(".filter-btn[data-filter]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.filter === filter);
+        });
+
+        filterLogs();
+      }
+
+      // Set source filter
+      function setSourceFilter(source) {
+        if (state.currentSource === source) {
+          state.currentSource = null;
+        } else {
+          state.currentSource = source;
+        }
+
+        document.querySelectorAll(".filter-btn[data-source]").forEach((btn) => {
+          btn.classList.toggle(
+            "active",
+            btn.dataset.source === state.currentSource
+          );
+        });
+
+        filterLogs();
+      }
+
+      // Handle search
+      function handleSearch(e) {
+        state.searchTerm = e.target.value;
+        filterLogs();
+      }
+
+      // Toggle pause
+      function togglePause() {
+        state.isPaused = !state.isPaused;
+        const btn = document.getElementById("pauseBtn");
+        btn.innerHTML = state.isPaused
+          ? "<span>▶️</span><span>Devam</span>"
+          : "<span>⏸</span><span>Duraklat</span>";
+      }
+
+      // Clear logs
+      function clearLogs() {
+        if (confirm("Tüm log kayıtları silinecek. Devam edilsin mi?")) {
+          state.logs = [];
+          state.filteredLogs = [];
+          counts.total = 0;
+          counts.info = 0;
+          counts.success = 0;
+          counts.warning = 0;
+          counts.error = 0;
+          updateCounts();
+          renderLogs();
+          addLog("System", "info", "Log kayıtları temizlendi");
+        }
+      }
+
+      // Toggle auto scroll
+      function toggleAutoScroll() {
+        state.autoScroll = !state.autoScroll;
+        const btn = document.getElementById("scrollBtn");
+        btn.style.opacity = state.autoScroll ? "1" : "0.5";
+      }
+
+      // Export logs
+      function exportLogs() {
+        const data = {
+          exportDate: new Date().toISOString(),
+          totalLogs: state.logs.length,
+          counts: counts,
+          logs: state.logs,
+        };
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `debug-logs-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        addLog("System", "success", "Log kayıtları dışa aktarıldı");
+      }
+
+      // Format time
+      function formatTime(date) {
+        return date.toLocaleTimeString("tr-TR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          fractionalSecondDigits: 3,
+        });
+      }
+
+      // Escape HTML
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Simulate logs for demo
+      function simulateLogs() {
+        setTimeout(() => {
+          addLog("Background", "info", "Background script initialized");
+          addLog("Content", "info", "Content script loaded on page");
+          addLog(
+            "Parser",
+            "success",
+            "Product detected: iPhone 15 Pro - 45,999 TL"
+          );
+          addLog(
+            "Background",
+            "warning",
+            "Rate limit approaching: 95/100 requests"
+          );
+          addLog("Content", "error", "Failed to extract price from selector");
+          addLog("Popup", "info", "Popup opened by user");
+        }, 1000);
+      }
+
+      // Initialize
+      init();
+    </script>
+  </body>
+</html>

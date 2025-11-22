@@ -1,0 +1,68 @@
+{
+  "manifest_version": 2,
+  "name": "Fiyat Takipçisi Pro",
+  "version": "2.0.2",
+  "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri ve 50+ site desteği",
+  "author": "Your Name",
+
+  "applications": {
+    "gecko": {
+      "id": "fiyat-takipci-pro@github.io",
+      "strict_min_version": "109.0"
+    }
+  },
+
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "notifications",
+    "alarms",
+    "tabs",
+    "activeTab",
+    "<all_urls>",
+    "webNavigation",
+    "contextMenus"
+  ],
+
+  "background": {
+    "scripts": [
+      "lib/helpers.js",
+      "lib/sites.js",
+      "lib/parser.js",
+      "background.js"
+    ],
+    "persistent": false
+  },
+
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Fiyat Takipçisi Pro"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/helpers.js", "lib/sites.js", "lib/parser.js", "content.js"],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+
+  "web_accessible_resources": [
+    "lib/helpers.js",
+    "lib/sites.js",
+    "lib/parser.js",
+    "debug.html"
+  ],
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
