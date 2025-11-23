@@ -1,4 +1,4 @@
-// Fixed Background Script v3.1 - Settings synchronization fixed
+// Fixed Background Script v3.2 - Added Debug Stats API
 
 (function () {
   "use strict";
@@ -30,15 +30,12 @@
    */
   async function loadSettings() {
     try {
-      // Try to load from storage
       const stored = await browser.storage.local.get("settings");
 
       if (stored.settings && typeof stored.settings === "object") {
-        // Merge with defaults to ensure all keys exist
         settings = { ...DEFAULT_SETTINGS, ...stored.settings };
         logger.info("✅ Settings loaded from storage");
       } else {
-        // Use defaults and save them
         settings = { ...DEFAULT_SETTINGS };
         await browser.storage.local.set({ settings: settings });
         logger.info("📝 Default settings initialized");
@@ -74,21 +71,17 @@
     logger.info("🚀 Initializing background script...");
 
     try {
-      // Load settings first
       await loadSettings();
 
-      // Initialize rate limiter with loaded settings
       rateLimiter = PriceTrackerHelpers.createRateLimiter(
         settings.rateLimitPerHour,
         60 * 60 * 1000
       );
 
-      // Setup alarm if auto-check is enabled
       if (settings.autoCheck) {
         await setupAlarm();
       }
 
-      // Create context menu
       await createContextMenu();
 
       logger.success("✅ Background initialized with settings:", {
@@ -102,14 +95,12 @@
   }
 
   /**
-   * Create context menu for manual price selection
+   * Create context menu
    */
   async function createContextMenu() {
     try {
-      // Remove existing menu items
       await browser.contextMenus.removeAll();
 
-      // Create menu item
       await browser.contextMenus.create({
         id: "select-price-element",
         title: "🎯 Bu Öğeyi Fiyat Olarak Seç",
@@ -130,15 +121,10 @@
     if (info.menuItemId === "select-price-element") {
       try {
         logger.info("🎯 Manual selector activated from context menu");
-
-        // Inject picker script into the tab
         await browser.tabs.executeScript(tab.id, { file: "picker.js" });
-
         logger.success("✅ Picker injected successfully");
       } catch (error) {
         logger.error("❌ Picker injection failed:", error);
-
-        // Show error notification
         browser.notifications.create({
           type: "basic",
           iconUrl: browser.runtime.getURL("icons/icon48.png"),
@@ -170,7 +156,7 @@
   }
 
   /**
-   * Listen for storage changes from settings page
+   * Listen for storage changes
    */
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.settings) {
@@ -181,7 +167,6 @@
       if (newSettings) {
         settings = { ...DEFAULT_SETTINGS, ...newSettings };
 
-        // Update rate limiter if needed
         if (
           changes.settings.oldValue?.rateLimitPerHour !==
           newSettings.rateLimitPerHour
@@ -193,7 +178,6 @@
           logger.info("🔄 Rate limiter updated");
         }
 
-        // Update alarm if needed
         if (
           changes.settings.oldValue?.autoCheck !== newSettings.autoCheck ||
           changes.settings.oldValue?.checkInterval !== newSettings.checkInterval
@@ -243,7 +227,7 @@
 
     for (let i = 0; i < products.length; i++) {
       try {
-        await PriceTrackerHelpers.wait(i * 2000); // 2s delay between products
+        await PriceTrackerHelpers.wait(i * 2000);
 
         const result = await checkSingleProduct(products[i]);
 
@@ -261,7 +245,6 @@
       }
     }
 
-    // Save all updates
     if (checked > 0) {
       await PriceTrackerHelpers.setStorage("trackedProducts", products);
     }
@@ -278,7 +261,6 @@
    */
   async function checkSingleProduct(product) {
     try {
-      // Validate product
       if (!product || !product.url || !product.price) {
         throw new Error("Invalid product data");
       }
@@ -287,7 +269,6 @@
         `🔍 Checking: ${PriceTrackerHelpers.truncate(product.name, 40)}`
       );
 
-      // Rate limit
       try {
         await rateLimiter.checkLimit();
       } catch (rateLimitError) {
@@ -295,7 +276,6 @@
         await PriceTrackerHelpers.wait(2000);
       }
 
-      // Fetch price
       const newPriceData = await fetchProductPrice(product.url);
 
       if (!newPriceData || !newPriceData.price) {
@@ -308,7 +288,6 @@
       const newPrice = parseFloat(newPriceData.price);
       const oldPrice = parseFloat(product.price);
 
-      // Validate new price
       if (isNaN(newPrice) || newPrice <= 0) {
         logger.warn(`⚠️ Invalid new price: ${newPriceData.price}`);
         product.lastCheck = Date.now();
@@ -323,41 +302,34 @@
           `📊 Price changed: ${oldPrice} → ${newPrice} ${product.currency}`
         );
 
-        // Initialize price history
         if (!Array.isArray(product.priceHistory)) {
           product.priceHistory = [];
         }
 
-        // Add to history
         product.priceHistory.push({
           price: oldPrice,
           date: product.lastCheck || Date.now(),
         });
 
-        // Keep max 30 entries
         if (product.priceHistory.length > 30) {
           product.priceHistory = product.priceHistory.slice(-30);
         }
 
-        // Update product
         product.previousPrice = oldPrice;
         product.price = newPrice;
         product.lastCheck = Date.now();
         product.lastCheckStatus = "success";
 
-        // Update name if changed
         if (newPriceData.name && newPriceData.name.length > 10) {
           product.name = newPriceData.name;
         }
 
-        // Send notification
         if (settings.notifications) {
           await sendPriceNotification(product, oldPrice, newPrice);
         }
 
         return { updated: true, product };
       } else {
-        // No change
         product.lastCheck = Date.now();
         product.lastCheckStatus = "success";
         return { updated: false, product };
@@ -377,18 +349,15 @@
    * Fetch product price
    */
   async function fetchProductPrice(url) {
-    // Check cache
     if (cache.has(url)) {
       const cached = cache.get(url);
       if (Date.now() - cached.timestamp < 300000) {
-        // 5 min cache
         logger.info("💾 Cache hit");
         return cached.data;
       }
       cache.delete(url);
     }
 
-    // Check pending requests
     if (pendingRequests.has(url)) {
       logger.info("⏳ Reusing pending request");
       return await pendingRequests.get(url);
@@ -430,7 +399,6 @@
 
         const productInfo = await PriceParser.extractProductInfo(doc, url);
 
-        // Validate
         if (productInfo && productInfo.price) {
           const price = parseFloat(productInfo.price);
           if (isNaN(price) || price <= 0) {
@@ -439,7 +407,6 @@
           productInfo.price = price;
         }
 
-        // Cache result
         if (productInfo) {
           cache.set(url, { data: productInfo, timestamp: Date.now() });
         }
@@ -467,13 +434,12 @@
   async function sendPriceNotification(product, oldPrice, newPrice) {
     const change = PriceTrackerHelpers.calculateChange(oldPrice, newPrice);
 
-    // Check minimum change percentage
     if (
       settings.minChangePercent &&
       Math.abs(change.percent) < settings.minChangePercent
     ) {
       logger.info(
-        `⏭️ Change too small (${change.percentFormatted}), skipping notification`
+        `⭐ Change too small (${change.percentFormatted}), skipping notification`
       );
       return;
     }
@@ -532,7 +498,6 @@
             const saved = await saveSettings(request.settings);
 
             if (saved) {
-              // Update rate limiter if needed
               if (request.settings.rateLimitPerHour) {
                 rateLimiter = PriceTrackerHelpers.createRateLimiter(
                   settings.rateLimitPerHour,
@@ -540,7 +505,6 @@
                 );
               }
 
-              // Update alarm if needed
               if (
                 request.settings.checkInterval !== undefined ||
                 request.settings.autoCheck !== undefined
@@ -556,8 +520,20 @@
             return { success: saved, settings: settings };
 
           case "getSettings":
-            // Always return current settings from memory
             return settings || DEFAULT_SETTINGS;
+
+          case "getDebugStats":
+            // FIXED: Added debug stats API
+            const trackedProducts = await PriceTrackerHelpers.getStorage(
+              "trackedProducts",
+              []
+            );
+            return {
+              productsCount: trackedProducts.length,
+              cacheSize: cache.size,
+              settings: settings,
+              rateLimit: rateLimiter ? rateLimiter.getTokens() : 0,
+            };
 
           case "clearCache":
             cache.clear();
@@ -588,7 +564,7 @@
         sendResponse({ error: error.message });
       });
 
-    return true; // Keep channel open
+    return true;
   });
 
   /**
@@ -598,7 +574,6 @@
     if (details.reason === "install") {
       logger.success("🎉 Price Tracker Pro installed!");
 
-      // Initialize default settings
       await saveSettings(DEFAULT_SETTINGS);
 
       browser.notifications.create({
@@ -609,8 +584,6 @@
       });
     } else if (details.reason === "update") {
       logger.success(`⬆️ Updated to ${browser.runtime.getManifest().version}`);
-
-      // Reload settings after update
       await loadSettings();
     }
 
@@ -628,9 +601,3 @@
   // Initial load
   initialize();
 })();
-// Listen for storage changes to log updates
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "sync") {
-    console.log("Selector güncellendi:", changes);
-  }
-});

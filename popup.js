@@ -1,4 +1,4 @@
-// Enhanced Popup Script v3.3 - Added Debug Console & Manual Selector
+// Enhanced Popup Script v3.3 - FIXED Debug Console
 (function () {
   "use strict";
 
@@ -135,7 +135,7 @@
     // Theme toggle
     els.themeToggle?.addEventListener("click", toggleTheme);
 
-    // Debug button - open background page console
+    // Debug button - FIXED: Opens debug.html directly
     els.debugBtn?.addEventListener("click", openDebugConsole);
 
     // Settings button
@@ -171,109 +171,31 @@
   }
 
   /**
-   * Open debug console (background page)
+   * Open debug console - FIXED VERSION
    */
   async function openDebugConsole() {
     try {
-      // For Firefox, open about:debugging to see background script console
-      // Create a new window with instructions
-      const debugWindow = window.open(
-        "",
-        "Debug Console",
-        "width=600,height=400"
-      );
+      // Open the debug.html page in a new tab
+      const debugUrl = browser.runtime.getURL("debug.html");
+      await browser.tabs.create({ url: debugUrl });
 
-      if (debugWindow) {
-        debugWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Debug Console - Fiyat Takipçisi</title>
-            <style>
-              body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                padding: 30px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                margin: 0;
-              }
-              .container {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                border-radius: 20px;
-                padding: 30px;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-              }
-              h1 { margin-top: 0; font-size: 24px; }
-              h2 { font-size: 18px; margin-top: 20px; }
-              ol { line-height: 1.8; }
-              code {
-                background: rgba(0, 0, 0, 0.3);
-                padding: 3px 8px;
-                border-radius: 5px;
-                font-family: monospace;
-              }
-              .btn {
-                background: white;
-                color: #667eea;
-                border: none;
-                padding: 12px 24px;
-                border-radius: 10px;
-                font-weight: 600;
-                cursor: pointer;
-                margin-top: 20px;
-                font-size: 14px;
-              }
-              .btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-              }
-              .info {
-                background: rgba(255, 255, 255, 0.15);
-                padding: 15px;
-                border-radius: 10px;
-                margin-top: 20px;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <h1>🔧 Debug Console</h1>
-              <p>Firefox uzantılarında debug konsolu için:</p>
-              
-              <h2>Yöntem 1: about:debugging</h2>
-              <ol>
-                <li>Yeni bir sekmede <code>about:debugging</code> açın</li>
-                <li>"Bu Firefox" seçeneğine tıklayın</li>
-                <li>"Fiyat Takipçisi Pro" uzantısını bulun</li>
-                <li>"İncele" (Inspect) butonuna tıklayın</li>
-                <li>Açılan geliştirici araçlarında "Console" sekmesini seçin</li>
-              </ol>
+      showToast("🔧 Debug konsolu açıldı", "success");
 
-              <h2>Yöntem 2: Browser Console</h2>
-              <ol>
-                <li><code>Ctrl + Shift + J</code> (Windows/Linux) veya <code>Cmd + Shift + J</code> (Mac)</li>
-                <li>Açılan konsolda uzantı loglarını görebilirsiniz</li>
-              </ol>
-
-              <div class="info">
-                <strong>💡 İpucu:</strong> Console'da <code>[Background]</code>, <code>[Content]</code> veya <code>[Popup]</code> 
-                ile başlayan mesajları arayın.
-              </div>
-
-              <button class="btn" onclick="window.open('about:debugging#/runtime/this-firefox', '_blank')">
-                about:debugging'i Aç
-              </button>
-            </div>
-          </body>
-          </html>
-        `);
-      }
-
-      showToast("ℹ️ Debug konsolu talimatları açıldı", "info");
+      // Close popup to show the debug console
+      window.close();
     } catch (error) {
       console.error("[Popup] Debug console error:", error);
-      showToast("❌ Debug konsolu açılamadı", "error");
+
+      // Fallback: Show instructions
+      try {
+        await browser.tabs.create({
+          url: "about:debugging#/runtime/this-firefox",
+        });
+        showToast("ℹ️ about:debugging açıldı", "info");
+        window.close();
+      } catch (fallbackError) {
+        showToast("❌ Debug konsolu açılamadı", "error");
+      }
     }
   }
 
@@ -346,7 +268,7 @@
       content.classList.toggle("active", isActive);
     });
 
-    console.log("[Popup] 🔀 Switched to tab:", tabName);
+    console.log("[Popup] 📑 Switched to tab:", tabName);
   }
 
   /**

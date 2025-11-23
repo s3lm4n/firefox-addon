@@ -521,7 +521,7 @@
     <!-- Header -->
     <div class="header">
       <div class="header-left">
-        <div class="logo">🐛</div>
+        <div class="logo">🛠</div>
         <div class="header-info">
           <h1>Debug Console</h1>
           <p>Fiyat Takipçisi Pro - Real-time Monitoring</p>
@@ -535,6 +535,10 @@
         <button class="btn btn-primary" id="pauseBtn">
           <span>⏸</span>
           <span>Duraklat</span>
+        </button>
+        <button class="btn btn-primary" id="refreshStatsBtn">
+          <span>🔄</span>
+          <span>Yenile</span>
         </button>
         <button class="btn btn-danger" id="clearBtn">
           <span>🗑️</span>
@@ -644,8 +648,9 @@
         </div>
       </div>
     </div>
-
-    <script>
+  </body>
+</html>
+<script>
       // State management
       const state = {
         logs: [],
@@ -673,7 +678,9 @@
         addLog("System", "info", "Debug console başlatıldı");
       }
 
-      // Setup event listeners
+      /**
+       * Setup event listeners
+       */
       function setupEventListeners() {
         // Filter buttons
         document.querySelectorAll(".filter-btn").forEach((btn) => {
@@ -689,6 +696,9 @@
           .getElementById("pauseBtn")
           .addEventListener("click", togglePause);
         document
+          .getElementById("refreshStatsBtn")
+          .addEventListener("click", refreshStats);
+        document
           .getElementById("clearBtn")
           .addEventListener("click", clearLogs);
         document
@@ -702,7 +712,31 @@
           .addEventListener("input", handleSearch);
       }
 
-      // Start capturing logs
+      /**
+       * Refresh statistics from background - FIXED
+       */
+      async function refreshStats() {
+        try {
+          const stats = await browser.runtime.sendMessage({ 
+            action: "getDebugStats" 
+          });
+          
+          if (stats && !stats.error) {
+            document.getElementById("totalLogs").textContent = state.logs.length;
+            document.getElementById("errorCount").textContent = counts.error;
+            document.getElementById("warningCount").textContent = counts.warning;
+            document.getElementById("successCount").textContent = counts.success;
+            
+            addLog("System", "success", `İstatistikler güncellendi: ${stats.productsCount} ürün, ${stats.cacheSize} önbellek`);
+          }
+        } catch (error) {
+          addLog("System", "error", `İstatistik yenileme hatası: ${error.message}`);
+        }
+      }
+
+      /**
+       * Start capturing logs
+       */
       function startLogCapture() {
         // Capture console.log
         const originalLog = console.log;
@@ -735,7 +769,9 @@
         simulateLogs();
       }
 
-      // Capture log entry
+      /**
+       * Capture log entry
+       */
       function captureLog(source, level, args) {
         const message = args
           .map((arg) => {
@@ -749,7 +785,9 @@
         addLog(source, level, message);
       }
 
-      // Add log entry
+      /**
+       * Add log entry
+       */
       function addLog(source, level, message) {
         const log = {
           id: Date.now() + Math.random(),
@@ -772,7 +810,9 @@
         filterLogs();
       }
 
-      // Filter logs
+      /**
+       * Filter logs
+       */
       function filterLogs() {
         let filtered = state.logs;
 
@@ -804,29 +844,31 @@
         renderLogs();
       }
 
-      // Render logs
+      /**
+       * Render logs
+       */
       function renderLogs() {
         const output = document.getElementById("consoleOutput");
 
         if (state.filteredLogs.length === 0) {
           output.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">🔍</div>
-                        <div class="empty-text">Filtre kriterlerine uygun log bulunamadı</div>
-                    </div>
-                `;
+            <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <div class="empty-text">Filtre kriterlerine uygun log bulunamadı</div>
+            </div>
+          `;
           return;
         }
 
         output.innerHTML = state.filteredLogs
           .map(
             (log) => `
-                <div class="log-entry ${log.level}">
-                    <div class="log-time">${formatTime(log.time)}</div>
-                    <div class="log-source">${log.source}</div>
-                    <div class="log-message">${escapeHtml(log.message)}</div>
-                </div>
-            `
+          <div class="log-entry ${log.level}">
+              <div class="log-time">${formatTime(log.time)}</div>
+              <div class="log-source">${log.source}</div>
+              <div class="log-message">${escapeHtml(log.message)}</div>
+          </div>
+          `
           )
           .join("");
 
@@ -840,7 +882,9 @@
           state.filteredLogs.length;
       }
 
-      // Update counts
+      /**
+       * Update counts
+       */
       function updateCounts() {
         document.getElementById("totalLogs").textContent = counts.total;
         document.getElementById("errorCount").textContent = counts.error;
@@ -856,16 +900,18 @@
         document.getElementById("errorCountFilter").textContent = counts.error;
       }
 
-      // Update source filters
+      /**
+       * Update source filters
+       */
       function updateSourceFilters() {
         const container = document.getElementById("sourceFilters");
         container.innerHTML = Array.from(state.sources)
           .map(
             (source) => `
-                <button class="filter-btn" data-source="${source}">
-                    <span>${source}</span>
-                </button>
-            `
+          <button class="filter-btn" data-source="${source}">
+              <span>${source}</span>
+          </button>
+          `
           )
           .join("");
 
@@ -877,7 +923,9 @@
         });
       }
 
-      // Set filter
+      /**
+       * Set filter
+       */
       function setFilter(filter) {
         state.currentFilter = filter;
 
@@ -888,7 +936,9 @@
         filterLogs();
       }
 
-      // Set source filter
+      /**
+       * Set source filter
+       */
       function setSourceFilter(source) {
         if (state.currentSource === source) {
           state.currentSource = null;
@@ -906,13 +956,17 @@
         filterLogs();
       }
 
-      // Handle search
+      /**
+       * Handle search
+       */
       function handleSearch(e) {
         state.searchTerm = e.target.value;
         filterLogs();
       }
 
-      // Toggle pause
+      /**
+       * Toggle pause
+       */
       function togglePause() {
         state.isPaused = !state.isPaused;
         const btn = document.getElementById("pauseBtn");
@@ -921,7 +975,9 @@
           : "<span>⏸</span><span>Duraklat</span>";
       }
 
-      // Clear logs
+      /**
+       * Clear logs
+       */
       function clearLogs() {
         if (confirm("Tüm log kayıtları silinecek. Devam edilsin mi?")) {
           state.logs = [];
@@ -937,14 +993,18 @@
         }
       }
 
-      // Toggle auto scroll
+      /**
+       * Toggle auto scroll
+       */
       function toggleAutoScroll() {
         state.autoScroll = !state.autoScroll;
         const btn = document.getElementById("scrollBtn");
         btn.style.opacity = state.autoScroll ? "1" : "0.5";
       }
 
-      // Export logs
+      /**
+       * Export logs
+       */
       function exportLogs() {
         const data = {
           exportDate: new Date().toISOString(),
@@ -966,7 +1026,9 @@
         addLog("System", "success", "Log kayıtları dışa aktarıldı");
       }
 
-      // Format time
+      /**
+       * Format time
+       */
       function formatTime(date) {
         return date.toLocaleTimeString("tr-TR", {
           hour: "2-digit",
@@ -976,14 +1038,18 @@
         });
       }
 
-      // Escape HTML
+      /**
+       * Escape HTML
+       */
       function escapeHtml(text) {
         const div = document.createElement("div");
         div.textContent = text;
         return div.innerHTML;
       }
 
-      // Simulate logs for demo
+      /**
+       * Simulate logs for demo
+       */
       function simulateLogs() {
         setTimeout(() => {
           addLog("Background", "info", "Background script initialized");
@@ -1005,6 +1071,30 @@
 
       // Initialize
       init();
+
+      // Listen for messages from background/content scripts - FIXED
+      browser.runtime.onMessage.addListener((message, sender) => {
+        if (message.action === "debugLog") {
+          const { source, level, text } = message;
+          addLog(source || "Unknown", level || "info", text || "");
+        }
+      });
+
+      // Periodic stats refresh - FIXED
+      setInterval(async () => {
+        try {
+          const bgStats = await browser.runtime.sendMessage({ 
+            action: "getDebugStats" 
+          });
+          
+          if (bgStats && !bgStats.error) {
+            // Silently update internal state if needed
+            // Could show a subtle indicator that stats were updated
+          }
+        } catch (e) {
+          // Background script might not be responding
+        }
+      }, 5000);
     </script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Fiyat Takipçisi Pro",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri ve 50+ site desteği",
   "author": "Your Name",
 
@@ -44,6 +44,11 @@
     "default_title": "Fiyat Takipçisi Pro"
   },
 
+  "options_ui": {
+    "page": "settings.html",
+    "open_in_tab": true
+  },
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -57,7 +62,8 @@
     "lib/helpers.js",
     "lib/sites.js",
     "lib/parser.js",
-    "debug.html"
+    "debug.html",
+    "picker.js"
   ],
 
   "icons": {
