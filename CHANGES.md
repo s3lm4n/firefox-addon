@@ -281,6 +281,9 @@ All changes are backward compatible:
 4. Optimize CSS.escape() calls in selector generation for very large DOM trees
 5. Add streaming JSON export for very large log collections (1000+ entries)
 6. Add performance monitoring and profiling
+7. Cache productIndexMap in popup.js when products array hasn't changed (avoid Map creation overhead for <50 products)
+8. Consider using template element or DOMParser for escapeHtml instead of creating DOM element each call
+9. Extend URL cleanup timeout in debug.html export from 100ms to 1000ms for slower systems
 
 ### Advanced Features
 7. Consider WebWorker for large dataset processing
