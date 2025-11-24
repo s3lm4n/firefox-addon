@@ -268,6 +268,13 @@
 
   console.log("[Picker] ✅ UI elements created");
 
+  // Escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Extract price from text
   function extractPrice(text) {
     const match = text.match(/[\d.,]+/);
@@ -553,19 +560,20 @@
           setTimeout(cleanup, 2000);
         } catch (error) {
           console.error("[Picker] ❌ Save failed:", error);
+          const errorMsg = escapeHtml(error.message || "Bilinmeyen hata");
           panel.innerHTML = `
           <h2>❌ Hata</h2>
-          <p>Kayıt sırasında hata oluştu.<br>${error.message}</p>
+          <p>Kayıt sırasında hata oluştu.<br>${errorMsg}</p>
           <div class="price-picker-buttons">
             <button class="price-picker-btn price-picker-btn-cancel" id="pickerRetry">
-              Tekrar Dene
+              Kapat
             </button>
           </div>
         `;
           
           document.getElementById("pickerRetry").addEventListener("click", () => {
             panel.remove();
-            cleanup();
+            // Don't call cleanup - allow user to try again
           });
         }
       });
@@ -582,7 +590,7 @@
     success.className = "price-picker-panel";
     success.innerHTML = `
       <h2>✅ Başarılı!</h2>
-      <p>${message}</p>
+      <p>${escapeHtml(message)}</p>
     `;
     document.body.appendChild(success);
     setTimeout(() => success.remove(), 2000);
@@ -594,7 +602,7 @@
     error.className = "price-picker-panel";
     error.innerHTML = `
       <h2>❌ Hata</h2>
-      <p>${message}</p>
+      <p>${escapeHtml(message)}</p>
       <div class="price-picker-buttons">
         <button class="price-picker-btn price-picker-btn-confirm" id="errorOk">
           Tamam
