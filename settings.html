@@ -312,6 +312,91 @@
 
         <div class="tab-content" id="advancedTab">
           <div class="section">
+            <h2 class="section-title">🎯 Özel Element Seçicileri</h2>
+            <p class="section-description">
+              Element Picker ile oluşturduğunuz özel seçicileri yönetin. Bu
+              seçiciler sitelerdeki fiyat öğelerini otomatik olarak bulur.
+            </p>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <div class="setting-label">
+                  Element Picker ile Seçici Oluştur
+                </div>
+                <div class="setting-description">
+                  Bir ürün sayfasında sağ tıklayıp "Bu Öğeyi Fiyat Olarak Seç"
+                  seçeneğini kullanın
+                </div>
+              </div>
+              <button class="btn btn-primary" id="openElementPickerGuide">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Nasıl Kullanılır?
+              </button>
+            </div>
+
+            <div style="margin-top: 24px">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  margin-bottom: 12px;
+                "
+              >
+                <div
+                  style="
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                  "
+                >
+                  Kayıtlı Seçiciler
+                </div>
+                <button class="btn-icon" id="refreshSelectors" title="Yenile">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path
+                      d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+
+              <div
+                id="custom-selectors-list"
+                style="
+                  min-height: 100px;
+                  padding: 16px;
+                  background: var(--bg-primary);
+                  border: 2px solid var(--border);
+                  border-radius: 12px;
+                "
+              >
+                <p style="color: #6b7280; text-align: center">Yükleniyor...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
             <h2 class="section-title">Gelişmiş Özellikler</h2>
 
             <div class="setting-item">
@@ -537,5 +622,40 @@
 
     <script src="lib/helpers.js"></script>
     <script src="settings.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        if (typeof loadCustomSelectors === "function") {
+          await loadCustomSelectors();
+        }
+      });
+
+      const refreshSelectorsBtn = document.getElementById("refreshSelectors");
+      if (refreshSelectorsBtn && typeof loadCustomSelectors === "function") {
+        refreshSelectorsBtn.addEventListener("click", async () => {
+          const list = document.getElementById("custom-selectors-list");
+          if (list) {
+            list.innerHTML =
+              '<p style="color: #6b7280; text-align: center;">Yükleniyor...</p>';
+          }
+          await loadCustomSelectors();
+          if (typeof showToast === "function") {
+            showToast("✅ Liste yenilendi", "success");
+          }
+        });
+      }
+
+      const guideBtn = document.getElementById("openElementPickerGuide");
+      if (guideBtn) {
+        guideBtn.addEventListener("click", () => {
+          const guide = [
+            "1. Ürün sayfasına gidin.",
+            "2. Fiyat öğesine sağ tıklayın.",
+            '3. "Bu Öğeyi Fiyat Olarak Seç" seçeneğini seçin.',
+            "4. Seçici kaydedildiğinde burada listelenecek.",
+          ].join("\n");
+          alert(guide);
+        });
+      }
+    </script>
   </body>
 </html>

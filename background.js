@@ -121,7 +121,10 @@
     if (info.menuItemId === "select-price-element") {
       try {
         logger.info("🎯 Manual selector activated from context menu");
-        await browser.tabs.executeScript(tab.id, { file: "picker.js" });
+        await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["content/picker.js"],
+        });
         logger.success("✅ Picker injected successfully");
       } catch (error) {
         logger.error("❌ Picker injection failed:", error);

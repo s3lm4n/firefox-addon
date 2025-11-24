@@ -1,33 +1,280 @@
-// content/picker.js - IMPROVED SELECTOR VERSION
+// Manual Price Picker v2.0 - FIXED VERSION
 (async () => {
   "use strict";
 
-  // Firefox'ta inject edildiğinde browser undefined olur → chrome var
+  // Prevent multiple instances
+  if (window.__PRICE_PICKER_ACTIVE__) {
+    console.log("[Picker] Already active, skipping");
+    return;
+  }
+  window.__PRICE_PICKER_ACTIVE__ = true;
+
   const browser = window.browser || window.chrome;
-
-  if (window.__SELO_PICKER_ACTIVE__) return;
-  window.__SELO_PICKER_ACTIVE__ = true;
-
   const domain = location.hostname.replace(/^www\./, "");
-  let selectedEl = null;
-  let currentHighlight = null;
 
-  // IMPROVED: Çok daha sağlam selector üret
-  const getSelector = el => {
-    if (!el) return null;
+  let selectedElement = null;
+  let currentHighlight = null;
+  let overlay = null;
+  let tooltip = null;
+  let panel = null;
+
+  console.log("[Picker] 🎯 Initializing manual price picker...");
+
+  // Check for saved selector
+  try {
+    const data = await browser.storage.sync.get(domain);
+    const saved = data[domain];
+    if (saved?.selector) {
+      const el = document.querySelector(saved.selector);
+      if (el?.textContent.trim()) {
+        console.log("[Picker] ✅ Found saved selector, using it");
+        const text = el.textContent.trim();
+        const price = extractPrice(text);
+
+        browser.runtime.sendMessage({
+          action: "manualPriceSelected",
+          data: { text, price, url: location.href, selector: saved.selector },
+        });
+
+        showSuccessMessage(`Otomatik fiyat bulundu: ${text}`);
+        setTimeout(() => (window.__PRICE_PICKER_ACTIVE__ = false), 2000);
+        return;
+      }
+    }
+  } catch (e) {
+    console.log("[Picker] No saved selector, starting manual mode");
+  }
+
+  // Inject styles
+  const style = document.createElement("style");
+  style.id = "price-picker-styles";
+  style.textContent = `
+    .price-picker-overlay {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      background: rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(3px) !important;
+      z-index: 2147483646 !important;
+      cursor: crosshair !important;
+    }
     
-    // Priority 1: Unique ID
-    if (el.id && /^[a-zA-Z][\w-]*$/.test(el.id)) {
-      // Validate ID is unique
-      if (document.querySelectorAll(`#${el.id}`).length === 1) {
-        return `#${el.id}`;
+    .price-picker-highlight {
+      outline: 4px solid #6366f1 !important;
+      outline-offset: 2px !important;
+      background: rgba(99, 102, 241, 0.15) !important;
+      position: relative !important;
+      cursor: pointer !important;
+      z-index: 2147483645 !important;
+    }
+    
+    .price-picker-tooltip {
+      position: fixed !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      padding: 12px 16px !important;
+      border-radius: 12px !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      z-index: 2147483647 !important;
+      pointer-events: none !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+      max-width: 300px !important;
+      word-break: break-word !important;
+    }
+    
+    .price-picker-hint {
+      position: fixed !important;
+      top: 20px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      padding: 16px 32px !important;
+      border-radius: 12px !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      font-size: 15px !important;
+      font-weight: 600 !important;
+      z-index: 2147483647 !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+      animation: slideDown 0.4s ease !important;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    
+    .price-picker-panel {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      background: white !important;
+      padding: 32px !important;
+      border-radius: 20px !important;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5) !important;
+      z-index: 2147483647 !important;
+      min-width: 450px !important;
+      max-width: 600px !important;
+      text-align: center !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      animation: panelIn 0.3s ease !important;
+    }
+    
+    @keyframes panelIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    .price-picker-panel h2 {
+      margin: 0 0 16px 0 !important;
+      color: #1f2937 !important;
+      font-size: 24px !important;
+      font-weight: 700 !important;
+    }
+    
+    .price-picker-panel p {
+      margin: 0 0 24px 0 !important;
+      color: #6b7280 !important;
+      font-size: 16px !important;
+      line-height: 1.5 !important;
+    }
+    
+    .price-picker-info {
+      background: #f9fafb !important;
+      padding: 20px !important;
+      border-radius: 12px !important;
+      margin-bottom: 24px !important;
+      text-align: left !important;
+    }
+    
+    .price-picker-info-row {
+      display: flex !important;
+      justify-content: space-between !important;
+      padding: 10px 0 !important;
+      border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .price-picker-info-row:last-child {
+      border-bottom: none !important;
+    }
+    
+    .price-picker-info-label {
+      font-weight: 600 !important;
+      color: #6b7280 !important;
+      font-size: 14px !important;
+    }
+    
+    .price-picker-info-value {
+      font-weight: 700 !important;
+      color: #111827 !important;
+      font-size: 14px !important;
+      max-width: 300px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+    
+    .price-picker-buttons {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 12px !important;
+    }
+    
+    .price-picker-btn {
+      padding: 14px 24px !important;
+      border: none !important;
+      border-radius: 10px !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+      font-family: inherit !important;
+    }
+    
+    .price-picker-btn-cancel {
+      background: #e5e7eb !important;
+      color: #374151 !important;
+    }
+    
+    .price-picker-btn-cancel:hover {
+      background: #d1d5db !important;
+      transform: translateY(-2px) !important;
+    }
+    
+    .price-picker-btn-confirm {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+    }
+    
+    .price-picker-btn-confirm:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4) !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Create overlay
+  overlay = document.createElement("div");
+  overlay.className = "price-picker-overlay";
+  document.body.appendChild(overlay);
+
+  // Create tooltip
+  tooltip = document.createElement("div");
+  tooltip.className = "price-picker-tooltip";
+  tooltip.style.display = "none";
+  document.body.appendChild(tooltip);
+
+  // Create hint
+  const hint = document.createElement("div");
+  hint.className = "price-picker-hint";
+  hint.textContent = "🎯 Fiyat içeren öğeyi seçin • ESC ile iptal";
+  document.body.appendChild(hint);
+  setTimeout(() => {
+    hint.style.opacity = "0";
+    hint.style.transform = "translateX(-50%) translateY(-20px)";
+    setTimeout(() => hint.remove(), 300);
+  }, 4000);
+
+  console.log("[Picker] ✅ UI elements created");
+
+  // Extract price from text
+  function extractPrice(text) {
+    const match = text.match(/[\d.,]+/);
+    return match ? match[0].replace(/[.,]/g, "") : null;
+  }
+
+  // Generate CSS selector
+  function generateSelector(element) {
+    if (!element) return null;
+
+    // Priority 1: ID
+    if (element.id && /^[a-zA-Z][\w-]*$/.test(element.id)) {
+      if (document.querySelectorAll(`#${element.id}`).length === 1) {
+        return `#${element.id}`;
       }
     }
 
-    // Priority 2: data-* attributes (common in modern sites)
-    const dataAttrs = ['data-testid', 'data-test-id', 'data-price', 'data-test'];
+    // Priority 2: data-* attributes
+    const dataAttrs = ["data-testid", "data-test-id", "data-price"];
     for (const attr of dataAttrs) {
-      const val = el.getAttribute(attr);
+      const val = element.getAttribute(attr);
       if (val) {
         const selector = `[${attr}="${val}"]`;
         if (document.querySelectorAll(selector).length === 1) {
@@ -36,306 +283,250 @@
       }
     }
 
-    // Priority 3: itemprop (Schema.org microdata)
-    const itemprop = el.getAttribute('itemprop');
-    if (itemprop === 'price' || itemprop === 'offers') {
+    // Priority 3: itemprop
+    const itemprop = element.getAttribute("itemprop");
+    if (itemprop === "price" || itemprop === "offers") {
       const selector = `[itemprop="${itemprop}"]`;
       const matches = document.querySelectorAll(selector);
-      if (matches.length === 1) {
-        return selector;
-      } else if (matches.length > 1) {
-        // Add parent context
-        return getContextualSelector(el);
-      }
+      if (matches.length === 1) return selector;
     }
 
-    // Priority 4: Unique class combinations
-    const uniqueClass = getUniqueClassSelector(el);
-    if (uniqueClass) return uniqueClass;
-
-    // Priority 5: Build optimized path
-    return buildOptimizedPath(el);
-  };
-
-  // Get unique class selector
-  const getUniqueClassSelector = (el) => {
-    if (!el.classList || el.classList.length === 0) return null;
-    
-    const classes = Array.from(el.classList).filter(c => 
-      c && 
-      !/^(active|selected|hover|focus|hidden|show)$/i.test(c) && // Skip state classes
-      !c.match(/^\d/) // Skip numeric-only classes
-    );
-
-    // Try different combinations
-    for (let i = 1; i <= Math.min(classes.length, 3); i++) {
-      for (let j = 0; j <= classes.length - i; j++) {
-        const combo = classes.slice(j, j + i);
-        const selector = el.tagName.toLowerCase() + '.' + combo.join('.');
-        const matches = document.querySelectorAll(selector);
-        
-        if (matches.length === 1) {
-          return selector;
-        }
-      }
-    }
-
-    return null;
-  };
-
-  // Build contextual selector with parent
-  const getContextualSelector = (el) => {
-    const parts = [];
-    let current = el;
+    // Priority 4: Build path with classes
+    const path = [];
+    let current = element;
     let depth = 0;
-    const maxDepth = 4;
 
-    while (current && current !== document.body && depth < maxDepth) {
+    while (current && current !== document.body && depth < 4) {
       let selector = current.tagName.toLowerCase();
 
-      // Add ID if exists
       if (current.id && /^[a-zA-Z][\w-]*$/.test(current.id)) {
-        parts.unshift(`#${current.id}`);
-        break; // ID is unique enough
+        path.unshift(`#${current.id}`);
+        break;
       }
 
-      // Add meaningful classes (max 2)
       if (current.classList && current.classList.length > 0) {
         const classes = Array.from(current.classList)
-          .filter(c => 
-            c && 
-            c.length < 30 && // Avoid generated classes
-            !/^(x\d+|css-|MuiBox|makeStyles)/.test(c) && // Skip framework classes
-            !/^(active|selected|hover)$/i.test(c) // Skip state classes
-          )
+          .filter((c) => c && c.length < 30 && !/^(x\d+|css-)/.test(c))
           .slice(0, 2);
-        
+
         if (classes.length > 0) {
-          selector += '.' + classes.join('.');
-        }
-      }
-
-      // Add data attributes
-      const dataTestId = current.getAttribute('data-testid') || current.getAttribute('data-test-id');
-      if (dataTestId) {
-        selector += `[data-testid="${dataTestId}"]`;
-      }
-
-      parts.unshift(selector);
-      current = current.parentElement;
-      depth++;
-    }
-
-    const fullSelector = parts.join(' > ');
-    
-    // Validate selector
-    try {
-      if (document.querySelectorAll(fullSelector).length === 1) {
-        return fullSelector;
-      }
-    } catch (e) {
-      console.warn('Invalid selector generated:', fullSelector);
-    }
-
-    return buildOptimizedPath(el);
-  };
-
-  // Build optimized path (fallback)
-  const buildOptimizedPath = (el) => {
-    const path = [];
-    let current = el;
-    
-    while (current && current !== document.body) {
-      let selector = current.tagName.toLowerCase();
-      
-      // Add relevant attributes
-      const classList = current.classList;
-      if (classList && classList.length > 0) {
-        // Get most specific classes (usually price-related)
-        const relevantClasses = Array.from(classList)
-          .filter(c => 
-            /price|amount|cost|value|fiyat|tutar/i.test(c) || 
-            (c.length > 2 && c.length < 20 && !/^[a-z]\d+$/.test(c))
-          )
-          .slice(0, 2);
-        
-        if (relevantClasses.length > 0) {
-          selector += '.' + relevantClasses.join('.');
-        }
-      }
-
-      // Add nth-of-type if needed
-      const parent = current.parentElement;
-      if (parent) {
-        const siblings = Array.from(parent.children).filter(e => e.tagName === current.tagName);
-        if (siblings.length > 1) {
-          const index = siblings.indexOf(current) + 1;
-          selector += `:nth-of-type(${index})`;
+          selector += "." + classes.join(".");
         }
       }
 
       path.unshift(selector);
-      current = parent;
-
-      // Stop at meaningful parent
-      if (current && (current.id || current.getAttribute('data-testid'))) {
-        let parentSelector = current.tagName.toLowerCase();
-        if (current.id) {
-          parentSelector = `#${current.id}`;
-        } else if (current.getAttribute('data-testid')) {
-          parentSelector += `[data-testid="${current.getAttribute('data-testid')}"]`;
-        }
-        path.unshift(parentSelector);
-        break;
-      }
+      current = current.parentElement;
+      depth++;
     }
 
-    return path.slice(-5).join(' > '); // Keep last 5 levels only
-  };
+    return path.join(" > ");
+  }
 
-  // Kayıtlı selector var mı?
-  try {
-    const data = await browser.storage.sync.get(domain);
-    const saved = data[domain];
-    if (saved?.selector) {
-      const el = document.querySelector(saved.selector);
-      if (el?.textContent.trim()) {
-        const text = el.textContent.trim();
-        const price = text.match(/[\d.,]+/)?.[0].replace(/[.,]/g, "") || null;
-        browser.runtime.sendMessage({
-          action: "manualPriceSelected",
-          data: { text, price, url: location.href }
-        });
-        console.log("Otomatik fiyat bulundu:", text);
-        return; // Picker açma
-      }
-    }
-  } catch (e) { console.log("Storage okuma hatası, manuel devam:", e); }
-
-  // ---------- MANUEL PICKER BAŞLAT ----------
-  const style = document.createElement("style");
-  style.textContent = `
-    .selo-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(3px);z-index:2147483646;cursor:crosshair;}
-    .selo-hl{outline:4px solid #6366f1 !important;background:rgba(99,102,241,0.2)!important;position:relative !important;}
-    .selo-tip{position:fixed;background:#6366f1;color:#fff;padding:10px 16px;border-radius:10px;font:13px system-ui;z-index:2147483647;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,0.4);max-width:300px;word-wrap:break-word;}
-    .selo-hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#6366f1;color:#fff;padding:16px 32px;border-radius:12px;font:15px system-ui;z-index:2147483647;pointer-events:none;}
-    .selo-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:32px;border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,0.5);z-index:2147483647;min-width:450px;text-align:center;font-family:system-ui;}
-    .selo-panel h2{margin:0 0 16px 0;color:#1f2937;font-size:24px;}
-    .selo-panel p{margin:0;color:#6b7280;font-size:16px;line-height:1.5;}
-  `;
-  document.head.appendChild(style);
-
-  const overlay = document.createElement("div");
-  overlay.className = "selo-overlay";
-  document.body.appendChild(overlay);
-
-  const tooltip = document.createElement("div");
-  tooltip.className = "selo-tip";
-  document.body.appendChild(tooltip);
-
-  const hint = document.createElement("div");
-  hint.className = "selo-hint";
-  hint.textContent = "Fiyat etiketini seç • ESC iptal";
-  document.body.appendChild(hint);
-  setTimeout(() => hint.remove(), 4000);
-
-  const move = e => {
-    tooltip.style.display = "none";
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    
-    if (!el || el === overlay || el === tooltip || el === hint) {
-      tooltip.style.display = "none";
+  // Mouse move handler
+  function handleMouseMove(e) {
+    // Don't highlight overlay or tooltip
+    const target = e.target;
+    if (target === overlay || target === tooltip || target === hint) {
       return;
     }
-    
-    if (currentHighlight && currentHighlight !== el) {
-      currentHighlight.classList.remove("selo-hl");
-    }
-    
-    currentHighlight = el;
-    el.classList.add("selo-hl");
-    
-    const text = el.textContent.trim();
-    tooltip.textContent = text.substring(0, 80) + (text.length > 80 ? "..." : "");
-    tooltip.style.left = (e.clientX + 15) + "px";
-    tooltip.style.top = (e.clientY + 15) + "px";
-    tooltip.style.display = "block";
-  };
 
-  const click = async e => {
+    // Remove previous highlight
+    if (currentHighlight && currentHighlight !== target) {
+      currentHighlight.classList.remove("price-picker-highlight");
+    }
+
+    // Add new highlight
+    currentHighlight = target;
+    currentHighlight.classList.add("price-picker-highlight");
+
+    // Update tooltip
+    const text = target.textContent.trim();
+    const preview = text.substring(0, 80) + (text.length > 80 ? "..." : "");
+
+    tooltip.textContent = preview;
+    tooltip.style.display = "block";
+    tooltip.style.left = e.clientX + 15 + "px";
+    tooltip.style.top = e.clientY + 15 + "px";
+
+    // Keep tooltip in viewport
+    setTimeout(() => {
+      const rect = tooltip.getBoundingClientRect();
+      if (rect.right > window.innerWidth) {
+        tooltip.style.left = e.clientX - rect.width - 15 + "px";
+      }
+      if (rect.bottom > window.innerHeight) {
+        tooltip.style.top = e.clientY - rect.height - 15 + "px";
+      }
+    }, 0);
+  }
+
+  // Click handler
+  function handleClick(e) {
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    
-    tooltip.style.display = "none";
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    
-    if (!el || el === overlay || el === tooltip || el === hint) return;
 
-    selectedEl = el;
-    document.querySelectorAll(".selo-hl").forEach(h => h.classList.remove("selo-hl"));
-
-    const selector = getSelector(el);
-    const text = el.textContent.trim();
-    const price = text.match(/[\d.,]+/)?.[0].replace(/[.,]/g, "") || null;
-
-    console.log("🎯 Generated selector:", selector);
-    console.log("📝 Extracted text:", text);
-    console.log("💰 Extracted price:", price);
-
-    // Validate selector works
-    try {
-      const testEl = document.querySelector(selector);
-      if (!testEl || testEl !== el) {
-        console.warn("⚠️ Selector validation failed, regenerating...");
-        selector = buildOptimizedPath(el);
-      }
-    } catch (err) {
-      console.error("❌ Selector error:", err);
-      selector = buildOptimizedPath(el);
+    if (e.target === overlay || e.target === tooltip || e.target === hint) {
+      return;
     }
 
-    // Kaydet
-    await browser.storage.sync.set({ 
-      [domain]: { 
-        selector, 
-        exampleText: text, 
-        lastSaved: Date.now(),
-        elementTag: el.tagName.toLowerCase(),
-        hasPrice: !!price
-      } 
+    selectedElement = e.target;
+    console.log("[Picker] Element selected:", selectedElement);
+
+    // Remove highlights
+    document.querySelectorAll(".price-picker-highlight").forEach((el) => {
+      el.classList.remove("price-picker-highlight");
     });
 
-    // Gönder
-    browser.runtime.sendMessage({
-      action: "manualPriceSelected",
-      data: { text, price, url: location.href, selector }
-    });
+    // Hide tooltip
+    if (tooltip) {
+      tooltip.style.display = "none";
+    }
 
-    // Başarı
-    const panel = document.createElement("div");
-    panel.className = "selo-panel";
+    // Show confirmation panel
+    showConfirmationPanel();
+  }
+
+  // Keyboard handler
+  function handleKeyDown(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      cleanup();
+    }
+  }
+
+  // Show confirmation panel
+  function showConfirmationPanel() {
+    const text = selectedElement.textContent.trim();
+    const selector = generateSelector(selectedElement);
+    const price = extractPrice(text);
+
+    console.log("[Picker] Generated selector:", selector);
+    console.log("[Picker] Extracted text:", text);
+    console.log("[Picker] Extracted price:", price);
+
+    panel = document.createElement("div");
+    panel.className = "price-picker-panel";
     panel.innerHTML = `
-      <h2>✅ Tamamdır Selo!</h2>
-      <p>Bu site artık otomatik çekecek.<br>Yenile ve gör.</p>
-      <p style="margin-top:12px;font-size:12px;color:#9ca3af;">Selector: ${selector}</p>
+      <h2>🎯 Öğe Seçildi</h2>
+      <p>Bu öğeyi fiyat olarak kaydetmek istiyor musunuz?</p>
+      
+      <div class="price-picker-info">
+        <div class="price-picker-info-row">
+          <span class="price-picker-info-label">İçerik:</span>
+          <span class="price-picker-info-value" title="${text}">${text.substring(
+      0,
+      50
+    )}${text.length > 50 ? "..." : ""}</span>
+        </div>
+        <div class="price-picker-info-row">
+          <span class="price-picker-info-label">Fiyat:</span>
+          <span class="price-picker-info-value">${price || "Bulunamadı"}</span>
+        </div>
+        <div class="price-picker-info-row">
+          <span class="price-picker-info-label">Tag:</span>
+          <span class="price-picker-info-value">${selectedElement.tagName.toLowerCase()}</span>
+        </div>
+        <div class="price-picker-info-row">
+          <span class="price-picker-info-label">Selector:</span>
+          <span class="price-picker-info-value" title="${selector}">${selector.substring(
+      0,
+      40
+    )}...</span>
+        </div>
+      </div>
+      
+      <div class="price-picker-buttons">
+        <button class="price-picker-btn price-picker-btn-cancel" id="pickerCancel">
+          ❌ İptal
+        </button>
+        <button class="price-picker-btn price-picker-btn-confirm" id="pickerConfirm">
+          ✅ Onayla
+        </button>
+      </div>
     `;
+
     document.body.appendChild(panel);
-    setTimeout(cleanup, 2500);
-  };
 
-  const cleanup = () => {
-    overlay.removeEventListener("mousemove", move);
-    overlay.removeEventListener("click", click, true);
-    document.removeEventListener("keydown", esc);
-    document.querySelectorAll(".selo-overlay,.selo-tip,.selo-hl,.selo-hint,.selo-panel").forEach(el => el?.remove());
-    style.remove();
-    window.__SELO_PICKER_ACTIVE__ = false;
-  };
+    // Add event listeners
+    document.getElementById("pickerCancel").addEventListener("click", () => {
+      panel.remove();
+      cleanup();
+    });
 
-  const esc = e => e.key === "Escape" && cleanup();
+    document
+      .getElementById("pickerConfirm")
+      .addEventListener("click", async () => {
+        console.log("[Picker] Confirming selection...");
 
-  overlay.addEventListener("mousemove", move, false);
-  overlay.addEventListener("click", click, true);
-  document.addEventListener("keydown", esc);
+        // Save selector
+        await browser.storage.sync.set({
+          [domain]: {
+            selector,
+            exampleText: text,
+            lastSaved: Date.now(),
+          },
+        });
+
+        // Send message
+        browser.runtime.sendMessage({
+          action: "manualPriceSelected",
+          data: { text, price, url: location.href, selector },
+        });
+
+        console.log("[Picker] ✅ Selection confirmed and saved");
+
+        // Show success
+        panel.innerHTML = `
+        <h2>✅ Başarılı!</h2>
+        <p>Fiyat öğesi kaydedildi.<br>Bu site artık otomatik olarak fiyatı çekecek.</p>
+      `;
+
+        setTimeout(cleanup, 2000);
+      });
+  }
+
+  // Show success message
+  function showSuccessMessage(message) {
+    const success = document.createElement("div");
+    success.className = "price-picker-panel";
+    success.innerHTML = `
+      <h2>✅ Başarılı!</h2>
+      <p>${message}</p>
+    `;
+    document.body.appendChild(success);
+    setTimeout(() => success.remove(), 2000);
+  }
+
+  // Cleanup
+  function cleanup() {
+    console.log("[Picker] 🧹 Cleaning up...");
+
+    // Remove event listeners
+    overlay?.removeEventListener("mousemove", handleMouseMove);
+    overlay?.removeEventListener("click", handleClick);
+    document.removeEventListener("keydown", handleKeyDown);
+
+    // Remove highlights
+    document.querySelectorAll(".price-picker-highlight").forEach((el) => {
+      el.classList.remove("price-picker-highlight");
+    });
+
+    // Remove elements
+    overlay?.remove();
+    tooltip?.remove();
+    panel?.remove();
+    hint?.remove();
+    document.getElementById("price-picker-styles")?.remove();
+
+    window.__PRICE_PICKER_ACTIVE__ = false;
+    console.log("[Picker] ✅ Cleanup complete");
+  }
+
+  // Attach event listeners
+  overlay.addEventListener("mousemove", handleMouseMove, false);
+  overlay.addEventListener("click", handleClick, true);
+  document.addEventListener("keydown", handleKeyDown, true);
+
+  console.log("[Picker] ✅ Event listeners attached, picker ready!");
 })();
