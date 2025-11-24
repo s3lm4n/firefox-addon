@@ -627,6 +627,8 @@
 
   /**
    * Render products list
+   * NOTE: No limit on number of products - renders ALL tracked items
+   * Optimized for performance with large datasets (50+ products)
    */
   function renderProducts(filterText = "") {
     if (products.length === 0) {
@@ -637,7 +639,7 @@
 
     let filtered = products;
 
-    // Apply search filter
+    // Apply search filter - works across ALL products
     if (filterText) {
       const search = filterText.toLowerCase();
       filtered = products.filter(
@@ -667,13 +669,30 @@
     // Sort by last check (most recent first)
     filtered.sort((a, b) => (b.lastCheck || 0) - (a.lastCheck || 0));
 
-    // Render product cards
-    els.productList.innerHTML = filtered
-      .map((product, idx) => {
-        const originalIndex = products.indexOf(product);
+    // Render ALL product cards - no limits!
+    // Using DocumentFragment for better performance with large lists
+    const fragment = document.createDocumentFragment();
+    const tempDiv = document.createElement("div");
+    
+    // Create index map for O(1) lookup instead of O(n) indexOf
+    const productIndexMap = new Map(products.map((p, i) => [p, i]));
+    
+    // Batch render for performance
+    tempDiv.innerHTML = filtered
+      .map((product) => {
+        const originalIndex = productIndexMap.get(product);
         return renderProductCard(product, originalIndex);
       })
       .join("");
+    
+    // Move all children to fragment
+    while (tempDiv.firstChild) {
+      fragment.appendChild(tempDiv.firstChild);
+    }
+    
+    // Clear and append in one operation
+    els.productList.innerHTML = "";
+    els.productList.appendChild(fragment);
 
     // Attach event listeners to cards
     attachCardListeners();

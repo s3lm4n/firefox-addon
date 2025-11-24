@@ -651,6 +651,20 @@
   </body>
 </html>
 <script>
+      // Ensure browser API is available
+      const browser = window.browser || window.chrome;
+      
+      /**
+       * Check if browser API is available
+       */
+      function isBrowserAPIAvailable() {
+        return browser && browser.runtime;
+      }
+      
+      if (!isBrowserAPIAvailable()) {
+        console.error("Browser API not available!");
+      }
+
       // State management
       const state = {
         logs: [],
@@ -676,6 +690,9 @@
         setupEventListeners();
         startLogCapture();
         addLog("System", "info", "Debug console başlatıldı");
+        
+        // Initial stats refresh
+        refreshStats();
       }
 
       /**
@@ -717,19 +734,30 @@
        */
       async function refreshStats() {
         try {
+          if (!isBrowserAPIAvailable()) {
+            throw new Error("Browser API not available");
+          }
+
           const stats = await browser.runtime.sendMessage({ 
             action: "getDebugStats" 
           });
           
           if (stats && !stats.error) {
+            // Update display counts
             document.getElementById("totalLogs").textContent = state.logs.length;
             document.getElementById("errorCount").textContent = counts.error;
             document.getElementById("warningCount").textContent = counts.warning;
             document.getElementById("successCount").textContent = counts.success;
             
-            addLog("System", "success", `İstatistikler güncellendi: ${stats.productsCount} ürün, ${stats.cacheSize} önbellek`);
+            // Show stats from background
+            if (stats.productsCount !== undefined) {
+              addLog("System", "success", `İstatistikler güncellendi: ${stats.productsCount} ürün, ${stats.cacheSize} önbellek`);
+            }
+          } else {
+            throw new Error(stats?.error || "Stats unavailable");
           }
         } catch (error) {
+          console.error("Stats refresh error:", error);
           addLog("System", "error", `İstatistik yenileme hatası: ${error.message}`);
         }
       }
@@ -872,9 +900,14 @@
           )
           .join("");
 
-        // Auto scroll to bottom
+        // Auto scroll to bottom - use requestAnimationFrame for reliability
         if (state.autoScroll) {
-          output.scrollTop = output.scrollHeight;
+          requestAnimationFrame(() => {
+            // Check if element is still in DOM before scrolling
+            if (output && output.isConnected) {
+              output.scrollTop = output.scrollHeight;
+            }
+          });
         }
 
         // Update visible count
@@ -1006,24 +1039,47 @@
        * Export logs
        */
       function exportLogs() {
-        const data = {
-          exportDate: new Date().toISOString(),
-          totalLogs: state.logs.length,
-          counts: counts,
-          logs: state.logs,
-        };
+        try {
+          // Prepare export data with proper formatting
+          const data = {
+            exportDate: new Date().toISOString(),
+            totalLogs: state.logs.length,
+            counts: {
+              total: counts.total,
+              info: counts.info,
+              success: counts.success,
+              warning: counts.warning,
+              error: counts.error
+            },
+            logs: state.logs.map(log => ({
+              time: log.time.toISOString(),
+              source: log.source,
+              level: log.level,
+              message: log.message
+            })),
+          };
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `debug-logs-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+          // Create and download file
+          const json = JSON.stringify(data, null, 2);
+          const blob = new Blob([json], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `debug-logs-${Date.now()}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Clean up URL after download
+          setTimeout(() => URL.revokeObjectURL(url), 100);
 
-        addLog("System", "success", "Log kayıtları dışa aktarıldı");
+          addLog("System", "success", `${state.logs.length} log kaydı dışa aktarıldı`);
+        } catch (error) {
+          console.error("Export error:", error);
+          addLog("System", "error", `Dışa aktarma hatası: ${error.message}`);
+        }
       }
 
       /**
@@ -1073,28 +1129,47 @@
       init();
 
       // Listen for messages from background/content scripts - FIXED
-      browser.runtime.onMessage.addListener((message, sender) => {
-        if (message.action === "debugLog") {
-          const { source, level, text } = message;
-          addLog(source || "Unknown", level || "info", text || "");
-        }
-      });
+      if (isBrowserAPIAvailable()) {
+        browser.runtime.onMessage.addListener((message, sender) => {
+          try {
+            if (message && message.action === "debugLog") {
+              const { source, level, text } = message;
+              if (!state.isPaused) {
+                addLog(source || "Unknown", level || "info", text || "");
+              }
+            }
+          } catch (error) {
+            console.error("Message handler error:", error);
+          }
+        });
+      } else {
+        addLog("System", "error", "Browser API not available for message listening");
+      }
 
       // Periodic stats refresh - FIXED
-      setInterval(async () => {
-        try {
-          const bgStats = await browser.runtime.sendMessage({ 
-            action: "getDebugStats" 
-          });
-          
-          if (bgStats && !bgStats.error) {
-            // Silently update internal state if needed
-            // Could show a subtle indicator that stats were updated
+      if (isBrowserAPIAvailable()) {
+        setInterval(async () => {
+          try {
+            if (!state.isPaused) {
+              const bgStats = await browser.runtime.sendMessage({ 
+                action: "getDebugStats" 
+              });
+              
+              if (bgStats && !bgStats.error) {
+                // Silently update internal state if needed
+                // Update counts display
+                document.getElementById("totalLogs").textContent = state.logs.length;
+                document.getElementById("errorCount").textContent = counts.error;
+                document.getElementById("warningCount").textContent = counts.warning;
+                document.getElementById("successCount").textContent = counts.success;
+              }
+            }
+          } catch (e) {
+            // Background script might not be responding - silent fail
+            console.debug("Periodic stats refresh failed:", e);
           }
-        } catch (e) {
-          // Background script might not be responding
-        }
-      }, 5000);
+        }, 5000);
+      }
     </script>
   </body>
 </html>
