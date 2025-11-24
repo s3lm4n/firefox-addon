@@ -272,11 +272,20 @@ All changes are backward compatible:
 
 ## Future Enhancements
 
+### High Priority
 1. Add unit tests for selector generation
 2. Add integration tests for message passing
 3. Consider virtual scrolling for 100+ products
-4. Add performance monitoring
-5. Consider WebWorker for large dataset processing
+
+### Performance Optimizations (for edge cases)
+4. Optimize CSS.escape() calls in selector generation for very large DOM trees
+5. Add streaming JSON export for very large log collections (1000+ entries)
+6. Add performance monitoring and profiling
+
+### Advanced Features
+7. Consider WebWorker for large dataset processing
+8. Add batch processing for massive log exports
+9. Implement progressive rendering for 200+ products
 
 ---
 
