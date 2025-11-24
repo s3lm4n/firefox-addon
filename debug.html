@@ -654,7 +654,14 @@
       // Ensure browser API is available
       const browser = window.browser || window.chrome;
       
-      if (!browser || !browser.runtime) {
+      /**
+       * Check if browser API is available
+       */
+      function isBrowserAPIAvailable() {
+        return browser && browser.runtime;
+      }
+      
+      if (!isBrowserAPIAvailable()) {
         console.error("Browser API not available!");
       }
 
@@ -727,7 +734,7 @@
        */
       async function refreshStats() {
         try {
-          if (!browser || !browser.runtime) {
+          if (!isBrowserAPIAvailable()) {
             throw new Error("Browser API not available");
           }
 
@@ -1119,7 +1126,7 @@
       init();
 
       // Listen for messages from background/content scripts - FIXED
-      if (browser && browser.runtime) {
+      if (isBrowserAPIAvailable()) {
         browser.runtime.onMessage.addListener((message, sender) => {
           try {
             if (message && message.action === "debugLog") {
@@ -1137,7 +1144,7 @@
       }
 
       // Periodic stats refresh - FIXED
-      if (browser && browser.runtime) {
+      if (isBrowserAPIAvailable()) {
         setInterval(async () => {
           try {
             if (!state.isPaused) {

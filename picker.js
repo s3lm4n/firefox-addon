@@ -12,6 +12,12 @@
   const browser = window.browser || window.chrome;
   const domain = location.hostname.replace(/^www\./, "");
 
+  // Constants for selector generation
+  const DATA_ATTRIBUTES = ["data-testid", "data-test-id", "data-price", "data-product-id"];
+  const MAX_CLASS_LENGTH = 30;
+  const CLASS_EXCLUDE_PATTERN = /^(x\d+|css-|_)/;
+  const MAX_SELECTOR_DEPTH = 5;
+
   let selectedElement = null;
   let currentHighlight = null;
   let overlay = null;
@@ -286,8 +292,7 @@
       }
 
       // Priority 2: data-* attributes
-      const dataAttrs = ["data-testid", "data-test-id", "data-price", "data-product-id"];
-      for (const attr of dataAttrs) {
+      for (const attr of DATA_ATTRIBUTES) {
         const val = element.getAttribute(attr);
         if (val) {
           try {
@@ -318,7 +323,7 @@
       let current = element;
       let depth = 0;
 
-      while (current && current !== document.body && depth < 5) {
+      while (current && current !== document.body && depth < MAX_SELECTOR_DEPTH) {
         let selector = current.tagName.toLowerCase();
 
         if (current.id && /^[a-zA-Z][\w-]*$/.test(current.id)) {
@@ -332,7 +337,7 @@
 
         if (current.classList && current.classList.length > 0) {
           const classes = Array.from(current.classList)
-            .filter((c) => c && c.length < 30 && !/^(x\d+|css-|_)/.test(c))
+            .filter((c) => c && c.length < MAX_CLASS_LENGTH && !CLASS_EXCLUDE_PATTERN.test(c))
             .slice(0, 2);
 
           if (classes.length > 0) {
