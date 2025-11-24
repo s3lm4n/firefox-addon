@@ -17,6 +17,7 @@
   let overlay = null;
   let tooltip = null;
   let panel = null;
+  let hint = null;
 
   console.log("[Picker] 🎯 Initializing manual price picker...");
 
@@ -242,14 +243,21 @@
   document.body.appendChild(tooltip);
 
   // Create hint
-  const hint = document.createElement("div");
+  hint = document.createElement("div");
   hint.className = "price-picker-hint";
   hint.textContent = "🎯 Fiyat içeren öğeyi seçin • ESC ile iptal";
   document.body.appendChild(hint);
   setTimeout(() => {
-    hint.style.opacity = "0";
-    hint.style.transform = "translateX(-50%) translateY(-20px)";
-    setTimeout(() => hint.remove(), 300);
+    if (hint) {
+      hint.style.opacity = "0";
+      hint.style.transform = "translateX(-50%) translateY(-20px)";
+      setTimeout(() => {
+        if (hint) {
+          hint.remove();
+          hint = null;
+        }
+      }, 300);
+    }
   }, 4000);
 
   console.log("[Picker] ✅ UI elements created");
@@ -264,62 +272,109 @@
   function generateSelector(element) {
     if (!element) return null;
 
-    // Priority 1: ID
-    if (element.id && /^[a-zA-Z][\w-]*$/.test(element.id)) {
-      if (document.querySelectorAll(`#${element.id}`).length === 1) {
-        return `#${element.id}`;
-      }
-    }
-
-    // Priority 2: data-* attributes
-    const dataAttrs = ["data-testid", "data-test-id", "data-price"];
-    for (const attr of dataAttrs) {
-      const val = element.getAttribute(attr);
-      if (val) {
-        const selector = `[${attr}="${val}"]`;
-        if (document.querySelectorAll(selector).length === 1) {
-          return selector;
-        }
-      }
-    }
-
-    // Priority 3: itemprop
-    const itemprop = element.getAttribute("itemprop");
-    if (itemprop === "price" || itemprop === "offers") {
-      const selector = `[itemprop="${itemprop}"]`;
-      const matches = document.querySelectorAll(selector);
-      if (matches.length === 1) return selector;
-    }
-
-    // Priority 4: Build path with classes
-    const path = [];
-    let current = element;
-    let depth = 0;
-
-    while (current && current !== document.body && depth < 4) {
-      let selector = current.tagName.toLowerCase();
-
-      if (current.id && /^[a-zA-Z][\w-]*$/.test(current.id)) {
-        path.unshift(`#${current.id}`);
-        break;
-      }
-
-      if (current.classList && current.classList.length > 0) {
-        const classes = Array.from(current.classList)
-          .filter((c) => c && c.length < 30 && !/^(x\d+|css-)/.test(c))
-          .slice(0, 2);
-
-        if (classes.length > 0) {
-          selector += "." + classes.join(".");
+    try {
+      // Priority 1: ID (only if unique)
+      if (element.id && /^[a-zA-Z][\w-]*$/.test(element.id)) {
+        try {
+          const selector = `#${CSS.escape(element.id)}`;
+          if (document.querySelectorAll(selector).length === 1) {
+            return selector;
+          }
+        } catch (e) {
+          console.warn("[Picker] ID selector failed:", e);
         }
       }
 
-      path.unshift(selector);
-      current = current.parentElement;
-      depth++;
-    }
+      // Priority 2: data-* attributes
+      const dataAttrs = ["data-testid", "data-test-id", "data-price", "data-product-id"];
+      for (const attr of dataAttrs) {
+        const val = element.getAttribute(attr);
+        if (val) {
+          try {
+            const selector = `[${attr}="${CSS.escape(val)}"]`;
+            if (document.querySelectorAll(selector).length === 1) {
+              return selector;
+            }
+          } catch (e) {
+            console.warn("[Picker] Data attribute selector failed:", e);
+          }
+        }
+      }
 
-    return path.join(" > ");
+      // Priority 3: itemprop
+      const itemprop = element.getAttribute("itemprop");
+      if (itemprop === "price" || itemprop === "offers") {
+        try {
+          const selector = `[itemprop="${itemprop}"]`;
+          const matches = document.querySelectorAll(selector);
+          if (matches.length === 1) return selector;
+        } catch (e) {
+          console.warn("[Picker] Itemprop selector failed:", e);
+        }
+      }
+
+      // Priority 4: Build path with classes
+      const path = [];
+      let current = element;
+      let depth = 0;
+
+      while (current && current !== document.body && depth < 5) {
+        let selector = current.tagName.toLowerCase();
+
+        if (current.id && /^[a-zA-Z][\w-]*$/.test(current.id)) {
+          try {
+            path.unshift(`#${CSS.escape(current.id)}`);
+            break;
+          } catch (e) {
+            console.warn("[Picker] Path ID escape failed:", e);
+          }
+        }
+
+        if (current.classList && current.classList.length > 0) {
+          const classes = Array.from(current.classList)
+            .filter((c) => c && c.length < 30 && !/^(x\d+|css-|_)/.test(c))
+            .slice(0, 2);
+
+          if (classes.length > 0) {
+            try {
+              selector += "." + classes.map(c => CSS.escape(c)).join(".");
+            } catch (e) {
+              console.warn("[Picker] Class escape failed:", e);
+            }
+          }
+        }
+
+        // Add nth-child for better specificity if needed
+        if (current.parentElement) {
+          const siblings = Array.from(current.parentElement.children);
+          const index = siblings.indexOf(current);
+          if (siblings.length > 1 && index >= 0) {
+            selector += `:nth-child(${index + 1})`;
+          }
+        }
+
+        path.unshift(selector);
+        current = current.parentElement;
+        depth++;
+      }
+
+      const finalSelector = path.join(" > ");
+      
+      // Validate selector works
+      try {
+        const matches = document.querySelectorAll(finalSelector);
+        if (matches.length === 1 && matches[0] === element) {
+          return finalSelector;
+        }
+      } catch (e) {
+        console.warn("[Picker] Final selector validation failed:", e);
+      }
+
+      return finalSelector;
+    } catch (error) {
+      console.error("[Picker] ❌ Selector generation failed:", error);
+      return element.tagName.toLowerCase();
+    }
   }
 
   // Mouse move handler
@@ -397,13 +452,20 @@
 
   // Show confirmation panel
   function showConfirmationPanel() {
-    const text = selectedElement.textContent.trim();
-    const selector = generateSelector(selectedElement);
-    const price = extractPrice(text);
+    try {
+      const text = selectedElement.textContent.trim();
+      const selector = generateSelector(selectedElement);
+      const price = extractPrice(text);
 
-    console.log("[Picker] Generated selector:", selector);
-    console.log("[Picker] Extracted text:", text);
-    console.log("[Picker] Extracted price:", price);
+      console.log("[Picker] Generated selector:", selector);
+      console.log("[Picker] Extracted text:", text);
+      console.log("[Picker] Extracted price:", price);
+
+      if (!selector) {
+        console.error("[Picker] ❌ Failed to generate selector");
+        showErrorMessage("Selector oluşturulamadı. Lütfen başka bir element seçin.");
+        return;
+      }
 
     panel = document.createElement("div");
     panel.className = "price-picker-panel";
@@ -457,33 +519,56 @@
     document
       .getElementById("pickerConfirm")
       .addEventListener("click", async () => {
-        console.log("[Picker] Confirming selection...");
+        try {
+          console.log("[Picker] Confirming selection...");
 
-        // Save selector
-        await browser.storage.sync.set({
-          [domain]: {
-            selector,
-            exampleText: text,
-            lastSaved: Date.now(),
-          },
-        });
+          // Save selector
+          await browser.storage.sync.set({
+            [domain]: {
+              selector,
+              exampleText: text,
+              lastSaved: Date.now(),
+            },
+          });
 
-        // Send message
-        browser.runtime.sendMessage({
-          action: "manualPriceSelected",
-          data: { text, price, url: location.href, selector },
-        });
+          // Send message
+          await browser.runtime.sendMessage({
+            action: "manualPriceSelected",
+            data: { text, price, url: location.href, selector },
+          });
 
-        console.log("[Picker] ✅ Selection confirmed and saved");
+          console.log("[Picker] ✅ Selection confirmed and saved");
 
-        // Show success
-        panel.innerHTML = `
-        <h2>✅ Başarılı!</h2>
-        <p>Fiyat öğesi kaydedildi.<br>Bu site artık otomatik olarak fiyatı çekecek.</p>
-      `;
+          // Show success
+          panel.innerHTML = `
+          <h2>✅ Başarılı!</h2>
+          <p>Fiyat öğesi kaydedildi.<br>Bu site artık otomatik olarak fiyatı çekecek.</p>
+        `;
 
-        setTimeout(cleanup, 2000);
+          setTimeout(cleanup, 2000);
+        } catch (error) {
+          console.error("[Picker] ❌ Save failed:", error);
+          panel.innerHTML = `
+          <h2>❌ Hata</h2>
+          <p>Kayıt sırasında hata oluştu.<br>${error.message}</p>
+          <div class="price-picker-buttons">
+            <button class="price-picker-btn price-picker-btn-cancel" id="pickerRetry">
+              Tekrar Dene
+            </button>
+          </div>
+        `;
+          
+          document.getElementById("pickerRetry").addEventListener("click", () => {
+            panel.remove();
+            cleanup();
+          });
+        }
       });
+    } catch (error) {
+      console.error("[Picker] ❌ Panel creation failed:", error);
+      showErrorMessage("Panel oluşturulurken hata oluştu.");
+      cleanup();
+    }
   }
 
   // Show success message
@@ -498,29 +583,66 @@
     setTimeout(() => success.remove(), 2000);
   }
 
+  // Show error message
+  function showErrorMessage(message) {
+    const error = document.createElement("div");
+    error.className = "price-picker-panel";
+    error.innerHTML = `
+      <h2>❌ Hata</h2>
+      <p>${message}</p>
+      <div class="price-picker-buttons">
+        <button class="price-picker-btn price-picker-btn-confirm" id="errorOk">
+          Tamam
+        </button>
+      </div>
+    `;
+    document.body.appendChild(error);
+    
+    document.getElementById("errorOk").addEventListener("click", () => {
+      error.remove();
+    });
+    
+    setTimeout(() => error.remove(), 5000);
+  }
+
   // Cleanup
   function cleanup() {
     console.log("[Picker] 🧹 Cleaning up...");
 
-    // Remove event listeners
-    overlay?.removeEventListener("mousemove", handleMouseMove);
-    overlay?.removeEventListener("click", handleClick);
-    document.removeEventListener("keydown", handleKeyDown);
+    try {
+      // Remove event listeners
+      if (overlay) {
+        overlay.removeEventListener("mousemove", handleMouseMove);
+        overlay.removeEventListener("click", handleClick);
+      }
+      document.removeEventListener("keydown", handleKeyDown);
 
-    // Remove highlights
-    document.querySelectorAll(".price-picker-highlight").forEach((el) => {
-      el.classList.remove("price-picker-highlight");
-    });
+      // Remove highlights
+      document.querySelectorAll(".price-picker-highlight").forEach((el) => {
+        el.classList.remove("price-picker-highlight");
+      });
 
-    // Remove elements
-    overlay?.remove();
-    tooltip?.remove();
-    panel?.remove();
-    hint?.remove();
-    document.getElementById("price-picker-styles")?.remove();
+      // Remove elements
+      overlay?.remove();
+      tooltip?.remove();
+      panel?.remove();
+      hint?.remove();
+      document.getElementById("price-picker-styles")?.remove();
 
-    window.__PRICE_PICKER_ACTIVE__ = false;
-    console.log("[Picker] ✅ Cleanup complete");
+      // Clear references to prevent memory leaks
+      overlay = null;
+      tooltip = null;
+      panel = null;
+      hint = null;
+      currentHighlight = null;
+      selectedElement = null;
+
+      window.__PRICE_PICKER_ACTIVE__ = false;
+      console.log("[Picker] ✅ Cleanup complete");
+    } catch (error) {
+      console.error("[Picker] ⚠️ Cleanup error:", error);
+      window.__PRICE_PICKER_ACTIVE__ = false;
+    }
   }
 
   // Attach event listeners
