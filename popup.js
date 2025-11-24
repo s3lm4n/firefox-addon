@@ -674,10 +674,13 @@
     const fragment = document.createDocumentFragment();
     const tempDiv = document.createElement("div");
     
+    // Create index map for O(1) lookup instead of O(n) indexOf
+    const productIndexMap = new Map(products.map((p, i) => [p, i]));
+    
     // Batch render for performance
     tempDiv.innerHTML = filtered
-      .map((product, idx) => {
-        const originalIndex = products.indexOf(product);
+      .map((product) => {
+        const originalIndex = productIndexMap.get(product);
         return renderProductCard(product, originalIndex);
       })
       .join("");

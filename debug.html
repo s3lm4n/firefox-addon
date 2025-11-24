@@ -903,7 +903,10 @@
         // Auto scroll to bottom - use requestAnimationFrame for reliability
         if (state.autoScroll) {
           requestAnimationFrame(() => {
-            output.scrollTop = output.scrollHeight;
+            // Check if element is still in DOM before scrolling
+            if (output && output.isConnected) {
+              output.scrollTop = output.scrollHeight;
+            }
           });
         }
 
