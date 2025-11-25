@@ -5,24 +5,18 @@
 
   const logger = PriceTrackerHelpers.createLogger("Background");
 
-  const DEFAULT_SETTINGS = {
-    checkInterval: 30,
-    notifications: true,
-    notifyOnPriceUp: false,
-    notifyOnPriceDown: true,
-    autoCheck: true,
-    maxRetries: 3,
-    rateLimitPerHour: 100,
-    minChangePercent: 5,
-    enablePicker: false,
-    verboseLogging: false,
-    cacheDuration: 300,
-  };
+  // Use centralized default settings from Config
+  const DEFAULT_SETTINGS = Config.DEFAULT_SETTINGS;
 
   let settings = null;
   let rateLimiter = null;
 
-  const cache = new Map();
+  // Use centralized cache manager
+  const cache = CacheManager.createCache({
+    defaultTTL: Config.CACHE.BACKGROUND_DURATION_MS,
+    maxSize: 100,
+    autoCleanup: true,
+  });
   const pendingRequests = new Map();
 
   /**
@@ -264,8 +258,9 @@
    */
   async function checkSingleProduct(product) {
     try {
-      if (!product || !product.url || !product.price) {
-        throw new Error("Invalid product data");
+      // Use centralized validation
+      if (!Validators.isValidProductInfo(product)) {
+        throw new PriceTrackerErrors.ValidationError("Invalid product data");
       }
 
       logger.info(
@@ -352,13 +347,11 @@
    * Fetch product price
    */
   async function fetchProductPrice(url) {
-    if (cache.has(url)) {
-      const cached = cache.get(url);
-      if (Date.now() - cached.timestamp < 300000) {
-        logger.info("💾 Cache hit");
-        return cached.data;
-      }
-      cache.delete(url);
+    // Use cache manager's get method
+    const cached = cache.get(url);
+    if (cached !== undefined) {
+      logger.info("💾 Cache hit");
+      return cached;
     }
 
     if (pendingRequests.has(url)) {
@@ -369,7 +362,10 @@
     const requestPromise = (async () => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          Config.NETWORK.REQUEST_TIMEOUT_MS
+        );
 
         const response = await fetch(url, {
           method: "GET",
@@ -411,17 +407,17 @@
         }
 
         if (productInfo) {
-          cache.set(url, { data: productInfo, timestamp: Date.now() });
+          cache.set(url, productInfo);
         }
 
         return productInfo;
       } catch (error) {
         if (error.name === "AbortError") {
           logger.error("⏱️ Request timeout");
-          throw new Error("Request timeout");
+          throw new PriceTrackerErrors.NetworkError("Request timeout", { url });
         }
         logger.error("🔴 Fetch error:", error);
-        throw error;
+        throw new PriceTrackerErrors.NetworkError(error.message, { url });
       } finally {
         pendingRequests.delete(url);
       }
@@ -483,21 +479,21 @@
         console.log("[Background] Message received:", request.action);
 
         switch (request.action) {
-          case "checkAllPrices":
+          case Config.MESSAGE_ACTIONS.CHECK_ALL_PRICES:
             const allResult = await checkAllPrices();
             console.log("[Background] Check all result:", allResult);
             return allResult;
 
-          case "checkSingleProduct":
+          case Config.MESSAGE_ACTIONS.CHECK_SINGLE_PRODUCT:
             if (!request.product) {
-              throw new Error("Product data missing");
+              throw new PriceTrackerErrors.ValidationError("Product data missing");
             }
             console.log("[Background] Checking product:", request.product.name);
             const singleResult = await checkSingleProduct(request.product);
             console.log("[Background] Check single result:", singleResult);
             return singleResult;
 
-          case "updateSettings":
+          case Config.MESSAGE_ACTIONS.UPDATE_SETTINGS:
             const saved = await saveSettings(request.settings);
 
             if (saved) {
@@ -522,10 +518,10 @@
 
             return { success: saved, settings: settings };
 
-          case "getSettings":
+          case Config.MESSAGE_ACTIONS.GET_SETTINGS:
             return settings || DEFAULT_SETTINGS;
 
-          case "getDebugStats":
+          case Config.MESSAGE_ACTIONS.GET_DEBUG_STATS:
             // FIXED: Added debug stats API
             const trackedProducts = await PriceTrackerHelpers.getStorage(
               "trackedProducts",
@@ -533,27 +529,28 @@
             );
             return {
               productsCount: trackedProducts.length,
-              cacheSize: cache.size,
+              cacheSize: cache.size(),
               settings: settings,
               rateLimit: rateLimiter ? rateLimiter.getTokens() : 0,
             };
 
-          case "clearCache":
+          case Config.MESSAGE_ACTIONS.CLEAR_CACHE:
             cache.clear();
             logger.info("🧹 Cache cleared");
             return { success: true };
 
-          case "productDetected":
+          case Config.MESSAGE_ACTIONS.PRODUCT_DETECTED:
             logger.info("📦 Product detected:", request.product?.name);
             return { received: true };
 
           default:
-            throw new Error(`Unknown action: ${request.action}`);
+            throw new PriceTrackerErrors.ValidationError(`Unknown action: ${request.action}`);
         }
       } catch (error) {
-        logger.error(`❌ Error handling ${request.action}:`, error);
+        // Use centralized error handling
+        const result = PriceTrackerErrors.ErrorHandler.handle(error, "Background");
         console.error("[Background] Handler error:", error);
-        return { error: error.message };
+        return result;
       }
     };
 

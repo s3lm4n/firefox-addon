@@ -95,19 +95,13 @@
   }
 
   /**
-   * Load settings from background
+   * Load settings from background - uses Messenger abstraction
    */
   async function loadSettings() {
     try {
-      settings = await browser.runtime.sendMessage({ action: "getSettings" });
+      settings = await Messenger.Actions.getSettings();
       if (!settings) {
-        settings = {
-          checkInterval: 30,
-          notifications: true,
-          notifyOnPriceDown: true,
-          notifyOnPriceUp: false,
-          autoCheck: true,
-        };
+        settings = Config.DEFAULT_SETTINGS;
       }
     } catch (error) {
       console.error("[Popup] Settings load error:", error);
@@ -289,25 +283,17 @@
   }
 
   /**
-   * Load products from storage
+   * Load products from storage - uses centralized Validators
    */
   async function loadProducts() {
     try {
       const result = await browser.storage.local.get("trackedProducts");
       const stored = result.trackedProducts || [];
 
-      // Validate and sanitize products
+      // Validate and sanitize products using centralized Validators
       products = stored
-        .filter((p) => p && p.url && p.name && p.price)
-        .map((p) => ({
-          ...p,
-          price: parseFloat(p.price) || 0,
-          previousPrice: p.previousPrice ? parseFloat(p.previousPrice) : null,
-          initialPrice: p.initialPrice
-            ? parseFloat(p.initialPrice)
-            : parseFloat(p.price) || 0,
-        }))
-        .filter((p) => p.price > 0);
+        .map((p) => Validators.sanitizeProductData(p))
+        .filter((p) => p !== null);
 
       console.log("[Popup] 📦 Loaded", products.length, "products");
 
@@ -334,7 +320,7 @@
   }
 
   /**
-   * Check current page for product
+   * Check current page for product - uses Validators and Messenger
    */
   async function checkCurrentPage() {
     try {
@@ -352,12 +338,8 @@
 
       const tab = tabs[0];
 
-      // Validate URL
-      if (
-        !tab.url ||
-        tab.url.startsWith("about:") ||
-        tab.url.startsWith("moz-")
-      ) {
+      // Validate URL using centralized Validators
+      if (!Validators.isValidPageForExtraction(tab.url)) {
         showEmpty("Geçersiz sayfa");
         return;
       }
@@ -370,27 +352,11 @@
         return;
       }
 
-      // Get product info from content script
-      const response = await browser.tabs.sendMessage(tab.id, {
-        action: "getProductInfo",
-        skipCache: false,
-      });
+      // Get product info from content script using Messenger
+      const response = await Messenger.Actions.getProductInfo(tab.id, false);
 
-      if (response && response.price) {
-        const price = parseFloat(response.price);
-
-        if (isNaN(price) || price <= 0) {
-          showEmpty("Geçersiz fiyat");
-          return;
-        }
-
-        currentProduct = {
-          ...response,
-          price: price,
-          currency: response.currency || "TRY",
-          site: response.site || PriceTrackerHelpers.getDomain(response.url),
-        };
-
+      if (response && Validators.isValidProductInfo(response)) {
+        currentProduct = Validators.sanitizeProductData(response);
         showProduct(currentProduct);
       } else {
         showEmpty("Ürün bulunamadı");
@@ -402,14 +368,12 @@
   }
 
   /**
-   * Ensure content script is injected and loaded
+   * Ensure content script is injected and loaded - uses Messenger
    */
   async function ensureContentScript(tabId) {
     try {
-      const response = await browser.tabs.sendMessage(tabId, {
-        action: "ping",
-      });
-      return response && response.pong;
+      const isLoaded = await Messenger.Actions.pingTab(tabId);
+      return isLoaded;
     } catch (e) {
       console.log("[Popup] 💉 Injecting content script...");
 
@@ -557,7 +521,7 @@
   }
 
   /**
-   * Refresh all products
+   * Refresh all products - uses Messenger abstraction
    */
   async function refreshAll() {
     if (products.length === 0) {
@@ -572,9 +536,7 @@
     `;
 
     try {
-      const result = await browser.runtime.sendMessage({
-        action: "checkAllPrices",
-      });
+      const result = await Messenger.Actions.checkAllPrices();
 
       if (result && !result.error) {
         els.refreshAllBtn.innerHTML = `
@@ -594,7 +556,7 @@
             : "ℹ️ Değişiklik yok";
         showToast(msg, result.updated > 0 ? "success" : "info");
 
-        // Reset button after 2 seconds
+        // Reset button after toast duration
         setTimeout(() => {
           els.refreshAllBtn.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -815,7 +777,7 @@
   }
 
   /**
-   * Check single product price
+   * Check single product price - uses Messenger abstraction
    */
   async function checkSingleProduct(index, btn) {
     const product = products[index];
@@ -826,10 +788,7 @@
     btn.innerHTML = '<div class="spinner"></div>';
 
     try {
-      const result = await browser.runtime.sendMessage({
-        action: "checkSingleProduct",
-        product: product,
-      });
+      const result = await Messenger.Actions.checkSingleProduct(product);
 
       if (result && result.product) {
         products[index] = result.product;
@@ -948,7 +907,7 @@
   }
 
   /**
-   * Show toast notification
+   * Show toast notification - uses Config.UI.TOAST_DURATION_MS
    */
   function showToast(message, type = "info") {
     const icons = {
@@ -965,7 +924,7 @@
 
     setTimeout(() => {
       els.toast.classList.remove("show");
-    }, 3000);
+    }, Config.UI.TOAST_DURATION_MS);
   }
 
   // Initialize when DOM is ready

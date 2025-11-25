@@ -32,18 +32,18 @@
     lastUrl: window.location.href,
     extractionInProgress: false,
     retryCount: 0,
-    maxRetries: 3,
+    maxRetries: Config.RETRY.MAX_RETRIES,
     lastMutationTime: 0,
     isReady: false,
   };
 
-  // Configuration
+  // Configuration from centralized Config module
   const config = {
-    cacheDuration: 5000,
-    mutationDebounce: 500,
-    dynamicCheckDelay: 1500,
-    slowSiteDelay: 3000,
-    initialCheckDelay: 1000,
+    cacheDuration: Config.CACHE.DURATION_MS,
+    mutationDebounce: Config.MUTATION.DEBOUNCE_MS,
+    dynamicCheckDelay: Config.CONTENT_TIMING.DYNAMIC_CHECK_DELAY_MS,
+    slowSiteDelay: Config.CONTENT_TIMING.SLOW_SITE_DELAY_MS,
+    initialCheckDelay: Config.CONTENT_TIMING.INITIAL_CHECK_DELAY_MS,
   };
 
   let mutationObserver = null;
@@ -52,45 +52,14 @@
   let readyCheckTimeout = null;
 
   /**
-   * Validate product info structure
+   * Validate product info structure - uses centralized Validators
    */
   function isValidProductInfo(info) {
-    if (!info || typeof info !== "object") {
-      logger.warn("Invalid product info: not an object");
-      return false;
+    const isValid = Validators.isValidProductInfo(info);
+    if (!isValid && info) {
+      logger.warn("Invalid product info detected");
     }
-
-    // Check price
-    if (!info.price) {
-      logger.warn("Invalid product info: missing price");
-      return false;
-    }
-
-    const price = parseFloat(info.price);
-    if (isNaN(price) || price <= 0) {
-      logger.warn(`Invalid product info: bad price value (${info.price})`);
-      return false;
-    }
-
-    // Check name
-    if (!info.name || typeof info.name !== "string" || info.name.length < 3) {
-      logger.warn(`Invalid product info: bad name (${info.name})`);
-      return false;
-    }
-
-    // Check URL
-    if (!info.url || !PriceTrackerHelpers.isValidUrl(info.url)) {
-      logger.warn(`Invalid product info: bad URL (${info.url})`);
-      return false;
-    }
-
-    // Check currency
-    if (!info.currency || typeof info.currency !== "string") {
-      logger.warn("Invalid product info: missing or invalid currency");
-      return false;
-    }
-
-    return true;
+    return isValid;
   }
 
   /**
@@ -154,7 +123,7 @@
         // No product found - maybe retry
         if (state.retryCount < state.maxRetries) {
           state.retryCount++;
-          const delay = 1000 * Math.pow(2, state.retryCount - 1);
+          const delay = Config.RETRY.BASE_DELAY_MS * Math.pow(2, state.retryCount - 1);
 
           logger.warn(
             `⚠️ No product found, retrying in ${delay}ms (${state.retryCount}/${state.maxRetries})`
@@ -169,12 +138,18 @@
         return null;
       }
     } catch (error) {
-      logger.error("❌ Extraction error:", error);
+      // Use centralized error handling
+      PriceTrackerErrors.ErrorHandler.log(
+        error instanceof PriceTrackerErrors.PriceTrackerError 
+          ? error 
+          : new PriceTrackerErrors.ExtractionError(error.message),
+        "Content"
+      );
 
       // Retry on error
       if (state.retryCount < state.maxRetries) {
         state.retryCount++;
-        const delay = 1000 * Math.pow(2, state.retryCount - 1);
+        const delay = Config.RETRY.BASE_DELAY_MS * Math.pow(2, state.retryCount - 1);
 
         logger.info(
           `🔄 Retrying extraction in ${delay}ms (${state.retryCount}/${state.maxRetries})`
@@ -406,12 +381,12 @@
   }
 
   /**
-   * Notify background script
+   * Notify background script - uses Messenger abstraction
    */
   async function notifyBackgroundScript(info) {
     try {
       await browser.runtime.sendMessage({
-        action: "productDetected",
+        action: Config.MESSAGE_ACTIONS.PRODUCT_DETECTED,
         product: info,
       });
       logger.info("📤 Product info sent to background");
@@ -429,29 +404,29 @@
     const handleAsync = async () => {
       try {
         switch (request.action) {
-          case "ping":
+          case Config.MESSAGE_ACTIONS.PING:
             console.log("[Content] Ping received, responding with pong");
             return { pong: true, loaded: true, ready: state.isReady };
 
-          case "getProductInfo":
+          case Config.MESSAGE_ACTIONS.GET_PRODUCT_INFO:
             logger.info("📥 Product info requested by popup");
             const info = await extractProductInfo(request.skipCache || false);
             console.log("[Content] Returning product info:", info);
             return info;
 
-          case "clearCache":
+          case Config.MESSAGE_ACTIONS.CLEAR_CACHE:
             logger.info("🧹 Cache clear requested");
             clearCache();
             return { success: true };
 
-          case "forceRefresh":
+          case Config.MESSAGE_ACTIONS.FORCE_REFRESH:
             logger.info("🔄 Force refresh requested");
             clearCache();
             state.retryCount = 0;
             const refreshedInfo = await extractProductInfo(true);
             return refreshedInfo;
 
-          case "getState":
+          case Config.MESSAGE_ACTIONS.GET_STATE:
             return {
               hasCache: !!state.extractionCache,
               cacheAge: Date.now() - state.cacheTimestamp,
@@ -461,7 +436,7 @@
             };
 
           default:
-            throw new Error(`Unknown action: ${request.action}`);
+            throw new PriceTrackerErrors.ValidationError(`Unknown action: ${request.action}`);
         }
       } catch (error) {
         logger.error(`❌ Error handling ${request.action}:`, error);
@@ -484,28 +459,10 @@
   });
 
   /**
-   * Check if page is valid for extraction
+   * Check if page is valid for extraction - uses centralized Validators
    */
   function isValidPage() {
-    const url = window.location.href;
-
-    if (
-      url.startsWith("about:") ||
-      url.startsWith("moz-") ||
-      url.startsWith("chrome:")
-    ) {
-      return false;
-    }
-
-    if (url.startsWith("file:")) {
-      return false;
-    }
-
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      return false;
-    }
-
-    return true;
+    return Validators.isValidPageForExtraction(window.location.href);
   }
 
   /**
