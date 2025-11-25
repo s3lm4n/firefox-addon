@@ -65,7 +65,7 @@
       background: rgba(0, 0, 0, 0.4) !important;
       backdrop-filter: blur(3px) !important;
       z-index: 2147483646 !important;
-      cursor: crosshair !important;
+      pointer-events: none !important;
     }
     
     .price-picker-highlight {
@@ -107,6 +107,7 @@
       font-weight: 600 !important;
       z-index: 2147483647 !important;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+      pointer-events: none !important;
       animation: slideDown 0.4s ease !important;
     }
     
@@ -147,6 +148,14 @@
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
       }
+    }
+    
+    body.price-picker-active {
+      cursor: crosshair !important;
+    }
+    
+    body.price-picker-active *:not(.price-picker-panel):not(.price-picker-panel *) {
+      cursor: crosshair !important;
     }
     
     .price-picker-panel h2 {
@@ -236,6 +245,9 @@
     }
   `;
   document.head.appendChild(style);
+
+  // Add active class to body for cursor
+  document.body.classList.add('price-picker-active');
 
   // Create overlay
   overlay = document.createElement("div");
@@ -391,9 +403,15 @@
 
   // Mouse move handler
   function handleMouseMove(e) {
-    // Don't highlight overlay or tooltip
+    // Don't highlight overlay, tooltip, panel, or hint
     const target = e.target;
-    if (target === overlay || target === tooltip || target === hint) {
+    if (
+      target === overlay || 
+      target === tooltip || 
+      target === hint || 
+      target === panel ||
+      target.closest('.price-picker-panel')
+    ) {
       return;
     }
 
@@ -416,7 +434,8 @@
     tooltip.style.top = e.clientY + 15 + "px";
 
     // Keep tooltip in viewport
-    setTimeout(() => {
+    requestAnimationFrame(() => {
+      if (!tooltip) return;
       const rect = tooltip.getBoundingClientRect();
       if (rect.right > window.innerWidth) {
         tooltip.style.left = e.clientX - rect.width - 15 + "px";
@@ -424,18 +443,25 @@
       if (rect.bottom > window.innerHeight) {
         tooltip.style.top = e.clientY - rect.height - 15 + "px";
       }
-    }, 0);
+    });
   }
 
   // Click handler
   function handleClick(e) {
+    // Don't handle clicks on overlay, tooltip, hint, or panel
+    if (
+      e.target === overlay || 
+      e.target === tooltip || 
+      e.target === hint ||
+      e.target === panel ||
+      e.target.closest('.price-picker-panel')
+    ) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-
-    if (e.target === overlay || e.target === tooltip || e.target === hint) {
-      return;
-    }
 
     selectedElement = e.target;
     console.log("[Picker] Element selected:", selectedElement);
@@ -623,12 +649,13 @@
     console.log("[Picker] 🧹 Cleaning up...");
 
     try {
-      // Remove event listeners
-      if (overlay) {
-        overlay.removeEventListener("mousemove", handleMouseMove);
-        overlay.removeEventListener("click", handleClick);
-      }
-      document.removeEventListener("keydown", handleKeyDown);
+      // Remove event listeners - FIXED: Remove from document
+      document.removeEventListener("mousemove", handleMouseMove, true);
+      document.removeEventListener("click", handleClick, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+
+      // Remove active class from body
+      document.body.classList.remove('price-picker-active');
 
       // Remove highlights
       document.querySelectorAll(".price-picker-highlight").forEach((el) => {
@@ -658,9 +685,10 @@
     }
   }
 
-  // Attach event listeners
-  overlay.addEventListener("mousemove", handleMouseMove, false);
-  overlay.addEventListener("click", handleClick, true);
+  // Attach event listeners - FIXED: Listen on document, not overlay
+  // The overlay blocks clicks, so we need to use capture phase on document
+  document.addEventListener("mousemove", handleMouseMove, true);
+  document.addEventListener("click", handleClick, true);
   document.addEventListener("keydown", handleKeyDown, true);
 
   console.log("[Picker] ✅ Event listeners attached, picker ready!");

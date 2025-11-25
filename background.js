@@ -543,6 +543,28 @@
             logger.info("📦 Product detected:", request.product?.name);
             return { received: true };
 
+          case "manualPriceSelected":
+            // Handle manual price selection from picker.js
+            logger.info("🎯 Manual price selected:", request.data);
+            if (request.data) {
+              const { text, price, url, selector } = request.data;
+              logger.success(`Manual selection saved: ${text} (${price}) for ${url}`);
+              
+              // Notify any open popup about the selection
+              try {
+                const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+                if (tabs[0]) {
+                  browser.tabs.sendMessage(tabs[0].id, {
+                    action: "manualPriceResult",
+                    data: request.data
+                  }).catch(() => {});
+                }
+              } catch (e) {
+                // Ignore errors when notifying
+              }
+            }
+            return { success: true };
+
           default:
             throw new PriceTrackerErrors.ValidationError(`Unknown action: ${request.action}`);
         }
