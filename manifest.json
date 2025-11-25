@@ -26,6 +26,11 @@
 
   "background": {
     "scripts": [
+      "lib/config.js",
+      "lib/errors.js",
+      "lib/validators.js",
+      "lib/cache.js",
+      "lib/messaging.js",
       "lib/helpers.js",
       "lib/sites.js",
       "lib/parser.js",
@@ -52,13 +57,18 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["lib/helpers.js", "lib/sites.js", "lib/parser.js", "content.js"],
+      "js": ["lib/config.js", "lib/errors.js", "lib/validators.js", "lib/cache.js", "lib/messaging.js", "lib/helpers.js", "lib/sites.js", "lib/parser.js", "content.js"],
       "run_at": "document_end",
       "all_frames": false
     }
   ],
 
   "web_accessible_resources": [
+    "lib/config.js",
+    "lib/errors.js",
+    "lib/validators.js",
+    "lib/cache.js",
+    "lib/messaging.js",
     "lib/helpers.js",
     "lib/sites.js",
     "lib/parser.js",

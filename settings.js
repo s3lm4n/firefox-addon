@@ -52,26 +52,14 @@
   }
 
   /**
-   * Load settings from storage
+   * Load settings from storage - uses Messenger and Config
    */
   async function loadSettings() {
     try {
-      settings = await browser.runtime.sendMessage({ action: "getSettings" });
+      settings = await Messenger.Actions.getSettings();
 
       if (!settings) {
-        settings = {
-          checkInterval: 30,
-          notifications: true,
-          notifyOnPriceDown: true,
-          notifyOnPriceUp: false,
-          autoCheck: true,
-          maxRetries: 3,
-          rateLimitPerHour: 100,
-          minChangePercent: 5,
-          enablePicker: false,
-          verboseLogging: false,
-          cacheDuration: 300,
-        };
+        settings = Config.DEFAULT_SETTINGS;
       }
 
       // Populate form fields
@@ -210,11 +198,8 @@
         cacheDuration: parseInt($("cacheDuration")?.value) || 300,
       };
 
-      // Send to background
-      await browser.runtime.sendMessage({
-        action: "updateSettings",
-        settings: newSettings,
-      });
+      // Send to background using Messenger
+      await Messenger.Actions.updateSettings(newSettings);
 
       settings = newSettings;
 
@@ -296,10 +281,7 @@
             "trackedProducts",
             data.products
           );
-          await browser.runtime.sendMessage({
-            action: "updateSettings",
-            settings: data.settings,
-          });
+          await Messenger.Actions.updateSettings(data.settings);
 
           products = data.products;
           settings = data.settings;
@@ -327,7 +309,7 @@
   }
 
   /**
-   * Clear all data
+   * Clear all data - uses Messenger
    */
   async function clearAllData() {
     try {
@@ -339,9 +321,7 @@
 
       // Clear storage
       await PriceTrackerHelpers.setStorage("trackedProducts", []);
-      await browser.runtime.sendMessage({
-        action: "clearCache",
-      });
+      await Messenger.Actions.clearCache();
 
       products = [];
       updateDebugStats();
@@ -405,11 +385,11 @@
   }
 
   /**
-   * Clear cache
+   * Clear cache - uses Messenger
    */
   async function clearCache() {
     try {
-      await browser.runtime.sendMessage({ action: "clearCache" });
+      await Messenger.Actions.clearCache();
       logToConsole("Önbellek temizlendi", "success");
       showToast("🧹 Önbellek temizlendi", "success");
     } catch (error) {
@@ -427,7 +407,7 @@
   }
 
   /**
-   * Reset settings to defaults
+   * Reset settings to defaults - uses Config.DEFAULT_SETTINGS
    */
   async function resetSettings() {
     try {
@@ -437,24 +417,9 @@
 
       if (!confirmed) return;
 
-      const defaults = {
-        checkInterval: 30,
-        notifications: true,
-        notifyOnPriceDown: true,
-        notifyOnPriceUp: false,
-        autoCheck: true,
-        maxRetries: 3,
-        rateLimitPerHour: 100,
-        minChangePercent: 5,
-        enablePicker: false,
-        verboseLogging: false,
-        cacheDuration: 300,
-      };
+      const defaults = Config.DEFAULT_SETTINGS;
 
-      await browser.runtime.sendMessage({
-        action: "updateSettings",
-        settings: defaults,
-      });
+      await Messenger.Actions.updateSettings(defaults);
 
       settings = defaults;
       populateForm();
