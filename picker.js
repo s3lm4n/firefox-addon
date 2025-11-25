@@ -1,19 +1,40 @@
-// Manual Price Picker v2.0 - FIXED VERSION
+// Manual Price Picker v2.1 - CRITICAL FIX: Browser API Access
 (async () => {
   "use strict";
+
+  // CRITICAL FIX: Safe browser API access
+  const getBrowserAPI = () => {
+    if (typeof browser !== "undefined") return browser;
+    if (typeof chrome !== "undefined") return chrome;
+    console.error("[Picker] No browser API available");
+    return null;
+  };
+
+  const browserAPI = getBrowserAPI();
 
   // Prevent multiple instances
   if (window.__PRICE_PICKER_ACTIVE__) {
     console.log("[Picker] Already active, skipping");
     return;
   }
+
+  if (!browserAPI) {
+    console.error("[Picker] Cannot run without browser API");
+    alert("Picker başlatılamadı: Tarayıcı API'si bulunamadı");
+    return;
+  }
+
   window.__PRICE_PICKER_ACTIVE__ = true;
 
-  const browser = window.browser || window.chrome;
   const domain = location.hostname.replace(/^www\./, "");
 
   // Constants for selector generation
-  const DATA_ATTRIBUTES = ["data-testid", "data-test-id", "data-price", "data-product-id"];
+  const DATA_ATTRIBUTES = [
+    "data-testid",
+    "data-test-id",
+    "data-price",
+    "data-product-id",
+  ];
   const MAX_CLASS_LENGTH = 30;
   const CLASS_EXCLUDE_PATTERN = /^(x\d+|css-|_)/;
   const MAX_SELECTOR_DEPTH = 5;
@@ -27,18 +48,54 @@
 
   console.log("[Picker] 🎯 Initializing manual price picker...");
 
-  // Check for saved selector
-  try {
-    const data = await browser.storage.sync.get(domain);
-    const saved = data[domain];
-    if (saved?.selector) {
-      const el = document.querySelector(saved.selector);
-      if (el?.textContent.trim()) {
-        console.log("[Picker] ✅ Found saved selector, using it");
-        const text = el.textContent.trim();
-        const price = extractPrice(text);
+  // FIXED: Safe storage access with error handling
+  const loadSavedSelector = async () => {
+    try {
+      if (!browserAPI.storage || !browserAPI.storage.sync) {
+        console.log("[Picker] Storage API not available");
+        return null;
+      }
 
-        browser.runtime.sendMessage({
+      const data = await browserAPI.storage.sync.get(domain);
+      return data[domain] || null;
+    } catch (error) {
+      console.error("[Picker] Storage access error:", error);
+      return null;
+    }
+  };
+
+  const saveSelectorToStorage = async (selector, text) => {
+    try {
+      if (!browserAPI.storage || !browserAPI.storage.sync) {
+        throw new Error("Storage API not available");
+      }
+
+      await browserAPI.storage.sync.set({
+        [domain]: {
+          selector,
+          exampleText: text,
+          lastSaved: Date.now(),
+        },
+      });
+      console.log("[Picker] ✅ Selector saved successfully");
+      return true;
+    } catch (error) {
+      console.error("[Picker] Storage save error:", error);
+      throw new Error(`Kayıt başarısız: ${error.message}`);
+    }
+  };
+
+  // Check for saved selector
+  const saved = await loadSavedSelector();
+  if (saved?.selector) {
+    const el = document.querySelector(saved.selector);
+    if (el?.textContent.trim()) {
+      console.log("[Picker] ✅ Found saved selector, using it");
+      const text = el.textContent.trim();
+      const price = extractPrice(text);
+
+      try {
+        await browserAPI.runtime.sendMessage({
           action: "manualPriceSelected",
           data: { text, price, url: location.href, selector: saved.selector },
         });
@@ -46,10 +103,10 @@
         showSuccessMessage(`Otomatik fiyat bulundu: ${text}`);
         setTimeout(() => (window.__PRICE_PICKER_ACTIVE__ = false), 2000);
         return;
+      } catch (error) {
+        console.error("[Picker] Message send error:", error);
       }
     }
-  } catch (e) {
-    console.log("[Picker] No saved selector, starting manual mode");
   }
 
   // Inject styles
@@ -247,7 +304,7 @@
   document.head.appendChild(style);
 
   // Add active class to body for cursor
-  document.body.classList.add('price-picker-active');
+  document.body.classList.add("price-picker-active");
 
   // Create overlay
   overlay = document.createElement("div");
@@ -342,7 +399,11 @@
       let current = element;
       let depth = 0;
 
-      while (current && current !== document.body && depth < MAX_SELECTOR_DEPTH) {
+      while (
+        current &&
+        current !== document.body &&
+        depth < MAX_SELECTOR_DEPTH
+      ) {
         let selector = current.tagName.toLowerCase();
 
         if (current.id && /^[a-zA-Z][\w-]*$/.test(current.id)) {
@@ -356,12 +417,17 @@
 
         if (current.classList && current.classList.length > 0) {
           const classes = Array.from(current.classList)
-            .filter((c) => c && c.length < MAX_CLASS_LENGTH && !CLASS_EXCLUDE_PATTERN.test(c))
+            .filter(
+              (c) =>
+                c &&
+                c.length < MAX_CLASS_LENGTH &&
+                !CLASS_EXCLUDE_PATTERN.test(c)
+            )
             .slice(0, 2);
 
           if (classes.length > 0) {
             try {
-              selector += "." + classes.map(c => CSS.escape(c)).join(".");
+              selector += "." + classes.map((c) => CSS.escape(c)).join(".");
             } catch (e) {
               console.warn("[Picker] Class escape failed:", e);
             }
@@ -383,7 +449,7 @@
       }
 
       const finalSelector = path.join(" > ");
-      
+
       // Validate selector works
       try {
         const matches = document.querySelectorAll(finalSelector);
@@ -403,28 +469,24 @@
 
   // Mouse move handler
   function handleMouseMove(e) {
-    // Don't highlight overlay, tooltip, panel, or hint
     const target = e.target;
     if (
-      target === overlay || 
-      target === tooltip || 
-      target === hint || 
+      target === overlay ||
+      target === tooltip ||
+      target === hint ||
       target === panel ||
-      target.closest('.price-picker-panel')
+      target.closest(".price-picker-panel")
     ) {
       return;
     }
 
-    // Remove previous highlight
     if (currentHighlight && currentHighlight !== target) {
       currentHighlight.classList.remove("price-picker-highlight");
     }
 
-    // Add new highlight
     currentHighlight = target;
     currentHighlight.classList.add("price-picker-highlight");
 
-    // Update tooltip
     const text = target.textContent.trim();
     const preview = text.substring(0, 80) + (text.length > 80 ? "..." : "");
 
@@ -433,7 +495,6 @@
     tooltip.style.left = e.clientX + 15 + "px";
     tooltip.style.top = e.clientY + 15 + "px";
 
-    // Keep tooltip in viewport
     requestAnimationFrame(() => {
       if (!tooltip) return;
       const rect = tooltip.getBoundingClientRect();
@@ -448,13 +509,12 @@
 
   // Click handler
   function handleClick(e) {
-    // Don't handle clicks on overlay, tooltip, hint, or panel
     if (
-      e.target === overlay || 
-      e.target === tooltip || 
+      e.target === overlay ||
+      e.target === tooltip ||
       e.target === hint ||
       e.target === panel ||
-      e.target.closest('.price-picker-panel')
+      e.target.closest(".price-picker-panel")
     ) {
       return;
     }
@@ -466,17 +526,14 @@
     selectedElement = e.target;
     console.log("[Picker] Element selected:", selectedElement);
 
-    // Remove highlights
     document.querySelectorAll(".price-picker-highlight").forEach((el) => {
       el.classList.remove("price-picker-highlight");
     });
 
-    // Hide tooltip
     if (tooltip) {
       tooltip.style.display = "none";
     }
 
-    // Show confirmation panel
     showConfirmationPanel();
   }
 
@@ -501,108 +558,105 @@
 
       if (!selector) {
         console.error("[Picker] ❌ Failed to generate selector");
-        showErrorMessage("Selector oluşturulamadı. Lütfen başka bir element seçin.");
+        showErrorMessage(
+          "Selector oluşturulamadı. Lütfen başka bir element seçin."
+        );
         return;
       }
 
-    panel = document.createElement("div");
-    panel.className = "price-picker-panel";
-    panel.innerHTML = `
-      <h2>🎯 Öğe Seçildi</h2>
-      <p>Bu öğeyi fiyat olarak kaydetmek istiyor musunuz?</p>
-      
-      <div class="price-picker-info">
-        <div class="price-picker-info-row">
-          <span class="price-picker-info-label">İçerik:</span>
-          <span class="price-picker-info-value" title="${text}">${text.substring(
-      0,
-      50
-    )}${text.length > 50 ? "..." : ""}</span>
-        </div>
-        <div class="price-picker-info-row">
-          <span class="price-picker-info-label">Fiyat:</span>
-          <span class="price-picker-info-value">${price || "Bulunamadı"}</span>
-        </div>
-        <div class="price-picker-info-row">
-          <span class="price-picker-info-label">Tag:</span>
-          <span class="price-picker-info-value">${selectedElement.tagName.toLowerCase()}</span>
-        </div>
-        <div class="price-picker-info-row">
-          <span class="price-picker-info-label">Selector:</span>
-          <span class="price-picker-info-value" title="${selector}">${selector.substring(
-      0,
-      40
-    )}...</span>
-        </div>
-      </div>
-      
-      <div class="price-picker-buttons">
-        <button class="price-picker-btn price-picker-btn-cancel" id="pickerCancel">
-          ❌ İptal
-        </button>
-        <button class="price-picker-btn price-picker-btn-confirm" id="pickerConfirm">
-          ✅ Onayla
-        </button>
-      </div>
-    `;
-
-    document.body.appendChild(panel);
-
-    // Add event listeners
-    document.getElementById("pickerCancel").addEventListener("click", () => {
-      panel.remove();
-      cleanup();
-    });
-
-    document
-      .getElementById("pickerConfirm")
-      .addEventListener("click", async () => {
-        try {
-          console.log("[Picker] Confirming selection...");
-
-          // Save selector
-          await browser.storage.sync.set({
-            [domain]: {
-              selector,
-              exampleText: text,
-              lastSaved: Date.now(),
-            },
-          });
-
-          // Send message
-          await browser.runtime.sendMessage({
-            action: "manualPriceSelected",
-            data: { text, price, url: location.href, selector },
-          });
-
-          console.log("[Picker] ✅ Selection confirmed and saved");
-
-          // Show success
-          panel.innerHTML = `
-          <h2>✅ Başarılı!</h2>
-          <p>Fiyat öğesi kaydedildi.<br>Bu site artık otomatik olarak fiyatı çekecek.</p>
-        `;
-
-          setTimeout(cleanup, 2000);
-        } catch (error) {
-          console.error("[Picker] ❌ Save failed:", error);
-          const errorMsg = escapeHtml(error.message || "Bilinmeyen hata");
-          panel.innerHTML = `
-          <h2>❌ Hata</h2>
-          <p>Kayıt sırasında hata oluştu.<br>${errorMsg}</p>
-          <div class="price-picker-buttons">
-            <button class="price-picker-btn price-picker-btn-cancel" id="pickerRetry">
-              Kapat
-            </button>
+      panel = document.createElement("div");
+      panel.className = "price-picker-panel";
+      panel.innerHTML = `
+        <h2>🎯 Öğe Seçildi</h2>
+        <p>Bu öğeyi fiyat olarak kaydetmek istiyor musunuz?</p>
+        
+        <div class="price-picker-info">
+          <div class="price-picker-info-row">
+            <span class="price-picker-info-label">İçerik:</span>
+            <span class="price-picker-info-value" title="${text}">${text.substring(
+        0,
+        50
+      )}${text.length > 50 ? "..." : ""}</span>
           </div>
-        `;
-          
-          document.getElementById("pickerRetry").addEventListener("click", () => {
-            panel.remove();
-            // Don't call cleanup - allow user to try again
-          });
-        }
+          <div class="price-picker-info-row">
+            <span class="price-picker-info-label">Fiyat:</span>
+            <span class="price-picker-info-value">${
+              price || "Bulunamadı"
+            }</span>
+          </div>
+          <div class="price-picker-info-row">
+            <span class="price-picker-info-label">Tag:</span>
+            <span class="price-picker-info-value">${selectedElement.tagName.toLowerCase()}</span>
+          </div>
+          <div class="price-picker-info-row">
+            <span class="price-picker-info-label">Selector:</span>
+            <span class="price-picker-info-value" title="${selector}">${selector.substring(
+        0,
+        40
+      )}...</span>
+          </div>
+        </div>
+        
+        <div class="price-picker-buttons">
+          <button class="price-picker-btn price-picker-btn-cancel" id="pickerCancel">
+            ❌ İptal
+          </button>
+          <button class="price-picker-btn price-picker-btn-confirm" id="pickerConfirm">
+            ✅ Onayla
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(panel);
+
+      document.getElementById("pickerCancel").addEventListener("click", () => {
+        panel.remove();
+        cleanup();
       });
+
+      document
+        .getElementById("pickerConfirm")
+        .addEventListener("click", async () => {
+          try {
+            console.log("[Picker] Confirming selection...");
+
+            // Save selector
+            await saveSelectorToStorage(selector, text);
+
+            // Send message
+            await browserAPI.runtime.sendMessage({
+              action: "manualPriceSelected",
+              data: { text, price, url: location.href, selector },
+            });
+
+            console.log("[Picker] ✅ Selection confirmed and saved");
+
+            panel.innerHTML = `
+            <h2>✅ Başarılı!</h2>
+            <p>Fiyat öğesi kaydedildi.<br>Bu site artık otomatik olarak fiyatı çekecek.</p>
+          `;
+
+            setTimeout(cleanup, 2000);
+          } catch (error) {
+            console.error("[Picker] ❌ Save failed:", error);
+            const errorMsg = escapeHtml(error.message || "Bilinmeyen hata");
+            panel.innerHTML = `
+            <h2>❌ Hata</h2>
+            <p>Kayıt sırasında hata oluştu.<br>${errorMsg}</p>
+            <div class="price-picker-buttons">
+              <button class="price-picker-btn price-picker-btn-cancel" id="pickerRetry">
+                Kapat
+              </button>
+            </div>
+          `;
+
+            document
+              .getElementById("pickerRetry")
+              .addEventListener("click", () => {
+                panel.remove();
+              });
+          }
+        });
     } catch (error) {
       console.error("[Picker] ❌ Panel creation failed:", error);
       showErrorMessage("Panel oluşturulurken hata oluştu.");
@@ -636,11 +690,11 @@
       </div>
     `;
     document.body.appendChild(error);
-    
+
     document.getElementById("errorOk").addEventListener("click", () => {
       error.remove();
     });
-    
+
     setTimeout(() => error.remove(), 5000);
   }
 
@@ -649,27 +703,22 @@
     console.log("[Picker] 🧹 Cleaning up...");
 
     try {
-      // Remove event listeners - FIXED: Remove from document
       document.removeEventListener("mousemove", handleMouseMove, true);
       document.removeEventListener("click", handleClick, true);
       document.removeEventListener("keydown", handleKeyDown, true);
 
-      // Remove active class from body
-      document.body.classList.remove('price-picker-active');
+      document.body.classList.remove("price-picker-active");
 
-      // Remove highlights
       document.querySelectorAll(".price-picker-highlight").forEach((el) => {
         el.classList.remove("price-picker-highlight");
       });
 
-      // Remove elements
       overlay?.remove();
       tooltip?.remove();
       panel?.remove();
       hint?.remove();
       document.getElementById("price-picker-styles")?.remove();
 
-      // Clear references to prevent memory leaks
       overlay = null;
       tooltip = null;
       panel = null;
@@ -685,8 +734,7 @@
     }
   }
 
-  // Attach event listeners - FIXED: Listen on document, not overlay
-  // The overlay blocks clicks, so we need to use capture phase on document
+  // Attach event listeners
   document.addEventListener("mousemove", handleMouseMove, true);
   document.addEventListener("click", handleClick, true);
   document.addEventListener("keydown", handleKeyDown, true);

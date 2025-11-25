@@ -1,38 +1,65 @@
-// Fixed Background Script v3.2 - Added Debug Stats API
-
+// Fixed Background Script v3.3 - CRITICAL FIXES
 (function () {
   "use strict";
 
   const logger = PriceTrackerHelpers.createLogger("Background");
 
-  // Use centralized default settings from Config
-  const DEFAULT_SETTINGS = Config.DEFAULT_SETTINGS;
+  // CRITICAL FIX: Ensure Config is available, provide fallback
+  const DEFAULT_SETTINGS =
+    typeof Config !== "undefined" && Config.DEFAULT_SETTINGS
+      ? Config.DEFAULT_SETTINGS
+      : {
+          checkInterval: 30,
+          notifications: true,
+          notifyOnPriceUp: false,
+          notifyOnPriceDown: true,
+          autoCheck: true,
+          maxRetries: 3,
+          rateLimitPerHour: 100,
+          minChangePercent: 5,
+          enablePicker: false,
+          verboseLogging: false,
+          cacheDuration: 300,
+        };
 
   let settings = null;
   let rateLimiter = null;
 
-  // Use centralized cache manager
-  const cache = CacheManager.createCache({
-    defaultTTL: Config.CACHE.BACKGROUND_DURATION_MS,
-    maxSize: 100,
-    autoCleanup: true,
-  });
+  // Use centralized cache manager if available
+  const cache =
+    typeof CacheManager !== "undefined"
+      ? CacheManager.createCache({
+          defaultTTL: 300000,
+          maxSize: 100,
+          autoCleanup: true,
+        })
+      : {
+          get: () => undefined,
+          set: () => {},
+          clear: () => {},
+          size: () => 0,
+        };
+
   const pendingRequests = new Map();
 
   /**
-   * Load settings from storage
+   * FIXED: Load settings from storage with proper error handling
    */
   async function loadSettings() {
     try {
       const stored = await browser.storage.local.get("settings");
 
+      logger.info("Raw stored data:", stored);
+
       if (stored.settings && typeof stored.settings === "object") {
+        // Merge with defaults to ensure all keys exist
         settings = { ...DEFAULT_SETTINGS, ...stored.settings };
-        logger.info("✅ Settings loaded from storage");
+        logger.info("✅ Settings loaded from storage:", settings);
       } else {
+        // No settings found, use defaults
         settings = { ...DEFAULT_SETTINGS };
         await browser.storage.local.set({ settings: settings });
-        logger.info("📝 Default settings initialized");
+        logger.info("📝 Default settings initialized and saved");
       }
 
       return settings;
@@ -44,12 +71,26 @@
   }
 
   /**
-   * Save settings to storage
+   * FIXED: Save settings to storage with validation
    */
   async function saveSettings(newSettings) {
     try {
+      if (!newSettings || typeof newSettings !== "object") {
+        throw new Error("Invalid settings object");
+      }
+
+      // Merge with existing settings
       settings = { ...settings, ...newSettings };
+
+      logger.info("Saving settings:", settings);
+
+      // Actually save to storage
       await browser.storage.local.set({ settings: settings });
+
+      // Verify save
+      const verification = await browser.storage.local.get("settings");
+      logger.info("Verification after save:", verification);
+
       logger.success("💾 Settings saved successfully");
       return true;
     } catch (error) {
@@ -67,10 +108,23 @@
     try {
       await loadSettings();
 
-      rateLimiter = PriceTrackerHelpers.createRateLimiter(
-        settings.rateLimitPerHour,
-        60 * 60 * 1000
-      );
+      // Initialize rate limiter
+      if (
+        typeof PriceTrackerHelpers !== "undefined" &&
+        PriceTrackerHelpers.createRateLimiter
+      ) {
+        rateLimiter = PriceTrackerHelpers.createRateLimiter(
+          settings.rateLimitPerHour,
+          60 * 60 * 1000
+        );
+      } else {
+        // Fallback rate limiter
+        rateLimiter = {
+          checkLimit: async () => true,
+          getTokens: () => settings.rateLimitPerHour,
+          reset: () => {},
+        };
+      }
 
       if (settings.autoCheck) {
         await setupAlarm();
@@ -117,7 +171,7 @@
         logger.info("🎯 Manual selector activated from context menu");
         await browser.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ["content/picker.js"],
+          files: ["picker.js"],
         });
         logger.success("✅ Picker injected successfully");
       } catch (error) {
@@ -153,7 +207,7 @@
   }
 
   /**
-   * Listen for storage changes
+   * FIXED: Listen for storage changes with proper handling
    */
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.settings) {
@@ -161,18 +215,23 @@
 
       const newSettings = changes.settings.newValue;
 
-      if (newSettings) {
+      if (newSettings && typeof newSettings === "object") {
         settings = { ...DEFAULT_SETTINGS, ...newSettings };
 
         if (
           changes.settings.oldValue?.rateLimitPerHour !==
           newSettings.rateLimitPerHour
         ) {
-          rateLimiter = PriceTrackerHelpers.createRateLimiter(
-            settings.rateLimitPerHour,
-            60 * 60 * 1000
-          );
-          logger.info("🔄 Rate limiter updated");
+          if (
+            typeof PriceTrackerHelpers !== "undefined" &&
+            PriceTrackerHelpers.createRateLimiter
+          ) {
+            rateLimiter = PriceTrackerHelpers.createRateLimiter(
+              settings.rateLimitPerHour,
+              60 * 60 * 1000
+            );
+            logger.info("🔄 Rate limiter updated");
+          }
         }
 
         if (
@@ -258,9 +317,12 @@
    */
   async function checkSingleProduct(product) {
     try {
-      // Use centralized validation
-      if (!Validators.isValidProductInfo(product)) {
-        throw new PriceTrackerErrors.ValidationError("Invalid product data");
+      // Use centralized validation if available
+      if (
+        typeof Validators !== "undefined" &&
+        !Validators.isValidProductInfo(product)
+      ) {
+        throw new Error("Invalid product data");
       }
 
       logger.info(
@@ -347,7 +409,6 @@
    * Fetch product price
    */
   async function fetchProductPrice(url) {
-    // Use cache manager's get method
     const cached = cache.get(url);
     if (cached !== undefined) {
       logger.info("💾 Cache hit");
@@ -362,10 +423,7 @@
     const requestPromise = (async () => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(
-          () => controller.abort(),
-          Config.NETWORK.REQUEST_TIMEOUT_MS
-        );
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const response = await fetch(url, {
           method: "GET",
@@ -396,7 +454,10 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
 
-        const productInfo = await PriceParser.extractProductInfo(doc, url);
+        const productInfo =
+          typeof PriceParser !== "undefined"
+            ? await PriceParser.extractProductInfo(doc, url)
+            : null;
 
         if (productInfo && productInfo.price) {
           const price = parseFloat(productInfo.price);
@@ -414,10 +475,10 @@
       } catch (error) {
         if (error.name === "AbortError") {
           logger.error("⏱️ Request timeout");
-          throw new PriceTrackerErrors.NetworkError("Request timeout", { url });
+          throw new Error("Request timeout");
         }
         logger.error("🔴 Fetch error:", error);
-        throw new PriceTrackerErrors.NetworkError(error.message, { url });
+        throw error;
       } finally {
         pendingRequests.delete(url);
       }
@@ -471,7 +532,7 @@
   }
 
   /**
-   * Message handler
+   * FIXED: Message handler with proper error handling
    */
   browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const handleAsync = async () => {
@@ -479,29 +540,38 @@
         console.log("[Background] Message received:", request.action);
 
         switch (request.action) {
-          case Config.MESSAGE_ACTIONS.CHECK_ALL_PRICES:
+          case "checkAllPrices":
             const allResult = await checkAllPrices();
             console.log("[Background] Check all result:", allResult);
             return allResult;
 
-          case Config.MESSAGE_ACTIONS.CHECK_SINGLE_PRODUCT:
+          case "checkSingleProduct":
             if (!request.product) {
-              throw new PriceTrackerErrors.ValidationError("Product data missing");
+              throw new Error("Product data missing");
             }
             console.log("[Background] Checking product:", request.product.name);
             const singleResult = await checkSingleProduct(request.product);
             console.log("[Background] Check single result:", singleResult);
             return singleResult;
 
-          case Config.MESSAGE_ACTIONS.UPDATE_SETTINGS:
+          case "updateSettings":
+            console.log(
+              "[Background] Update settings request:",
+              request.settings
+            );
             const saved = await saveSettings(request.settings);
 
             if (saved) {
               if (request.settings.rateLimitPerHour) {
-                rateLimiter = PriceTrackerHelpers.createRateLimiter(
-                  settings.rateLimitPerHour,
-                  60 * 60 * 1000
-                );
+                if (
+                  typeof PriceTrackerHelpers !== "undefined" &&
+                  PriceTrackerHelpers.createRateLimiter
+                ) {
+                  rateLimiter = PriceTrackerHelpers.createRateLimiter(
+                    settings.rateLimitPerHour,
+                    60 * 60 * 1000
+                  );
+                }
               }
 
               if (
@@ -518,11 +588,14 @@
 
             return { success: saved, settings: settings };
 
-          case Config.MESSAGE_ACTIONS.GET_SETTINGS:
+          case "getSettings":
+            console.log(
+              "[Background] Get settings request, returning:",
+              settings
+            );
             return settings || DEFAULT_SETTINGS;
 
-          case Config.MESSAGE_ACTIONS.GET_DEBUG_STATS:
-            // FIXED: Added debug stats API
+          case "getDebugStats":
             const trackedProducts = await PriceTrackerHelpers.getStorage(
               "trackedProducts",
               []
@@ -534,30 +607,35 @@
               rateLimit: rateLimiter ? rateLimiter.getTokens() : 0,
             };
 
-          case Config.MESSAGE_ACTIONS.CLEAR_CACHE:
+          case "clearCache":
             cache.clear();
             logger.info("🧹 Cache cleared");
             return { success: true };
 
-          case Config.MESSAGE_ACTIONS.PRODUCT_DETECTED:
+          case "productDetected":
             logger.info("📦 Product detected:", request.product?.name);
             return { received: true };
 
           case "manualPriceSelected":
-            // Handle manual price selection from picker.js
             logger.info("🎯 Manual price selected:", request.data);
             if (request.data) {
               const { text, price, url, selector } = request.data;
-              logger.success(`Manual selection saved: ${text} (${price}) for ${url}`);
-              
-              // Notify any open popup about the selection
+              logger.success(
+                `Manual selection saved: ${text} (${price}) for ${url}`
+              );
+
               try {
-                const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+                const tabs = await browser.tabs.query({
+                  active: true,
+                  currentWindow: true,
+                });
                 if (tabs[0]) {
-                  browser.tabs.sendMessage(tabs[0].id, {
-                    action: "manualPriceResult",
-                    data: request.data
-                  }).catch(() => {});
+                  browser.tabs
+                    .sendMessage(tabs[0].id, {
+                      action: "manualPriceResult",
+                      data: request.data,
+                    })
+                    .catch(() => {});
                 }
               } catch (e) {
                 // Ignore errors when notifying
@@ -566,13 +644,11 @@
             return { success: true };
 
           default:
-            throw new PriceTrackerErrors.ValidationError(`Unknown action: ${request.action}`);
+            throw new Error(`Unknown action: ${request.action}`);
         }
       } catch (error) {
-        // Use centralized error handling
-        const result = PriceTrackerErrors.ErrorHandler.handle(error, "Background");
         console.error("[Background] Handler error:", error);
-        return result;
+        return { error: error.message };
       }
     };
 
