@@ -1,4 +1,4 @@
-// Fixed Background Script v3.4 - MANUAL SELECTOR FIX
+// Fixed Background Script v3.5 - ALERTS & MULTI-CURRENCY
 (function () {
   "use strict";
 
@@ -20,10 +20,16 @@
           enablePicker: false,
           verboseLogging: false,
           cacheDuration: 300,
+          preferredCurrency: "TRY",
+          enablePriceAlerts: true,
+          autoBackup: true,
+          autoBackupInterval: 24,
+          theme: "auto",
         };
 
   let settings = null;
   let rateLimiter = null;
+  let retryQueue = new Map(); // For error recovery
 
   // Use centralized cache manager if available
   const cache =
@@ -291,8 +297,93 @@
     if (alarm.name === "checkPrices") {
       logger.info("⏰ Automatic check triggered");
       await checkAllPrices();
+      
+      // Check price alerts after price check
+      if (settings.enablePriceAlerts && typeof PriceAlerts !== "undefined") {
+        await checkPriceAlerts();
+      }
+    } else if (alarm.name === "autoBackup") {
+      // Auto backup
+      if (settings.autoBackup && typeof DataManager !== "undefined") {
+        logger.info("💾 Running auto backup...");
+        await DataManager.createAutoBackup();
+      }
+    } else if (alarm.name === "retryFailed") {
+      // Retry failed requests
+      await processRetryQueue();
     }
   });
+
+  /**
+   * Check price alerts
+   */
+  async function checkPriceAlerts() {
+    if (typeof PriceAlerts === "undefined") return;
+
+    try {
+      const products = await PriceTrackerHelpers.getStorage("trackedProducts", []);
+      const triggered = await PriceAlerts.checkAllAlerts(products);
+
+      for (const alert of triggered) {
+        if (settings.notifications) {
+          await browser.notifications.create({
+            type: "basic",
+            iconUrl: browser.runtime.getURL("icons/icon48.png"),
+            title: "🔔 Fiyat Alarmı!",
+            message: alert.message,
+            priority: 2,
+          });
+        }
+        logger.info(`🔔 Alert triggered: ${alert.message}`);
+      }
+
+      return triggered;
+    } catch (error) {
+      logger.error("Alert check error:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Process retry queue for failed requests
+   */
+  async function processRetryQueue() {
+    if (retryQueue.size === 0) return;
+
+    logger.info(`🔄 Processing ${retryQueue.size} failed requests...`);
+
+    for (const [url, retryInfo] of retryQueue.entries()) {
+      if (retryInfo.attempts >= settings.maxRetries) {
+        retryQueue.delete(url);
+        continue;
+      }
+
+      try {
+        const result = await fetchProductPrice(url);
+        if (result && result.price) {
+          retryQueue.delete(url);
+          logger.success(`✅ Retry successful for ${url}`);
+        }
+      } catch (error) {
+        retryInfo.attempts++;
+        retryInfo.lastError = error.message;
+        logger.warn(`⚠️ Retry ${retryInfo.attempts} failed for ${url}`);
+      }
+    }
+  }
+
+  /**
+   * Add to retry queue
+   */
+  function addToRetryQueue(url, error) {
+    if (!retryQueue.has(url)) {
+      retryQueue.set(url, {
+        attempts: 1,
+        firstFailed: Date.now(),
+        lastError: error.message,
+      });
+    }
+  }
 
   /**
    * Check all prices
@@ -774,6 +865,86 @@
               }
             }
             return { success: true };
+
+          // Price Alert handlers
+          case "addAlert":
+            if (typeof PriceAlerts !== "undefined") {
+              const newAlert = await PriceAlerts.addAlert(request.alertData);
+              logger.info("🔔 Alert added:", newAlert.id);
+              return { success: true, alert: newAlert };
+            }
+            return { success: false, error: "Alerts not available" };
+
+          case "removeAlert":
+            if (typeof PriceAlerts !== "undefined") {
+              await PriceAlerts.removeAlert(request.alertId);
+              logger.info("🗑️ Alert removed:", request.alertId);
+              return { success: true };
+            }
+            return { success: false, error: "Alerts not available" };
+
+          case "getAlerts":
+            if (typeof PriceAlerts !== "undefined") {
+              const alerts = request.productUrl
+                ? await PriceAlerts.getAlertsForProduct(request.productUrl)
+                : await PriceAlerts.loadAlerts();
+              return { success: true, alerts };
+            }
+            return { success: true, alerts: [] };
+
+          case "toggleAlert":
+            if (typeof PriceAlerts !== "undefined") {
+              await PriceAlerts.toggleAlert(request.alertId);
+              return { success: true };
+            }
+            return { success: false, error: "Alerts not available" };
+
+          case "checkAlerts":
+            const triggeredAlerts = await checkPriceAlerts();
+            return { success: true, triggered: triggeredAlerts };
+
+          // Data management handlers
+          case "exportData":
+            if (typeof DataManager !== "undefined") {
+              const exportData = await DataManager.exportAll();
+              return { success: true, data: exportData };
+            }
+            return { success: false, error: "DataManager not available" };
+
+          case "importData":
+            if (typeof DataManager !== "undefined") {
+              const importResult = await DataManager.importData(request.data, request.options);
+              return { success: true, result: importResult };
+            }
+            return { success: false, error: "DataManager not available" };
+
+          case "getStorageStats":
+            if (typeof DataManager !== "undefined") {
+              const stats = await DataManager.getStorageStats();
+              return { success: true, stats };
+            }
+            return { success: false, error: "DataManager not available" };
+
+          case "createBackup":
+            if (typeof DataManager !== "undefined") {
+              await DataManager.createAutoBackup();
+              return { success: true };
+            }
+            return { success: false, error: "DataManager not available" };
+
+          case "listBackups":
+            if (typeof DataManager !== "undefined") {
+              const backups = await DataManager.listAutoBackups();
+              return { success: true, backups };
+            }
+            return { success: true, backups: [] };
+
+          case "restoreBackup":
+            if (typeof DataManager !== "undefined") {
+              await DataManager.restoreFromAutoBackup(request.backupKey);
+              return { success: true };
+            }
+            return { success: false, error: "DataManager not available" };
 
           default:
             throw new Error(`Unknown action: ${request.action}`);

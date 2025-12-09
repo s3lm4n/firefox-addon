@@ -103,6 +103,8 @@
       $("notifyOnPriceUp").checked = settings.notifyOnPriceUp;
     if ($("minChangePercent"))
       $("minChangePercent").value = settings.minChangePercent || 5;
+    if ($("enablePriceAlerts"))
+      $("enablePriceAlerts").checked = settings.enablePriceAlerts !== false;
 
     // Advanced
     if ($("enablePicker"))
@@ -111,6 +113,14 @@
       $("verboseLogging").checked = settings.verboseLogging || false;
     if ($("cacheDuration"))
       $("cacheDuration").value = settings.cacheDuration || 300;
+    
+    // New settings
+    if ($("autoBackup"))
+      $("autoBackup").checked = settings.autoBackup !== false;
+    if ($("autoBackupInterval"))
+      $("autoBackupInterval").value = settings.autoBackupInterval || 24;
+    if ($("themePreference"))
+      $("themePreference").value = settings.theme || "auto";
   }
 
   /**
@@ -131,11 +141,15 @@
     // Cancel button
     $("cancelBtn")?.addEventListener("click", () => window.close());
 
-    // Export/Import
+    // Export/Import - use DataManager if available
     $("exportData")?.addEventListener("click", exportData);
     $("importData")?.addEventListener("click", () => $("fileInput").click());
     $("fileInput")?.addEventListener("change", importData);
     $("clearAllData")?.addEventListener("click", clearAllData);
+
+    // Backup actions
+    $("manualBackup")?.addEventListener("click", createManualBackup);
+    $("viewBackups")?.addEventListener("click", viewBackups);
 
     // Debug actions
     $("testExtraction")?.addEventListener("click", testExtraction);
@@ -148,6 +162,65 @@
     $("customRules")?.addEventListener("click", () => {
       showToast("Özel kurallar editörü yakında eklenecek", "info");
     });
+  }
+
+  /**
+   * Apply theme based on preference
+   */
+  function applyTheme(themePref) {
+    if (themePref === "auto") {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.body.classList.toggle("dark-mode", prefersDark);
+    } else if (themePref === "dark") {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  }
+
+  /**
+   * Create manual backup
+   */
+  async function createManualBackup() {
+    try {
+      if (typeof DataManager !== "undefined") {
+        await DataManager.downloadExport();
+        showToast("✅ Yedek indirildi!", "success");
+        logToConsole("Yedek başarıyla oluşturuldu", "success");
+      } else {
+        // Fallback to existing export
+        await exportData();
+      }
+    } catch (error) {
+      logger.error("Backup error:", error);
+      showToast("❌ Yedekleme hatası", "error");
+    }
+  }
+
+  /**
+   * View backups
+   */
+  async function viewBackups() {
+    try {
+      if (typeof DataManager !== "undefined") {
+        const backups = await DataManager.listAutoBackups();
+        if (backups.length === 0) {
+          showToast("Henüz otomatik yedek yok", "info");
+          return;
+        }
+        
+        const backupList = backups.map(b => 
+          `${b.date.toLocaleString()} - ${b.productCount} ürün`
+        ).join("\n");
+        
+        alert(`Otomatik Yedekler:\n\n${backupList}`);
+      } else {
+        showToast("Yedekleme özelliği kullanılamıyor", "warning");
+      }
+    } catch (error) {
+      logger.error("View backups error:", error);
+      showToast("❌ Yedekler yüklenemedi", "error");
+    }
   }
 
   /**
@@ -193,15 +266,22 @@
         notifyOnPriceDown: $("notifyOnPriceDown")?.checked,
         notifyOnPriceUp: $("notifyOnPriceUp")?.checked,
         minChangePercent: parseFloat($("minChangePercent")?.value) || 5,
+        enablePriceAlerts: $("enablePriceAlerts")?.checked !== false,
         enablePicker: $("enablePicker")?.checked || false,
         verboseLogging: $("verboseLogging")?.checked || false,
         cacheDuration: parseInt($("cacheDuration")?.value) || 300,
+        autoBackup: $("autoBackup")?.checked !== false,
+        autoBackupInterval: parseInt($("autoBackupInterval")?.value) || 24,
+        theme: $("themePreference")?.value || "auto",
       };
 
       // Send to background using Messenger
       await Messenger.Actions.updateSettings(newSettings);
 
       settings = newSettings;
+      
+      // Apply theme immediately
+      applyTheme(newSettings.theme);
 
       showToast("✅ Ayarlar kaydedildi!", "success");
       logToConsole("Ayarlar başarıyla kaydedildi", "success");

@@ -1,9 +1,10 @@
-// Enhanced Popup Script v3.3 - FIXED Debug Console
+// Enhanced Popup Script v3.4 - ALERTS & IMPROVEMENTS
 (function () {
   "use strict";
 
   let currentProduct = null;
   let products = [];
+  let alerts = [];
   let settings = null;
   let searchTimeout = null;
 
@@ -43,6 +44,21 @@
     productList: $("productList"),
     listEmptyState: $("listEmptyState"),
 
+    // Alerts Tab
+    alertsList: $("alertsList"),
+    alertsEmptyState: $("alertsEmptyState"),
+    addAlertBtn: $("addAlertBtn"),
+    addAlertModal: $("addAlertModal"),
+    closeAlertModal: $("closeAlertModal"),
+    alertProductSelect: $("alertProductSelect"),
+    alertTypeSelect: $("alertTypeSelect"),
+    alertTargetPrice: $("alertTargetPrice"),
+    alertTargetPercent: $("alertTargetPercent"),
+    targetPriceGroup: $("targetPriceGroup"),
+    targetPercentGroup: $("targetPercentGroup"),
+    cancelAlertBtn: $("cancelAlertBtn"),
+    saveAlertBtn: $("saveAlertBtn"),
+
     // Toast
     toast: $("toast"),
     toastIcon: $("toastIcon"),
@@ -67,6 +83,9 @@
 
       // Load products from storage
       await loadProducts();
+
+      // Load alerts
+      await loadAlerts();
 
       // Check current page for product
       await checkCurrentPage();
@@ -159,6 +178,18 @@
 
     // Clear search
     els.clearSearch?.addEventListener("click", clearSearch);
+
+    // Alert modal events
+    els.addAlertBtn?.addEventListener("click", openAlertModal);
+    els.closeAlertModal?.addEventListener("click", closeAlertModal);
+    els.cancelAlertBtn?.addEventListener("click", closeAlertModal);
+    els.saveAlertBtn?.addEventListener("click", saveAlert);
+    
+    // Alert type change
+    els.alertTypeSelect?.addEventListener("change", handleAlertTypeChange);
+    
+    // Close modal on backdrop click
+    els.addAlertModal?.querySelector(".modal-backdrop")?.addEventListener("click", closeAlertModal);
 
     // Keyboard shortcuts
     document.addEventListener("keydown", handleKeyboardShortcuts);
@@ -925,6 +956,255 @@
     setTimeout(() => {
       els.toast.classList.remove("show");
     }, Config.UI.TOAST_DURATION_MS);
+  }
+
+  // ==================== ALERTS FUNCTIONS ====================
+
+  /**
+   * Load alerts from storage
+   */
+  async function loadAlerts() {
+    try {
+      if (typeof PriceAlerts !== "undefined") {
+        alerts = await PriceAlerts.loadAlerts();
+      } else {
+        const response = await browser.runtime.sendMessage({ action: "getAlerts" });
+        alerts = response?.alerts || [];
+      }
+      renderAlerts();
+      console.log("[Popup] 🔔 Loaded", alerts.length, "alerts");
+    } catch (error) {
+      console.error("[Popup] Alerts load error:", error);
+      alerts = [];
+      renderAlerts();
+    }
+  }
+
+  /**
+   * Render alerts list
+   */
+  function renderAlerts() {
+    if (!els.alertsList) return;
+
+    if (alerts.length === 0) {
+      els.alertsList.style.display = "none";
+      if (els.alertsEmptyState) els.alertsEmptyState.style.display = "block";
+      return;
+    }
+
+    els.alertsList.style.display = "flex";
+    if (els.alertsEmptyState) els.alertsEmptyState.style.display = "none";
+
+    els.alertsList.innerHTML = alerts.map(alert => {
+      const product = products.find(p => p.url === alert.productUrl);
+      const productName = product?.name || alert.productName || "Bilinmeyen Ürün";
+      const description = typeof PriceAlerts !== "undefined" 
+        ? PriceAlerts.getAlertDescription(alert)
+        : getAlertDescriptionFallback(alert);
+      
+      const typeBadgeClass = getAlertTypeBadgeClass(alert.type);
+      const typeLabel = getAlertTypeLabel(alert.type);
+
+      return `
+        <div class="alert-card ${!alert.enabled ? 'disabled' : ''}" data-alert-id="${alert.id}">
+          <div class="alert-card-header">
+            <span class="alert-product-name" title="${productName}">${truncate(productName, 35)}</span>
+            <span class="alert-type-badge ${typeBadgeClass}">${typeLabel}</span>
+          </div>
+          <div class="alert-description">${description}</div>
+          <div class="alert-card-actions">
+            <button class="alert-action-btn toggle" data-action="toggle">
+              ${alert.enabled ? '⏸️ Duraklat' : '▶️ Etkinleştir'}
+            </button>
+            <button class="alert-action-btn delete" data-action="delete">🗑️ Sil</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Add event listeners for alert actions
+    els.alertsList.querySelectorAll('.alert-action-btn').forEach(btn => {
+      btn.addEventListener('click', handleAlertAction);
+    });
+  }
+
+  /**
+   * Get alert type badge class
+   */
+  function getAlertTypeBadgeClass(type) {
+    switch (type) {
+      case 'target_price': return 'target';
+      case 'percentage_drop': return 'percent-down';
+      case 'percentage_rise': return 'percent-up';
+      default: return '';
+    }
+  }
+
+  /**
+   * Get alert type label
+   */
+  function getAlertTypeLabel(type) {
+    switch (type) {
+      case 'target_price': return 'Hedef';
+      case 'percentage_drop': return 'Düşüş';
+      case 'percentage_rise': return 'Artış';
+      case 'any_change': return 'Değişim';
+      default: return 'Alarm';
+    }
+  }
+
+  /**
+   * Fallback alert description
+   */
+  function getAlertDescriptionFallback(alert) {
+    switch (alert.type) {
+      case 'target_price':
+        return `Fiyat ${alert.targetPrice?.toFixed(2) || '?'} ₺ altına düştüğünde bildir`;
+      case 'percentage_drop':
+        return `Fiyat %${alert.targetPercent || '?'} düştüğünde bildir`;
+      case 'percentage_rise':
+        return `Fiyat %${alert.targetPercent || '?'} arttığında bildir`;
+      case 'any_change':
+        return 'Herhangi bir fiyat değişikliğinde bildir';
+      default:
+        return 'Bilinmeyen alarm türü';
+    }
+  }
+
+  /**
+   * Handle alert action button click
+   */
+  async function handleAlertAction(e) {
+    const btn = e.target;
+    const action = btn.dataset.action;
+    const alertCard = btn.closest('.alert-card');
+    const alertId = alertCard?.dataset.alertId;
+
+    if (!alertId) return;
+
+    try {
+      if (action === 'toggle') {
+        await browser.runtime.sendMessage({ action: 'toggleAlert', alertId });
+        showToast('Alarm durumu değiştirildi', 'success');
+      } else if (action === 'delete') {
+        if (confirm('Bu alarmı silmek istediğinizden emin misiniz?')) {
+          await browser.runtime.sendMessage({ action: 'removeAlert', alertId });
+          showToast('Alarm silindi', 'success');
+        }
+      }
+      await loadAlerts();
+    } catch (error) {
+      console.error('[Popup] Alert action error:', error);
+      showToast('Hata oluştu', 'error');
+    }
+  }
+
+  /**
+   * Open alert modal
+   */
+  function openAlertModal() {
+    if (!els.addAlertModal) return;
+
+    // Populate product select
+    if (els.alertProductSelect) {
+      els.alertProductSelect.innerHTML = '<option value="">Ürün seçin...</option>' +
+        products.map(p => `<option value="${p.url}" data-price="${p.price}">${truncate(p.name, 40)}</option>`).join('');
+    }
+
+    // Reset form
+    if (els.alertTypeSelect) els.alertTypeSelect.value = 'target_price';
+    if (els.alertTargetPrice) els.alertTargetPrice.value = '';
+    if (els.alertTargetPercent) els.alertTargetPercent.value = '';
+    
+    handleAlertTypeChange();
+    els.addAlertModal.style.display = 'flex';
+  }
+
+  /**
+   * Close alert modal
+   */
+  function closeAlertModal() {
+    if (els.addAlertModal) {
+      els.addAlertModal.style.display = 'none';
+    }
+  }
+
+  /**
+   * Handle alert type change
+   */
+  function handleAlertTypeChange() {
+    const type = els.alertTypeSelect?.value;
+    
+    if (els.targetPriceGroup) {
+      els.targetPriceGroup.style.display = type === 'target_price' ? 'block' : 'none';
+    }
+    
+    if (els.targetPercentGroup) {
+      els.targetPercentGroup.style.display = 
+        (type === 'percentage_drop' || type === 'percentage_rise') ? 'block' : 'none';
+    }
+  }
+
+  /**
+   * Save new alert
+   */
+  async function saveAlert() {
+    const productUrl = els.alertProductSelect?.value;
+    const type = els.alertTypeSelect?.value;
+    const targetPrice = parseFloat(els.alertTargetPrice?.value);
+    const targetPercent = parseFloat(els.alertTargetPercent?.value);
+
+    if (!productUrl) {
+      showToast('Lütfen bir ürün seçin', 'warning');
+      return;
+    }
+
+    const product = products.find(p => p.url === productUrl);
+    if (!product) {
+      showToast('Ürün bulunamadı', 'error');
+      return;
+    }
+
+    // Validate based on type
+    if (type === 'target_price' && (!targetPrice || targetPrice <= 0)) {
+      showToast('Lütfen geçerli bir hedef fiyat girin', 'warning');
+      return;
+    }
+
+    if ((type === 'percentage_drop' || type === 'percentage_rise') && 
+        (!targetPercent || targetPercent <= 0 || targetPercent > 100)) {
+      showToast('Lütfen 1-100 arası bir yüzde girin', 'warning');
+      return;
+    }
+
+    try {
+      const alertData = {
+        productUrl,
+        productName: product.name,
+        type,
+        targetPrice: type === 'target_price' ? targetPrice : null,
+        targetPercent: (type === 'percentage_drop' || type === 'percentage_rise') ? targetPercent : null,
+        currentPrice: product.price,
+        currency: product.currency || 'TRY',
+      };
+
+      await browser.runtime.sendMessage({ action: 'addAlert', alertData });
+      
+      showToast('✅ Alarm eklendi!', 'success');
+      closeAlertModal();
+      await loadAlerts();
+    } catch (error) {
+      console.error('[Popup] Save alert error:', error);
+      showToast('Alarm eklenemedi', 'error');
+    }
+  }
+
+  /**
+   * Truncate text helper
+   */
+  function truncate(text, maxLength) {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
 
   // Initialize when DOM is ready

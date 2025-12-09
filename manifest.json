@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
   "name": "Fiyat Takipçisi Pro",
-  "version": "2.0.3",
-  "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri ve 50+ site desteği",
+  "version": "2.1.0",
+  "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri, fiyat alarmları ve 50+ site desteği",
   "author": "Your Name",
 
   "applications": {
@@ -24,6 +24,8 @@
     "contextMenus"
   ],
 
+  "content_security_policy": "script-src 'self'; object-src 'self';",
+
   "background": {
     "scripts": [
       "lib/config.js",
@@ -34,6 +36,8 @@
       "lib/helpers.js",
       "lib/sites.js",
       "lib/parser.js",
+      "lib/alerts.js",
+      "lib/data-manager.js",
       "background.js"
     ],
     "persistent": false
@@ -72,6 +76,8 @@
     "lib/helpers.js",
     "lib/sites.js",
     "lib/parser.js",
+    "lib/alerts.js",
+    "lib/data-manager.js",
     "debug.html",
     "picker.js"
   ],

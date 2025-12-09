@@ -151,6 +151,20 @@
         </svg>
         <span>Liste</span>
       </button>
+      <button class="tab" data-tab="alerts" role="tab" aria-selected="false">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span>Alarmlar</span>
+      </button>
     </div>
 
     <!-- Content -->
@@ -317,6 +331,78 @@
           </div>
         </div>
       </div>
+
+      <!-- Alerts Tab -->
+      <div class="tab-content" id="alertsTab">
+        <div class="alerts-header">
+          <h3 class="alerts-title">Fiyat Alarmları</h3>
+          <button class="btn-add-alert" id="addAlertBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Yeni Alarm
+          </button>
+        </div>
+
+        <div class="alerts-list" id="alertsList">
+          <!-- Alerts will be inserted here -->
+        </div>
+
+        <div id="alertsEmptyState">
+          <div class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-title">Henüz Alarm Yok</div>
+            <div class="empty-text">Bir ürün için hedef fiyat veya yüzde alarmı ekleyin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Alert Modal -->
+    <div class="modal" id="addAlertModal" style="display: none;">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Yeni Fiyat Alarmı</h3>
+          <button class="modal-close" id="closeAlertModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Ürün</label>
+            <select id="alertProductSelect" class="form-select">
+              <option value="">Ürün seçin...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Alarm Türü</label>
+            <select id="alertTypeSelect" class="form-select">
+              <option value="target_price">Hedef Fiyat</option>
+              <option value="percentage_drop">Yüzde Düşüş</option>
+              <option value="percentage_rise">Yüzde Artış</option>
+              <option value="any_change">Herhangi Değişiklik</option>
+            </select>
+          </div>
+          <div class="form-group" id="targetPriceGroup">
+            <label>Hedef Fiyat</label>
+            <div class="input-with-suffix">
+              <input type="number" id="alertTargetPrice" placeholder="0.00" step="0.01" min="0">
+              <span class="input-suffix">₺</span>
+            </div>
+          </div>
+          <div class="form-group" id="targetPercentGroup" style="display: none;">
+            <label>Hedef Yüzde</label>
+            <div class="input-with-suffix">
+              <input type="number" id="alertTargetPercent" placeholder="10" min="1" max="100">
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelAlertBtn">İptal</button>
+          <button class="btn-primary" id="saveAlertBtn">Kaydet</button>
+        </div>
+      </div>
     </div>
 
     <!-- Toast Notification -->
@@ -334,6 +420,8 @@
     <script src="lib/helpers.js"></script>
     <script src="lib/sites.js"></script>
     <script src="lib/parser.js"></script>
+    <script src="lib/alerts.js"></script>
+    <script src="lib/data-manager.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
