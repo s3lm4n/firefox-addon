@@ -1,28 +1,43 @@
-// Fixed Background Script v3.2 - Added Debug Stats API
-
+// Fixed Background Script v3.4 - MANUAL SELECTOR FIX
 (function () {
   "use strict";
 
   const logger = PriceTrackerHelpers.createLogger("Background");
 
-  const DEFAULT_SETTINGS = {
-    checkInterval: 30,
-    notifications: true,
-    notifyOnPriceUp: false,
-    notifyOnPriceDown: true,
-    autoCheck: true,
-    maxRetries: 3,
-    rateLimitPerHour: 100,
-    minChangePercent: 5,
-    enablePicker: false,
-    verboseLogging: false,
-    cacheDuration: 300,
-  };
+  const DEFAULT_SETTINGS =
+    typeof Config !== "undefined" && Config.DEFAULT_SETTINGS
+      ? Config.DEFAULT_SETTINGS
+      : {
+          checkInterval: 30,
+          notifications: true,
+          notifyOnPriceUp: false,
+          notifyOnPriceDown: true,
+          autoCheck: true,
+          maxRetries: 3,
+          rateLimitPerHour: 100,
+          minChangePercent: 5,
+          enablePicker: false,
+          verboseLogging: false,
+          cacheDuration: 300,
+        };
 
   let settings = null;
   let rateLimiter = null;
 
-  const cache = new Map();
+  const cache =
+    typeof CacheManager !== "undefined"
+      ? CacheManager.createCache({
+          defaultTTL: 300000,
+          maxSize: 100,
+          autoCleanup: true,
+        })
+      : {
+          get: () => undefined,
+          set: () => {},
+          clear: () => {},
+          size: () => 0,
+        };
+
   const pendingRequests = new Map();
 
   /**
@@ -31,16 +46,14 @@
   async function loadSettings() {
     try {
       const stored = await browser.storage.local.get("settings");
-
       if (stored.settings && typeof stored.settings === "object") {
         settings = { ...DEFAULT_SETTINGS, ...stored.settings };
-        logger.info("✅ Settings loaded from storage");
+        logger.info("✅ Settings loaded from storage:", settings);
       } else {
         settings = { ...DEFAULT_SETTINGS };
         await browser.storage.local.set({ settings: settings });
-        logger.info("📝 Default settings initialized");
+        logger.info("📝 Default settings initialized and saved");
       }
-
       return settings;
     } catch (error) {
       logger.error("❌ Settings load error:", error);
@@ -54,8 +67,13 @@
    */
   async function saveSettings(newSettings) {
     try {
+      if (!newSettings || typeof newSettings !== "object") {
+        throw new Error("Invalid settings object");
+      }
       settings = { ...settings, ...newSettings };
       await browser.storage.local.set({ settings: settings });
+      const verification = await browser.storage.local.get("settings");
+      logger.info("Verification after save:", verification);
       logger.success("💾 Settings saved successfully");
       return true;
     } catch (error) {
@@ -69,14 +87,24 @@
    */
   async function initialize() {
     logger.info("🚀 Initializing background script...");
-
     try {
       await loadSettings();
 
-      rateLimiter = PriceTrackerHelpers.createRateLimiter(
-        settings.rateLimitPerHour,
-        60 * 60 * 1000
-      );
+      if (
+        typeof PriceTrackerHelpers !== "undefined" &&
+        PriceTrackerHelpers.createRateLimiter
+      ) {
+        rateLimiter = PriceTrackerHelpers.createRateLimiter(
+          settings.rateLimitPerHour,
+          60 * 60 * 1000
+        );
+      } else {
+        rateLimiter = {
+          checkLimit: async () => true,
+          getTokens: () => settings.rateLimitPerHour,
+          reset: () => {},
+        };
+      }
 
       if (settings.autoCheck) {
         await setupAlarm();
@@ -95,15 +123,23 @@
   }
 
   /**
-   * Create context menu
+   * Create context menu - IMPROVED
    */
   async function createContextMenu() {
     try {
       await browser.contextMenus.removeAll();
 
+      // Basit menü (ana + alt menü Firefox'ta sorun çıkarabiliyor)
       await browser.contextMenus.create({
         id: "select-price-element",
-        title: "🎯 Bu Öğeyi Fiyat Olarak Seç",
+        title: "🎯 Fiyat Öğesini Seç",
+        contexts: ["all"],
+        documentUrlPatterns: ["http://*/*", "https://*/*"],
+      });
+
+      await browser.contextMenus.create({
+        id: "check-current-page",
+        title: "🔍 Bu Sayfayı Kontrol Et",
         contexts: ["all"],
         documentUrlPatterns: ["http://*/*", "https://*/*"],
       });
@@ -115,26 +151,62 @@
   }
 
   /**
-   * Handle context menu clicks
+   * Handle context menu clicks - IMPROVED
    */
   browser.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId === "select-price-element") {
-      try {
+    try {
+      if (info.menuItemId === "select-price-element") {
         logger.info("🎯 Manual selector activated from context menu");
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ["content/picker.js"],
+
+        // Inject picker script
+        await browser.tabs.executeScript(tab.id, {
+          file: "picker.js",
         });
+
         logger.success("✅ Picker injected successfully");
-      } catch (error) {
-        logger.error("❌ Picker injection failed:", error);
-        browser.notifications.create({
-          type: "basic",
-          iconUrl: browser.runtime.getURL("icons/icon48.png"),
-          title: "Hata",
-          message: "Manuel seçici başlatılamadı. Lütfen sayfayı yenileyin.",
-        });
+      } else if (info.menuItemId === "check-current-page") {
+        logger.info("🔍 Checking current page for products");
+
+        // Send message to content script to extract product
+        try {
+          const response = await browser.tabs.sendMessage(tab.id, {
+            action: "getProductInfo",
+            skipCache: true,
+          });
+
+          if (response && response.price) {
+            await browser.notifications.create({
+              type: "basic",
+              iconUrl: browser.runtime.getURL("icons/icon48.png"),
+              title: "✅ Ürün Bulundu!",
+              message: `${response.name}\n${response.price} ${response.currency}`,
+            });
+          } else {
+            await browser.notifications.create({
+              type: "basic",
+              iconUrl: browser.runtime.getURL("icons/icon48.png"),
+              title: "ℹ️ Ürün Bulunamadı",
+              message: "Bu sayfada ürün algılanamadı. Manuel seçici kullanın.",
+            });
+          }
+        } catch (e) {
+          logger.error("Page check error:", e);
+          await browser.notifications.create({
+            type: "basic",
+            iconUrl: browser.runtime.getURL("icons/icon48.png"),
+            title: "❌ Hata",
+            message: "Sayfa kontrol edilemedi.",
+          });
+        }
       }
+    } catch (error) {
+      logger.error("❌ Context menu handler error:", error);
+      await browser.notifications.create({
+        type: "basic",
+        iconUrl: browser.runtime.getURL("icons/icon48.png"),
+        title: "Hata",
+        message: "İşlem başarısız oldu.",
+      });
     }
   });
 
@@ -144,14 +216,11 @@
   async function setupAlarm() {
     try {
       await browser.alarms.clear("checkPrices");
-
       const interval = Math.max(5, Math.min(1440, settings.checkInterval));
-
       await browser.alarms.create("checkPrices", {
         periodInMinutes: interval,
         when: Date.now() + 60000,
       });
-
       logger.info(`⏰ Alarm set: Every ${interval} minutes`);
     } catch (error) {
       logger.error("Alarm setup failed:", error);
@@ -164,23 +233,24 @@
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.settings) {
       logger.info("⚙️ Settings changed, reloading...");
-
       const newSettings = changes.settings.newValue;
-
-      if (newSettings) {
+      if (newSettings && typeof newSettings === "object") {
         settings = { ...DEFAULT_SETTINGS, ...newSettings };
-
         if (
           changes.settings.oldValue?.rateLimitPerHour !==
           newSettings.rateLimitPerHour
         ) {
-          rateLimiter = PriceTrackerHelpers.createRateLimiter(
-            settings.rateLimitPerHour,
-            60 * 60 * 1000
-          );
-          logger.info("🔄 Rate limiter updated");
+          if (
+            typeof PriceTrackerHelpers !== "undefined" &&
+            PriceTrackerHelpers.createRateLimiter
+          ) {
+            rateLimiter = PriceTrackerHelpers.createRateLimiter(
+              settings.rateLimitPerHour,
+              60 * 60 * 1000
+            );
+            logger.info("🔄 Rate limiter updated");
+          }
         }
-
         if (
           changes.settings.oldValue?.autoCheck !== newSettings.autoCheck ||
           changes.settings.oldValue?.checkInterval !== newSettings.checkInterval
@@ -192,7 +262,6 @@
             logger.info("⏰ Alarm disabled");
           }
         }
-
         logger.success("✅ Settings synchronized");
       }
     }
@@ -231,13 +300,10 @@
     for (let i = 0; i < products.length; i++) {
       try {
         await PriceTrackerHelpers.wait(i * 2000);
-
         const result = await checkSingleProduct(products[i]);
-
         if (result && result.product) {
           products[i] = result.product;
           checked++;
-
           if (result.updated) {
             updated++;
           }
@@ -260,11 +326,14 @@
   }
 
   /**
-   * Check single product
+   * Check single product - IMPROVED WITH CUSTOM SELECTOR SUPPORT
    */
   async function checkSingleProduct(product) {
     try {
-      if (!product || !product.url || !product.price) {
+      if (
+        typeof Validators !== "undefined" &&
+        !Validators.isValidProductInfo(product)
+      ) {
         throw new Error("Invalid product data");
       }
 
@@ -279,7 +348,29 @@
         await PriceTrackerHelpers.wait(2000);
       }
 
-      const newPriceData = await fetchProductPrice(product.url);
+      // IMPROVED: Try custom selector first if available
+      let newPriceData = null;
+
+      // Check if custom selector exists for this domain
+      const domain = new URL(product.url).hostname.replace(/^www\./, "");
+      const customSelectorData = await browser.storage.sync.get(domain);
+
+      if (customSelectorData[domain] && customSelectorData[domain].selector) {
+        logger.info(`🎯 Using custom selector for ${domain}`);
+        try {
+          newPriceData = await fetchProductPriceWithSelector(
+            product.url,
+            customSelectorData[domain].selector
+          );
+        } catch (e) {
+          logger.warn("Custom selector failed, falling back to parser:", e);
+        }
+      }
+
+      // Fallback to normal parsing if custom selector failed or not available
+      if (!newPriceData || !newPriceData.price) {
+        newPriceData = await fetchProductPrice(product.url);
+      }
 
       if (!newPriceData || !newPriceData.price) {
         logger.warn(`⚠️ Could not fetch price for: ${product.name}`);
@@ -339,26 +430,85 @@
       }
     } catch (error) {
       logger.error(`❌ Error checking product:`, error);
-
       product.lastCheck = Date.now();
       product.lastCheckStatus = "error";
       product.lastError = error.message;
-
       return { updated: false, product };
     }
   }
 
   /**
-   * Fetch product price
+   * NEW: Fetch product price using custom selector
+   */
+  async function fetchProductPriceWithSelector(url, selector) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      // Use custom selector
+      const element = doc.querySelector(selector);
+      if (!element) {
+        throw new Error("Selector element not found");
+      }
+
+      const text = element.textContent.trim();
+      const priceMatch = text.match(/[\d.,]+/);
+
+      if (!priceMatch) {
+        throw new Error("Price not found in element");
+      }
+
+      const price = SiteConfigs.cleanPrice(priceMatch[0]);
+
+      // Try to get product name from nearby h1 or title
+      let name = doc.querySelector("h1")?.textContent.trim() || doc.title;
+
+      return {
+        price: price,
+        name: name,
+        currency: "TRY",
+        url: url,
+        confidence: 0.9,
+        method: "custom-selector",
+      };
+    } catch (error) {
+      logger.error("Custom selector fetch error:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch product price using parser or Go backend
    */
   async function fetchProductPrice(url) {
-    if (cache.has(url)) {
-      const cached = cache.get(url);
-      if (Date.now() - cached.timestamp < 300000) {
-        logger.info("💾 Cache hit");
-        return cached.data;
-      }
-      cache.delete(url);
+    const cached = cache.get(url);
+    if (cached !== undefined) {
+      logger.info("💾 Cache hit");
+      return cached;
     }
 
     if (pendingRequests.has(url)) {
@@ -367,6 +517,24 @@
     }
 
     const requestPromise = (async () => {
+      // IMPROVED: Try Go backend first if available
+      if (typeof NativeMessaging !== "undefined") {
+        try {
+          const goResult = await NativeMessaging.fetchProductPrice(url, true);
+          if (goResult && goResult.price) {
+            logger.success("✅ Got product from Go backend");
+            cache.set(url, goResult);
+            return goResult;
+          }
+        } catch (error) {
+          logger.warn(
+            "⚠️ Go backend failed, falling back to browser:",
+            error.message
+          );
+        }
+      }
+
+      // Fallback to browser-based fetching
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -400,7 +568,10 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
 
-        const productInfo = await PriceParser.extractProductInfo(doc, url);
+        const productInfo =
+          typeof PriceParser !== "undefined"
+            ? await PriceParser.extractProductInfo(doc, url)
+            : null;
 
         if (productInfo && productInfo.price) {
           const price = parseFloat(productInfo.price);
@@ -411,7 +582,7 @@
         }
 
         if (productInfo) {
-          cache.set(url, { data: productInfo, timestamp: Date.now() });
+          cache.set(url, productInfo);
         }
 
         return productInfo;
@@ -498,14 +669,23 @@
             return singleResult;
 
           case "updateSettings":
+            console.log(
+              "[Background] Update settings request:",
+              request.settings
+            );
             const saved = await saveSettings(request.settings);
 
             if (saved) {
               if (request.settings.rateLimitPerHour) {
-                rateLimiter = PriceTrackerHelpers.createRateLimiter(
-                  settings.rateLimitPerHour,
-                  60 * 60 * 1000
-                );
+                if (
+                  typeof PriceTrackerHelpers !== "undefined" &&
+                  PriceTrackerHelpers.createRateLimiter
+                ) {
+                  rateLimiter = PriceTrackerHelpers.createRateLimiter(
+                    settings.rateLimitPerHour,
+                    60 * 60 * 1000
+                  );
+                }
               }
 
               if (
@@ -523,17 +703,20 @@
             return { success: saved, settings: settings };
 
           case "getSettings":
+            console.log(
+              "[Background] Get settings request, returning:",
+              settings
+            );
             return settings || DEFAULT_SETTINGS;
 
           case "getDebugStats":
-            // FIXED: Added debug stats API
             const trackedProducts = await PriceTrackerHelpers.getStorage(
               "trackedProducts",
               []
             );
             return {
               productsCount: trackedProducts.length,
-              cacheSize: cache.size,
+              cacheSize: cache.size(),
               settings: settings,
               rateLimit: rateLimiter ? rateLimiter.getTokens() : 0,
             };
@@ -547,11 +730,37 @@
             logger.info("📦 Product detected:", request.product?.name);
             return { received: true };
 
+          case "manualPriceSelected":
+            logger.info("🎯 Manual price selected:", request.data);
+            if (request.data) {
+              const { text, price, url, selector } = request.data;
+              logger.success(
+                `Manual selection saved: ${text} (${price}) for ${url}`
+              );
+
+              try {
+                const tabs = await browser.tabs.query({
+                  active: true,
+                  currentWindow: true,
+                });
+                if (tabs[0]) {
+                  browser.tabs
+                    .sendMessage(tabs[0].id, {
+                      action: "manualPriceResult",
+                      data: request.data,
+                    })
+                    .catch(() => {});
+                }
+              } catch (e) {
+                // Ignore errors when notifying
+              }
+            }
+            return { success: true };
+
           default:
             throw new Error(`Unknown action: ${request.action}`);
         }
       } catch (error) {
-        logger.error(`❌ Error handling ${request.action}:`, error);
         console.error("[Background] Handler error:", error);
         return { error: error.message };
       }
@@ -576,20 +785,17 @@
   browser.runtime.onInstalled.addListener(async (details) => {
     if (details.reason === "install") {
       logger.success("🎉 Price Tracker Pro installed!");
-
       await saveSettings(DEFAULT_SETTINGS);
-
       browser.notifications.create({
         type: "basic",
         iconUrl: browser.runtime.getURL("icons/icon48.png"),
         title: "Fiyat Takipçisi Pro",
-        message: "Eklenti kuruldu! Bir ürün sayfasına gidip takibe alın.",
+        message: "Eklenti kuruldu! Bir ürün sayfasına gidip sağ tıklayın.",
       });
     } else if (details.reason === "update") {
       logger.success(`⬆️ Updated to ${browser.runtime.getManifest().version}`);
       await loadSettings();
     }
-
     await initialize();
   });
 

@@ -1,0 +1,9 @@
+{
+  "name": "com.pricetracker.native",
+  "description": "Price Tracker Go Backend",
+  "path": "/usr/local/bin/price-tracker-backend",
+  "type": "stdio",
+  "allowed_extensions": [
+    "fiyat-takipci-pro@github.io"
+  ]
+}
