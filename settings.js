@@ -52,26 +52,14 @@
   }
 
   /**
-   * Load settings from storage
+   * Load settings from storage - uses Messenger and Config
    */
   async function loadSettings() {
     try {
-      settings = await browser.runtime.sendMessage({ action: "getSettings" });
+      settings = await Messenger.Actions.getSettings();
 
       if (!settings) {
-        settings = {
-          checkInterval: 30,
-          notifications: true,
-          notifyOnPriceDown: true,
-          notifyOnPriceUp: false,
-          autoCheck: true,
-          maxRetries: 3,
-          rateLimitPerHour: 100,
-          minChangePercent: 5,
-          enablePicker: false,
-          verboseLogging: false,
-          cacheDuration: 300,
-        };
+        settings = Config.DEFAULT_SETTINGS;
       }
 
       // Populate form fields
@@ -210,11 +198,8 @@
         cacheDuration: parseInt($("cacheDuration")?.value) || 300,
       };
 
-      // Send to background
-      await browser.runtime.sendMessage({
-        action: "updateSettings",
-        settings: newSettings,
-      });
+      // Send to background using Messenger
+      await Messenger.Actions.updateSettings(newSettings);
 
       settings = newSettings;
 
@@ -296,10 +281,7 @@
             "trackedProducts",
             data.products
           );
-          await browser.runtime.sendMessage({
-            action: "updateSettings",
-            settings: data.settings,
-          });
+          await Messenger.Actions.updateSettings(data.settings);
 
           products = data.products;
           settings = data.settings;
@@ -327,7 +309,7 @@
   }
 
   /**
-   * Clear all data
+   * Clear all data - uses Messenger
    */
   async function clearAllData() {
     try {
@@ -339,9 +321,7 @@
 
       // Clear storage
       await PriceTrackerHelpers.setStorage("trackedProducts", []);
-      await browser.runtime.sendMessage({
-        action: "clearCache",
-      });
+      await Messenger.Actions.clearCache();
 
       products = [];
       updateDebugStats();
@@ -405,11 +385,11 @@
   }
 
   /**
-   * Clear cache
+   * Clear cache - uses Messenger
    */
   async function clearCache() {
     try {
-      await browser.runtime.sendMessage({ action: "clearCache" });
+      await Messenger.Actions.clearCache();
       logToConsole("Önbellek temizlendi", "success");
       showToast("🧹 Önbellek temizlendi", "success");
     } catch (error) {
@@ -427,7 +407,7 @@
   }
 
   /**
-   * Reset settings to defaults
+   * Reset settings to defaults - uses Config.DEFAULT_SETTINGS
    */
   async function resetSettings() {
     try {
@@ -437,24 +417,9 @@
 
       if (!confirmed) return;
 
-      const defaults = {
-        checkInterval: 30,
-        notifications: true,
-        notifyOnPriceDown: true,
-        notifyOnPriceUp: false,
-        autoCheck: true,
-        maxRetries: 3,
-        rateLimitPerHour: 100,
-        minChangePercent: 5,
-        enablePicker: false,
-        verboseLogging: false,
-        cacheDuration: 300,
-      };
+      const defaults = Config.DEFAULT_SETTINGS;
 
-      await browser.runtime.sendMessage({
-        action: "updateSettings",
-        settings: defaults,
-      });
+      await Messenger.Actions.updateSettings(defaults);
 
       settings = defaults;
       populateForm();
@@ -547,6 +512,65 @@
   }
 
   /**
+   * Load custom selectors from storage
+   */
+  async function loadCustomSelectors() {
+    const list = $("custom-selectors-list");
+    if (!list) return;
+
+    try {
+      // Get all saved selectors from sync storage
+      const data = await browser.storage.sync.get(null);
+      
+      // Filter for site selectors (they have selector property)
+      const selectors = Object.entries(data)
+        .filter(([key, value]) => value && value.selector)
+        .map(([domain, value]) => ({
+          domain,
+          selector: value.selector,
+          exampleText: value.exampleText || '',
+          lastSaved: value.lastSaved || 0
+        }));
+
+      if (selectors.length === 0) {
+        list.innerHTML = '<p style="color: #6b7280; text-align: center;">Henüz kaydedilmiş seçici yok</p>';
+        return;
+      }
+
+      list.innerHTML = selectors.map(s => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary, #f3f4f6); border-radius: 8px; margin-bottom: 8px;">
+          <div>
+            <div style="font-weight: 600; color: var(--text-primary, #111827);">${PriceTrackerHelpers.escapeHtml(s.domain)}</div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${PriceTrackerHelpers.escapeHtml(s.exampleText.substring(0, 50))}${s.exampleText.length > 50 ? '...' : ''}</div>
+          </div>
+          <button class="btn-icon delete-selector" data-domain="${PriceTrackerHelpers.escapeHtml(s.domain)}" title="Sil" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer;">
+            🗑️
+          </button>
+        </div>
+      `).join('');
+
+      // Add delete handlers
+      list.querySelectorAll('.delete-selector').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const domain = btn.dataset.domain;
+          if (confirm(`"${domain}" için kaydedilen seçici silinsin mi?`)) {
+            await browser.storage.sync.remove(domain);
+            loadCustomSelectors();
+            showToast('✅ Seçici silindi', 'success');
+          }
+        });
+      });
+
+    } catch (error) {
+      logger.error('Load custom selectors error:', error);
+      list.innerHTML = '<p style="color: #ef4444; text-align: center;">Yükleme hatası</p>';
+    }
+  }
+
+  // Make loadCustomSelectors available globally for settings.html inline script
+  window.loadCustomSelectors = loadCustomSelectors;
+
+  /**
    * Show toast notification
    */
   function showToast(message, type = "info") {
@@ -572,6 +596,9 @@
       toast.classList.remove("show");
     }, 3000);
   }
+
+  // Make showToast available globally for settings.html inline script
+  window.showToast = showToast;
 
   // Initialize when DOM is ready
   if (document.readyState === "loading") {

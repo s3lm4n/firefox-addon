@@ -4,6 +4,7 @@
 
   const logger = PriceTrackerHelpers.createLogger("Background");
 
+  // Ensure Config is available, provide fallback
   const DEFAULT_SETTINGS =
     typeof Config !== "undefined" && Config.DEFAULT_SETTINGS
       ? Config.DEFAULT_SETTINGS
@@ -24,6 +25,7 @@
   let settings = null;
   let rateLimiter = null;
 
+  // Use centralized cache manager if available
   const cache =
     typeof CacheManager !== "undefined"
       ? CacheManager.createCache({
@@ -41,15 +43,18 @@
   const pendingRequests = new Map();
 
   /**
-   * Load settings from storage
+   * FIXED: Load settings from storage with proper error handling
    */
   async function loadSettings() {
     try {
       const stored = await browser.storage.local.get("settings");
+
       if (stored.settings && typeof stored.settings === "object") {
+        // Merge with defaults to ensure all keys exist
         settings = { ...DEFAULT_SETTINGS, ...stored.settings };
         logger.info("✅ Settings loaded from storage:", settings);
       } else {
+        // No settings found, use defaults
         settings = { ...DEFAULT_SETTINGS };
         await browser.storage.local.set({ settings: settings });
         logger.info("📝 Default settings initialized and saved");
@@ -63,17 +68,26 @@
   }
 
   /**
-   * Save settings to storage
+   * FIXED: Save settings to storage with validation
    */
   async function saveSettings(newSettings) {
     try {
       if (!newSettings || typeof newSettings !== "object") {
         throw new Error("Invalid settings object");
       }
+
+      // Merge with existing settings
       settings = { ...settings, ...newSettings };
+
+      logger.info("Saving settings:", settings);
+
+      // Actually save to storage
       await browser.storage.local.set({ settings: settings });
+
+      // Verify save
       const verification = await browser.storage.local.get("settings");
       logger.info("Verification after save:", verification);
+
       logger.success("💾 Settings saved successfully");
       return true;
     } catch (error) {
@@ -90,6 +104,7 @@
     try {
       await loadSettings();
 
+      // Initialize rate limiter
       if (
         typeof PriceTrackerHelpers !== "undefined" &&
         PriceTrackerHelpers.createRateLimiter
@@ -99,6 +114,7 @@
           60 * 60 * 1000
         );
       } else {
+        // Fallback rate limiter
         rateLimiter = {
           checkLimit: async () => true,
           getTokens: () => settings.rateLimitPerHour,
@@ -228,12 +244,13 @@
   }
 
   /**
-   * Listen for storage changes
+   * FIXED: Listen for storage changes with proper handling
    */
   browser.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === "local" && changes.settings) {
       logger.info("⚙️ Settings changed, reloading...");
       const newSettings = changes.settings.newValue;
+
       if (newSettings && typeof newSettings === "object") {
         settings = { ...DEFAULT_SETTINGS, ...newSettings };
         if (
@@ -330,6 +347,7 @@
    */
   async function checkSingleProduct(product) {
     try {
+      // Use centralized validation if available
       if (
         typeof Validators !== "undefined" &&
         !Validators.isValidProductInfo(product)
@@ -646,7 +664,7 @@
   }
 
   /**
-   * Message handler
+   * FIXED: Message handler with proper error handling
    */
   browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const handleAsync = async () => {
