@@ -207,88 +207,29 @@
       </div>
     </div>
 
-    <!-- Alerts Tab - Full M3 Pattern -->
+    <!-- Alerts Tab -->
     <div class="tab-content" id="alertsTab">
-      <!-- Selection Mode Top Bar -->
-      <div class="selection-top-bar">
-        <button class="btn-icon" id="cancelSelectionBtn" title="İptal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-        <span class="selection-count" id="selectionCount">0 seçili</span>
-        <div class="selection-actions">
-          <button class="btn btn-tonal btn-sm" id="pauseSelectedBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="6" y="4" width="4" height="16"></rect>
-              <rect x="14" y="4" width="4" height="16"></rect>
-            </svg>
-            Duraklat
-          </button>
-          <button class="btn btn-danger btn-sm" id="deleteSelectedBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
-            </svg>
-            Sil
-          </button>
-        </div>
-      </div>
-
-      <!-- Normal Header -->
-      <div class="alerts-header" id="alertsHeader">
-        <h3 class="alerts-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          Fiyat Alarmları
-        </h3>
-        <span class="badge info" id="alertsBadge">0</span>
-      </div>
-
-      <!-- Alerts List Container -->
-      <div class="alerts-list" id="alertsList">
-        <!-- M3 Alarm cards will be inserted here -->
-      </div>
-
-      <!-- Enhanced Empty State -->
-      <div id="alertsEmptyState">
-        <div class="empty-state m3-empty-state">
-          <div class="empty-illustration">
-            <div class="empty-icon-bg">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                <line x1="12" y1="2" x2="12" y2="4"></line>
-              </svg>
-            </div>
-          </div>
-          <div class="empty-title">Henüz Alarm Yok</div>
-          <div class="empty-text">
-            Takip ettiğiniz ürünler için fiyat alarmları oluşturun.<br>
-            Hedef fiyata ulaşıldığında bildirim alacaksınız.
-          </div>
-          <button class="btn btn-filled" id="emptyStateAddBtn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            İlk Alarmı Oluştur
-          </button>
-        </div>
-      </div>
-
-      <!-- M3 FAB - Floating Action Button -->
-      <div class="m3-fab" id="alertsFab">
-        <button class="fab-button extended" id="fabAddAlert">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <div class="alerts-header">
+        <h3 class="alerts-title">Fiyat Alarmları</h3>
+        <button class="btn-add-alert" id="addAlertBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          <span class="fab-label">Yeni Alarm</span>
+          Yeni Alarm
         </button>
+      </div>
+
+      <div class="alerts-list" id="alertsList">
+        <!-- Alerts will be inserted here -->
+      </div>
+
+      <div id="alertsEmptyState">
+        <div class="empty-state">
+          <div class="empty-icon">🔔</div>
+          <div class="empty-title">Henüz Alarm Yok</div>
+          <div class="empty-text">Bir ürün için hedef fiyat veya yüzde alarmı ekleyin</div>
+        </div>
       </div>
     </div>
   </div>
@@ -428,31 +369,6 @@
   <div class="toast" id="toast" role="alert" aria-live="polite">
     <span class="toast-icon" id="toastIcon"></span>
     <span id="toastMessage"></span>
-  </div>
-
-  <!-- M3 Bottom Sheet - Alarm Details -->
-  <div class="m3-bottom-sheet" id="alarmBottomSheet">
-    <div class="bottom-sheet-scrim" id="bottomSheetScrim"></div>
-    <div class="bottom-sheet-container">
-      <div class="bottom-sheet-drag-handle"></div>
-      <div class="bottom-sheet-header">
-        <h3 class="bottom-sheet-title" id="bottomSheetTitle">Alarm Detayları</h3>
-      </div>
-      <div class="bottom-sheet-content" id="bottomSheetContent">
-        <!-- Dynamic content will be inserted here -->
-      </div>
-      <div class="bottom-sheet-actions">
-        <button class="btn btn-text" id="bottomSheetEdit">Düzenle</button>
-        <button class="btn btn-tonal" id="bottomSheetPause">Duraklat</button>
-        <button class="btn btn-danger" id="bottomSheetDelete">Sil</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- M3 Snackbar - Confirmations -->
-  <div class="m3-snackbar" id="snackbar">
-    <span class="snackbar-message" id="snackbarMessage">İşlem tamamlandı</span>
-    <button class="snackbar-action" id="snackbarAction">Geri Al</button>
   </div>
 
   <!-- Load all required libraries in correct order -->
