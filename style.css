@@ -1326,67 +1326,220 @@ body {
 }
 
 /* ============================================
-   BUTTONS - M3 Common
+   BUTTONS - M3 Complete System
    ============================================ */
-.btn-secondary {
+
+/* === Base Button === */
+.btn {
   padding: 10px 24px;
-  background: transparent;
-  border: 1px solid var(--md-sys-color-outline);
-  border-radius: var(--md-sys-shape-corner-full);
-  font: var(--md-sys-typescale-label-large-font);
-  color: var(--md-sys-color-primary);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.btn-secondary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--md-sys-color-primary);
-  opacity: 0;
-  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.btn-secondary:hover::before {
-  opacity: var(--md-sys-state-hover-state-layer-opacity);
-}
-
-.btn-primary {
-  padding: 10px 24px;
-  background: var(--md-sys-color-primary);
   border: none;
   border-radius: var(--md-sys-shape-corner-full);
   font: var(--md-sys-typescale-label-large-font);
-  color: var(--md-sys-color-on-primary);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   position: relative;
   overflow: hidden;
-  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  text-decoration: none;
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  white-space: nowrap;
+  min-height: 40px;
 }
 
-.btn-primary::before {
+.btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--md-sys-color-on-primary);
+  background: currentColor;
   opacity: 0;
   transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.btn-primary:hover::before {
+.btn:hover::before {
   opacity: var(--md-sys-state-hover-state-layer-opacity);
 }
 
-.btn-primary:hover {
+.btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.btn:active::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn svg,
+.btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.btn:disabled {
+  opacity: var(--md-sys-state-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* === M3 Filled Button (Primary) === */
+.btn-primary,
+.btn-filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.btn-primary:hover,
+.btn-filled:hover {
   box-shadow: var(--md-sys-elevation-level1);
 }
 
-.btn-primary:disabled {
-  opacity: var(--md-sys-state-disabled-opacity);
-  cursor: not-allowed;
+.btn-primary::before,
+.btn-filled::before {
+  background: var(--md-sys-color-on-primary);
+}
+
+/* === M3 Filled Tonal Button === */
+.btn-tonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.btn-tonal::before {
+  background: var(--md-sys-color-on-secondary-container);
+}
+
+.btn-tonal:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+/* === M3 Outlined Button (Secondary) === */
+.btn-secondary,
+.btn-outlined {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-outline);
+}
+
+.btn-secondary::before,
+.btn-outlined::before {
+  background: var(--md-sys-color-primary);
+}
+
+/* === M3 Text Button === */
+.btn-text {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  padding: 10px 12px;
+}
+
+.btn-text::before {
+  background: var(--md-sys-color-primary);
+}
+
+/* === M3 Elevated Button === */
+.btn-elevated {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-elevated::before {
+  background: var(--md-sys-color-primary);
+}
+
+.btn-elevated:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+}
+
+/* === M3 Danger/Error Buttons === */
+.btn-danger {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.btn-danger:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-danger::before {
+  background: var(--md-sys-color-on-error);
+}
+
+.btn-danger-tonal {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* === M3 Success Buttons === */
+.btn-success {
+  background: var(--md-sys-color-success);
+  color: var(--md-sys-color-on-success);
+}
+
+.btn-success:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-success-tonal {
+  background: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+}
+
+/* === M3 Warning Buttons === */
+.btn-warning {
+  background: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning);
+}
+
+.btn-warning:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+/* === Button Sizes === */
+.btn-sm {
+  padding: 6px 16px;
+  min-height: 32px;
+  font: var(--md-sys-typescale-label-medium-font);
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  min-height: 48px;
+  font: var(--md-sys-typescale-title-small-font);
+}
+
+/* === Full Width Button === */
+.btn-block {
+  width: 100%;
+}
+
+/* === Loading State === */
+.btn-loading {
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btnSpinner 0.8s linear infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes btnSpinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================

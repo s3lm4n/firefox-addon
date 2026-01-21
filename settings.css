@@ -472,10 +472,12 @@ body {
 }
 
 /* ============================================
-   BUTTONS - M3 Styles
+   BUTTONS - M3 Complete System
    ============================================ */
+
+/* === Base Button === */
 .btn {
-  padding: 12px 24px;
+  padding: 10px 24px;
   border: none;
   border-radius: var(--md-sys-shape-corner-full);
   font: var(--md-sys-typescale-label-large-font);
@@ -486,8 +488,11 @@ body {
   gap: 8px;
   position: relative;
   overflow: hidden;
-  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  text-decoration: none;
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
   white-space: nowrap;
+  min-height: 40px;
 }
 
 .btn::before {
@@ -503,8 +508,17 @@ body {
   opacity: var(--md-sys-state-hover-state-layer-opacity);
 }
 
+.btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
 .btn:active::before {
   opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.btn:active {
+  transform: scale(0.98);
 }
 
 .btn svg,
@@ -513,53 +527,206 @@ body {
   z-index: 1;
 }
 
-/* M3 Filled Button */
-.btn-primary {
+.btn:disabled {
+  opacity: var(--md-sys-state-disabled-opacity);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* === M3 Filled Button (Primary) === */
+.btn-primary,
+.btn-filled {
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
 }
 
-.btn-primary:hover {
+.btn-primary:hover,
+.btn-filled:hover {
   box-shadow: var(--md-sys-elevation-level1);
 }
 
-/* M3 Outlined Button */
-.btn-secondary {
+.btn-primary:disabled,
+.btn-filled:disabled {
+  background: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-surface);
+  opacity: var(--md-sys-state-disabled-container-opacity);
+}
+
+/* === M3 Filled Tonal Button === */
+.btn-tonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.btn-tonal::before {
+  background: var(--md-sys-color-on-secondary-container);
+}
+
+.btn-tonal:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+/* === M3 Outlined Button (Secondary) === */
+.btn-secondary,
+.btn-outlined {
   background: transparent;
   color: var(--md-sys-color-primary);
   border: 1px solid var(--md-sys-color-outline);
 }
 
-.btn-secondary::before {
+.btn-secondary::before,
+.btn-outlined::before {
   background: var(--md-sys-color-primary);
 }
 
-/* M3 Filled Tonal Button (Danger) */
+.btn-secondary:hover,
+.btn-outlined:hover {
+  background: rgba(103, 80, 164, 0.08);
+}
+
+/* === M3 Text Button === */
+.btn-text {
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  padding: 10px 12px;
+}
+
+.btn-text::before {
+  background: var(--md-sys-color-primary);
+}
+
+/* === M3 Elevated Button === */
+.btn-elevated {
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-elevated::before {
+  background: var(--md-sys-color-primary);
+}
+
+.btn-elevated:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+}
+
+/* === M3 Danger/Error Buttons === */
 .btn-danger {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
 }
 
 .btn-danger:hover {
   box-shadow: var(--md-sys-elevation-level1);
 }
 
-/* M3 Icon Button (in content) */
+.btn-danger-tonal {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.btn-danger-tonal::before {
+  background: var(--md-sys-color-on-error-container);
+}
+
+.btn-danger-outlined {
+  background: transparent;
+  color: var(--md-sys-color-error);
+  border: 1px solid var(--md-sys-color-error);
+}
+
+.btn-danger-outlined::before {
+  background: var(--md-sys-color-error);
+}
+
+/* === M3 Success Buttons === */
+.btn-success {
+  background: var(--md-sys-color-success);
+  color: var(--md-sys-color-on-success);
+}
+
+.btn-success:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-success-tonal {
+  background: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+}
+
+/* === M3 Warning Buttons === */
+.btn-warning {
+  background: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning);
+}
+
+.btn-warning:hover {
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.btn-warning-tonal {
+  background: var(--md-sys-color-warning-container);
+  color: var(--md-sys-color-on-warning-container);
+}
+
+/* === Button Sizes === */
+.btn-sm {
+  padding: 6px 16px;
+  min-height: 32px;
+  font: var(--md-sys-typescale-label-medium-font);
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  min-height: 48px;
+  font: var(--md-sys-typescale-title-small-font);
+}
+
+.btn-xl {
+  padding: 18px 40px;
+  min-height: 56px;
+  font: var(--md-sys-typescale-title-medium-font);
+}
+
+/* === Full Width Button === */
+.btn-block {
+  width: 100%;
+}
+
+/* === Button with Only Icon === */
+.btn-icon-only {
+  padding: 10px;
+  min-width: 40px;
+}
+
+.btn-icon-only.btn-sm {
+  padding: 6px;
+  min-width: 32px;
+}
+
+.btn-icon-only.btn-lg {
+  padding: 14px;
+  min-width: 48px;
+}
+
+/* === M3 Icon Button === */
 .btn-icon {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   background: transparent;
   border: none;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   padding: 8px;
   border-radius: var(--md-sys-shape-corner-full);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  transition: color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .btn-icon::before {
@@ -576,8 +743,109 @@ body {
   opacity: var(--md-sys-state-hover-state-layer-opacity);
 }
 
+.btn-icon:active::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
 .btn-icon:hover {
   color: var(--md-sys-color-on-surface);
+}
+
+.btn-icon:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.btn-icon svg {
+  position: relative;
+  z-index: 1;
+}
+
+/* Icon Button Sizes */
+.btn-icon.btn-icon-sm {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 6px;
+}
+
+.btn-icon.btn-icon-lg {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 12px;
+}
+
+/* Icon Button Filled */
+.btn-icon-filled {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.btn-icon-filled:hover {
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Icon Button Tonal */
+.btn-icon-tonal {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.btn-icon-tonal:hover {
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Icon Button Outlined */
+.btn-icon-outlined {
+  border: 1px solid var(--md-sys-color-outline);
+}
+
+/* === Button Group === */
+.btn-group {
+  display: inline-flex;
+  border-radius: var(--md-sys-shape-corner-full);
+  overflow: hidden;
+}
+
+.btn-group .btn {
+  border-radius: 0;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.btn-group .btn:first-child {
+  border-radius: var(--md-sys-shape-corner-full) 0 0 var(--md-sys-shape-corner-full);
+}
+
+.btn-group .btn:last-child {
+  border-radius: 0 var(--md-sys-shape-corner-full) var(--md-sys-shape-corner-full) 0;
+  border-right: none;
+}
+
+/* === Loading State === */
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn-loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btnSpinner 0.8s linear infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes btnSpinner {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================
