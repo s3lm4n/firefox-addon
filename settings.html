@@ -1,751 +1,638 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ayarlar - Fiyat Takipçisi Pro</title>
-    <link rel="stylesheet" href="settings.css" />
-  </head>
-  <body>
-    <div class="container">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-content">
-          <div class="logo">
-            <div class="logo-icon">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <path
-                  d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
-                ></path>
-                <line x1="7" y1="7" x2="7.01" y2="7"></line>
-              </svg>
-            </div>
-            <div>
-              <h1>Fiyat Takipçisi Pro</h1>
-              <p>Ayarlar & Yapılandırma</p>
-            </div>
-          </div>
-          <button class="icon-btn" id="themeToggle" title="Tema Değiştir">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ayarlar - Fiyat Takipçisi Pro</title>
+  <link rel="stylesheet" href="m3-tokens.css" />
+  <link rel="stylesheet" href="settings.css" />
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+              <line x1="7" y1="7" x2="7.01" y2="7"></line>
             </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Content -->
-      <div class="content">
-        <!-- Tabs -->
-        <div class="tabs">
-          <button class="tab active" data-tab="general">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="3"></circle>
-              <path
-                d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m-1.4 1.4l-4.2 4.2M23 12h-6m-6 0H1m18.8-5.2l-4.2 4.2m-1.4 1.4l-4.2 4.2"
-              ></path>
-            </svg>
-            <span>Genel</span>
-          </button>
-          <button class="tab" data-tab="notifications">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span>Bildirimler</span>
-          </button>
-          <button class="tab" data-tab="advanced">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-              <polyline points="2 17 12 22 22 17"></polyline>
-              <polyline points="2 12 12 17 22 12"></polyline>
-            </svg>
-            <span>Gelişmiş</span>
-          </button>
-          <button class="tab" data-tab="debug">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-              <line x1="8" y1="21" x2="16" y2="21"></line>
-              <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            <span>Debug</span>
-          </button>
-        </div>
-
-        <!-- Tab Contents -->
-        <div class="tab-content active" id="generalTab">
-          <div class="section">
-            <h2 class="section-title">Genel Ayarlar</h2>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Otomatik Kontrol</div>
-                <div class="setting-description">
-                  Fiyatları belirlenen aralıklarla otomatik kontrol et
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="autoCheck" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Kontrol Aralığı</div>
-                <div class="setting-description">
-                  Fiyatların ne sıklıkla kontrol edileceği (dakika)
-                </div>
-              </div>
-              <div class="input-group">
-                <input
-                  type="number"
-                  id="checkInterval"
-                  min="5"
-                  max="1440"
-                  step="5"
-                />
-                <span class="input-suffix">dk</span>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Maksimum Yeniden Deneme</div>
-                <div class="setting-description">
-                  Başarısız kontrolde kaç kez yeniden denenecek
-                </div>
-              </div>
-              <select id="maxRetries" class="select-input">
-                <option value="1">1 kez</option>
-                <option value="2">2 kez</option>
-                <option value="3">3 kez</option>
-                <option value="5">5 kez</option>
-              </select>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Saat Başı İstek Limiti</div>
-                <div class="setting-description">
-                  Saatte maksimum kaç istek yapılacağı
-                </div>
-              </div>
-              <input
-                type="number"
-                id="rateLimitPerHour"
-                min="10"
-                max="500"
-                step="10"
-                class="number-input"
-              />
-            </div>
           </div>
-
-          <div class="section">
-            <h2 class="section-title">Veri Yönetimi</h2>
-
-            <div class="action-buttons">
-              <button class="btn btn-secondary" id="exportData">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Verileri Dışa Aktar
-              </button>
-              <button class="btn btn-secondary" id="importData">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                Verileri İçe Aktar
-              </button>
-              <button class="btn btn-danger" id="clearAllData">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path
-                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                  ></path>
-                </svg>
-                Tüm Verileri Sil
-              </button>
-            </div>
+          <div>
+            <h1>Fiyat Takipçisi Pro</h1>
+            <p>Ayarlar & Yapılandırma</p>
           </div>
         </div>
-
-        <div class="tab-content" id="notificationsTab">
-          <div class="section">
-            <h2 class="section-title">Bildirim Ayarları</h2>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Bildirimleri Etkinleştir</div>
-                <div class="setting-description">
-                  Fiyat değişikliklerinde bildirim al
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="notifications" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Fiyat Düşüşünde Bildir</div>
-                <div class="setting-description">
-                  Fiyat düştüğünde bildirim gönder
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="notifyOnPriceDown" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Fiyat Artışında Bildir</div>
-                <div class="setting-description">
-                  Fiyat arttığında bildirim gönder
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="notifyOnPriceUp" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Minimum Değişim Yüzdesi</div>
-                <div class="setting-description">
-                  Bu yüzdenin altındaki değişimler için bildirim gönderme
-                </div>
-              </div>
-              <div class="input-group">
-                <input
-                  type="number"
-                  id="minChangePercent"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value="5"
-                />
-                <span class="input-suffix">%</span>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Fiyat Alarmlarını Etkinleştir</div>
-                <div class="setting-description">
-                  Hedef fiyat ve yüzde bazlı alarmları aktifleştir
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="enablePriceAlerts" checked />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="tab-content" id="advancedTab">
-          <div class="section">
-            <h2 class="section-title">💾 Otomatik Yedekleme</h2>
-            
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Otomatik Yedekleme</div>
-                <div class="setting-description">
-                  Verilerinizi otomatik olarak yedekle
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="autoBackup" checked />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Yedekleme Aralığı</div>
-                <div class="setting-description">
-                  Ne sıklıkla otomatik yedekleme yapılacak
-                </div>
-              </div>
-              <select id="autoBackupInterval" class="select-input">
-                <option value="12">12 saat</option>
-                <option value="24" selected>24 saat</option>
-                <option value="48">48 saat</option>
-                <option value="168">1 hafta</option>
-              </select>
-            </div>
-
-            <div class="action-buttons" style="margin-top: 16px;">
-              <button class="btn btn-secondary" id="manualBackup">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Şimdi Yedekle
-              </button>
-              <button class="btn btn-secondary" id="viewBackups">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                </svg>
-                Yedekleri Görüntüle
-              </button>
-            </div>
-          </div>
-
-          <div class="section">
-            <h2 class="section-title">🎨 Tema</h2>
-            
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Tema Tercihi</div>
-                <div class="setting-description">
-                  Eklentinin görünüm teması
-                </div>
-              </div>
-              <select id="themePreference" class="select-input">
-                <option value="auto">Sistem Varsayılanı</option>
-                <option value="light">Açık Tema</option>
-                <option value="dark">Koyu Tema</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="section">
-            <h2 class="section-title">🎯 Özel Element Seçicileri</h2>
-            <p class="section-description">
-              Element Picker ile oluşturduğunuz özel seçicileri yönetin. Bu
-              seçiciler sitelerdeki fiyat öğelerini otomatik olarak bulur.
-            </p>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">
-                  Element Picker ile Seçici Oluştur
-                </div>
-                <div class="setting-description">
-                  Bir ürün sayfasında sağ tıklayıp "Bu Öğeyi Fiyat Olarak Seç"
-                  seçeneğini kullanın
-                </div>
-              </div>
-              <button class="btn btn-primary" id="openElementPickerGuide">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                Nasıl Kullanılır?
-              </button>
-            </div>
-
-            <div style="margin-top: 24px">
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                  margin-bottom: 12px;
-                "
-              >
-                <div
-                  style="
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: var(--text-primary);
-                  "
-                >
-                  Kayıtlı Seçiciler
-                </div>
-                <button class="btn-icon" id="refreshSelectors" title="Yenile">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <polyline points="1 20 1 14 7 14"></polyline>
-                    <path
-                      d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
-                    ></path>
-                  </svg>
-                </button>
-              </div>
-
-              <div
-                id="custom-selectors-list"
-                style="
-                  min-height: 100px;
-                  padding: 16px;
-                  background: var(--bg-primary);
-                  border: 2px solid var(--border);
-                  border-radius: 12px;
-                "
-              >
-                <p style="color: #6b7280; text-align: center">Yükleniyor...</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="section">
-            <h2 class="section-title">Gelişmiş Özellikler</h2>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Manuel Fiyat Seçici</div>
-                <div class="setting-description">
-                  Fiyatı manuel olarak seçmek için etkinleştir
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="enablePicker" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Detaylı Loglama</div>
-                <div class="setting-description">
-                  Console'da detaylı log kayıtları tut
-                </div>
-              </div>
-              <label class="toggle">
-                <input type="checkbox" id="verboseLogging" />
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Önbellek Süresi</div>
-                <div class="setting-description">
-                  Önbellek verilerinin geçerlilik süresi (saniye)
-                </div>
-              </div>
-              <input
-                type="number"
-                id="cacheDuration"
-                min="60"
-                max="3600"
-                step="60"
-                class="number-input"
-              />
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <div class="setting-label">Özel Site Kuralları</div>
-                <div class="setting-description">
-                  Belirli siteler için özel seçici kuralları ekle
-                </div>
-              </div>
-              <button class="btn btn-secondary" id="customRules">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                  ></path>
-                  <path
-                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                  ></path>
-                </svg>
-                Kuralları Düzenle
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="tab-content" id="debugTab">
-          <div class="section">
-            <h2 class="section-title">Debug Konsolu</h2>
-            <p class="section-description">
-              Eklenti durumunu izleyin ve sorun giderin
-            </p>
-
-            <div class="debug-stats">
-              <div class="debug-stat">
-                <div class="debug-stat-label">Toplam Ürün</div>
-                <div class="debug-stat-value" id="debugTotalProducts">-</div>
-              </div>
-              <div class="debug-stat">
-                <div class="debug-stat-label">Önbellek Boyutu</div>
-                <div class="debug-stat-value" id="debugCacheSize">-</div>
-              </div>
-              <div class="debug-stat">
-                <div class="debug-stat-label">Son Kontrol</div>
-                <div class="debug-stat-value" id="debugLastCheck">-</div>
-              </div>
-              <div class="debug-stat">
-                <div class="debug-stat-label">Hata Sayısı</div>
-                <div class="debug-stat-value" id="debugErrorCount">-</div>
-              </div>
-            </div>
-
-            <div class="debug-actions">
-              <button class="btn btn-primary" id="testExtraction">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                Test Extraction
-              </button>
-              <button class="btn btn-secondary" id="clearCache">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"
-                  ></path>
-                </svg>
-                Önbelleği Temizle
-              </button>
-              <button class="btn btn-secondary" id="viewLogs">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                  ></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                Log Geçmişi
-              </button>
-              <button class="btn btn-secondary" id="resetSettings">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polyline points="1 4 1 10 7 10"></polyline>
-                  <polyline points="23 20 23 14 17 14"></polyline>
-                  <path
-                    d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"
-                  ></path>
-                </svg>
-                Ayarları Sıfırla
-              </button>
-            </div>
-
-            <div class="console">
-              <div class="console-header">
-                <span>Console Output</span>
-                <button class="btn-icon" id="clearConsole" title="Temizle">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              <div class="console-output" id="consoleOutput">
-                <div class="console-line info">
-                  <span class="console-time">00:00:00</span>
-                  <span class="console-message">Debug konsolu hazır...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="footer">
-        <button class="btn btn-secondary" id="cancelBtn">İptal</button>
-        <button class="btn btn-primary" id="saveBtn">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polyline points="20 6 9 17 4 12"></polyline>
+        <button class="icon-btn" id="themeToggle" title="Tema Değiştir">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
-          Kaydet
         </button>
       </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">
-      <span class="toast-icon" id="toastIcon"></span>
-      <span id="toastMessage"></span>
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="general">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m-1.4 1.4l-4.2 4.2M23 12h-6m-6 0H1m18.8-5.2l-4.2 4.2m-1.4 1.4l-4.2 4.2">
+            </path>
+          </svg>
+          <span>Genel</span>
+        </button>
+        <button class="tab" data-tab="notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span>Bildirimler</span>
+        </button>
+        <button class="tab" data-tab="advanced">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span>Gelişmiş</span>
+        </button>
+        <button class="tab" data-tab="debug">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <span>Debug</span>
+        </button>
+      </div>
+
+      <!-- Tab Contents -->
+      <div class="tab-content active" id="generalTab">
+        <div class="section">
+          <h2 class="section-title">Genel Ayarlar</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Otomatik Kontrol</div>
+              <div class="setting-description">
+                Fiyatları belirlenen aralıklarla otomatik kontrol et
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="autoCheck" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Kontrol Aralığı</div>
+              <div class="setting-description">
+                Fiyatların ne sıklıkla kontrol edileceği (dakika)
+              </div>
+            </div>
+            <div class="input-group">
+              <input type="number" id="checkInterval" min="5" max="1440" step="5" />
+              <span class="input-suffix">dk</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Maksimum Yeniden Deneme</div>
+              <div class="setting-description">
+                Başarısız kontrolde kaç kez yeniden denenecek
+              </div>
+            </div>
+            <select id="maxRetries" class="select-input">
+              <option value="1">1 kez</option>
+              <option value="2">2 kez</option>
+              <option value="3">3 kez</option>
+              <option value="5">5 kez</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Saat Başı İstek Limiti</div>
+              <div class="setting-description">
+                Saatte maksimum kaç istek yapılacağı
+              </div>
+            </div>
+            <input type="number" id="rateLimitPerHour" min="10" max="500" step="10" class="number-input" />
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Veri Yönetimi</h2>
+
+          <div class="action-buttons">
+            <button class="btn btn-secondary" id="exportData">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Verileri Dışa Aktar
+            </button>
+            <button class="btn btn-secondary" id="importData">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Verileri İçe Aktar
+            </button>
+            <button class="btn btn-danger" id="clearAllData">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Tüm Verileri Sil
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="notificationsTab">
+        <div class="section">
+          <h2 class="section-title">Bildirim Ayarları</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Bildirimleri Etkinleştir</div>
+              <div class="setting-description">
+                Fiyat değişikliklerinde bildirim al
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="notifications" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Fiyat Düşüşünde Bildir</div>
+              <div class="setting-description">
+                Fiyat düştüğünde bildirim gönder
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="notifyOnPriceDown" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Fiyat Artışında Bildir</div>
+              <div class="setting-description">
+                Fiyat arttığında bildirim gönder
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="notifyOnPriceUp" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Minimum Değişim Yüzdesi</div>
+              <div class="setting-description">
+                Bu yüzdenin altındaki değişimler için bildirim gönderme
+              </div>
+            </div>
+            <div class="input-group">
+              <input type="number" id="minChangePercent" min="0" max="100" step="1" value="5" />
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Fiyat Alarmlarını Etkinleştir</div>
+              <div class="setting-description">
+                Hedef fiyat ve yüzde bazlı alarmları aktifleştir
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enablePriceAlerts" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="advancedTab">
+        <div class="section">
+          <h2 class="section-title">💾 Otomatik Yedekleme</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Otomatik Yedekleme</div>
+              <div class="setting-description">
+                Verilerinizi otomatik olarak yedekle
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="autoBackup" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Yedekleme Aralığı</div>
+              <div class="setting-description">
+                Ne sıklıkla otomatik yedekleme yapılacak
+              </div>
+            </div>
+            <select id="autoBackupInterval" class="select-input">
+              <option value="12">12 saat</option>
+              <option value="24" selected>24 saat</option>
+              <option value="48">48 saat</option>
+              <option value="168">1 hafta</option>
+            </select>
+          </div>
+
+          <div class="action-buttons" style="margin-top: 16px;">
+            <button class="btn btn-secondary" id="manualBackup">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Şimdi Yedekle
+            </button>
+            <button class="btn btn-secondary" id="viewBackups">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Yedekleri Görüntüle
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">🎨 Tema</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Tema Tercihi</div>
+              <div class="setting-description">
+                Eklentinin görünüm teması
+              </div>
+            </div>
+            <select id="themePreference" class="select-input">
+              <option value="auto">Sistem Varsayılanı</option>
+              <option value="light">Açık Tema</option>
+              <option value="dark">Koyu Tema</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">🎯 Özel Element Seçicileri</h2>
+          <p class="section-description">
+            Element Picker ile oluşturduğunuz özel seçicileri yönetin. Bu
+            seçiciler sitelerdeki fiyat öğelerini otomatik olarak bulur.
+          </p>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">
+                Element Picker ile Seçici Oluştur
+              </div>
+              <div class="setting-description">
+                Bir ürün sayfasında sağ tıklayıp "Bu Öğeyi Fiyat Olarak Seç"
+                seçeneğini kullanın
+              </div>
+            </div>
+            <button class="btn btn-primary" id="openElementPickerGuide">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Nasıl Kullanılır?
+            </button>
+          </div>
+
+          <div style="margin-top: 24px">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div class="list-item-headline"
+                style="font: var(--md-sys-typescale-title-small-font); color: var(--md-sys-color-on-surface);">
+                Kayıtlı Seçiciler
+                <span class="badge info" id="selectorCount" style="margin-left: 8px;">0</span>
+              </div>
+              <button class="btn-icon tooltip" id="refreshSelectors" data-tooltip="Listeyi yenile">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div id="custom-selectors-list" class="selectors-list">
+              <div class="selectors-empty">
+                <div class="selectors-empty-icon">🎯</div>
+                <div class="selectors-empty-text">Yükleniyor...</div>
+                <div class="progress-linear indeterminate"
+                  style="margin-top: 16px; max-width: 200px; margin-left: auto; margin-right: auto;">
+                  <div class="progress-linear-track"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Gelişmiş Özellikler</h2>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Manuel Fiyat Seçici</div>
+              <div class="setting-description">
+                Fiyatı manuel olarak seçmek için etkinleştir
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enablePicker" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Detaylı Loglama</div>
+              <div class="setting-description">
+                Console'da detaylı log kayıtları tut
+              </div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="verboseLogging" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Önbellek Süresi</div>
+              <div class="setting-description">
+                Önbellek verilerinin geçerlilik süresi (saniye)
+              </div>
+            </div>
+            <input type="number" id="cacheDuration" min="60" max="3600" step="60" class="number-input" />
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <div class="setting-label">Özel Site Kuralları</div>
+              <div class="setting-description">
+                Belirli siteler için özel seçici kuralları ekle
+              </div>
+            </div>
+            <button class="btn btn-secondary" id="customRules">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Kuralları Düzenle
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="debugTab">
+        <div class="section">
+          <h2 class="section-title">
+            <span class="status-indicator"
+              style="display: inline-block; width: 10px; height: 10px; background: var(--md-sys-color-success); border-radius: 50%; margin-right: 8px; animation: statusPulse 2s ease-in-out infinite;"></span>
+            Debug Konsolu
+          </h2>
+          <p class="section-description">
+            Eklenti durumunu izleyin ve sorun giderin
+          </p>
+
+          <!-- Enhanced Debug Stats with M3 Cards -->
+          <div class="debug-stats">
+            <div class="debug-stat">
+              <div class="debug-stat-label">Toplam Ürün</div>
+              <div class="debug-stat-value" id="debugTotalProducts">-</div>
+              <div class="progress-linear" style="margin-top: 8px;">
+                <div class="progress-linear-track" style="width: 0%;" id="productsProgress"></div>
+              </div>
+            </div>
+            <div class="debug-stat">
+              <div class="debug-stat-label">Önbellek Boyutu</div>
+              <div class="debug-stat-value" id="debugCacheSize">-</div>
+              <div class="badge success" style="margin-top: 8px;">Aktif</div>
+            </div>
+            <div class="debug-stat">
+              <div class="debug-stat-label">Son Kontrol</div>
+              <div class="debug-stat-value" id="debugLastCheck">-</div>
+              <div class="chip" style="margin-top: 8px; font-size: 10px; padding: 4px 8px;">
+                <span class="chip-label">Otomatik</span>
+              </div>
+            </div>
+            <div class="debug-stat">
+              <div class="debug-stat-label">Hata Sayısı</div>
+              <div class="debug-stat-value" id="debugErrorCount">-</div>
+              <div class="badge" style="margin-top: 8px;" id="errorBadge">0</div>
+            </div>
+          </div>
+
+          <!-- M3 Segmented Buttons for Filter -->
+          <div style="margin-bottom: 16px;">
+            <div class="segmented-buttons" id="logFilter">
+              <button class="segmented-btn selected" data-filter="all">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M3 12h18M3 18h18"></path>
+                </svg>
+                <span>Tümü</span>
+              </button>
+              <button class="segmented-btn" data-filter="info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>Bilgi</span>
+              </button>
+              <button class="segmented-btn" data-filter="warning">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                  </path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Uyarı</span>
+              </button>
+              <button class="segmented-btn" data-filter="error">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <span>Hata</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Debug Actions with M3 Chips Style -->
+          <div class="debug-actions">
+            <button class="btn btn-primary" id="testExtraction">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              Test Extraction
+            </button>
+            <button class="btn btn-secondary tooltip" id="clearCache" data-tooltip="Önbellek verilerini temizler">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"></path>
+              </svg>
+              Önbelleği Temizle
+            </button>
+            <button class="btn btn-secondary tooltip" id="viewLogs" data-tooltip="Tüm log kayıtlarını görüntüle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              Log Geçmişi
+            </button>
+            <button class="btn btn-danger tooltip" id="resetSettings" data-tooltip="Tüm ayarları varsayılana döndür">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <polyline points="23 20 23 14 17 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+              </svg>
+              Ayarları Sıfırla
+            </button>
+          </div>
+
+          <!-- Enhanced Console with M3 Debug Panel -->
+          <div class="debug-panel" style="margin-top: 20px;">
+            <div class="debug-panel-header">
+              <div class="debug-panel-title">
+                <div class="status-indicator"></div>
+                Console Output
+                <span class="badge info" id="logCount">0</span>
+              </div>
+              <div class="debug-panel-actions">
+                <button class="btn-icon tooltip" id="clearConsole" data-tooltip="Konsolu temizle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+                <button class="btn-icon tooltip" id="copyLogs" data-tooltip="Logları kopyala">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="console-output" id="consoleOutput" style="max-height: 350px; overflow-y: auto;">
+              <div class="debug-log-entry log-info">
+                <span class="debug-log-timestamp">00:00:00</span>
+                <span class="debug-log-level info">INFO</span>
+                <span class="debug-log-message">Debug konsolu hazır...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Hidden file input for import -->
-    <input type="file" id="fileInput" accept=".json" style="display: none" />
+    <!-- Footer -->
+    <div class="footer">
+      <button class="btn btn-secondary" id="cancelBtn">İptal</button>
+      <button class="btn btn-primary" id="saveBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Kaydet
+      </button>
+    </div>
+  </div>
 
-    <!-- Load all required libraries in correct order -->
-    <script src="lib/config.js"></script>
-    <script src="lib/errors.js"></script>
-    <script src="lib/validators.js"></script>
-    <script src="lib/cache.js"></script>
-    <script src="lib/messaging.js"></script>
-    <script src="lib/helpers.js"></script>
-    <script src="lib/sites.js"></script>
-    <script src="lib/parser.js"></script>
-    <script src="lib/alerts.js"></script>
-    <script src="lib/data-manager.js"></script>
-    <script src="settings.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", async () => {
-        if (typeof loadCustomSelectors === "function") {
-          await loadCustomSelectors();
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-icon" id="toastIcon"></span>
+    <span id="toastMessage"></span>
+  </div>
+
+  <!-- Hidden file input for import -->
+  <input type="file" id="fileInput" accept=".json" style="display: none" />
+
+  <!-- Load all required libraries in correct order -->
+  <script src="lib/config.js"></script>
+  <script src="lib/errors.js"></script>
+  <script src="lib/validators.js"></script>
+  <script src="lib/cache.js"></script>
+  <script src="lib/messaging.js"></script>
+  <script src="lib/helpers.js"></script>
+  <script src="lib/sites.js"></script>
+  <script src="lib/parser.js"></script>
+  <script src="lib/alerts.js"></script>
+  <script src="lib/data-manager.js"></script>
+  <script src="settings.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      if (typeof loadCustomSelectors === "function") {
+        await loadCustomSelectors();
+      }
+    });
+
+    const refreshSelectorsBtn = document.getElementById("refreshSelectors");
+    if (refreshSelectorsBtn && typeof loadCustomSelectors === "function") {
+      refreshSelectorsBtn.addEventListener("click", async () => {
+        const list = document.getElementById("custom-selectors-list");
+        if (list) {
+          list.innerHTML =
+            '<p style="color: #6b7280; text-align: center;">Yükleniyor...</p>';
+        }
+        await loadCustomSelectors();
+        if (typeof showToast === "function") {
+          showToast("✅ Liste yenilendi", "success");
         }
       });
+    }
 
-      const refreshSelectorsBtn = document.getElementById("refreshSelectors");
-      if (refreshSelectorsBtn && typeof loadCustomSelectors === "function") {
-        refreshSelectorsBtn.addEventListener("click", async () => {
-          const list = document.getElementById("custom-selectors-list");
-          if (list) {
-            list.innerHTML =
-              '<p style="color: #6b7280; text-align: center;">Yükleniyor...</p>';
-          }
-          await loadCustomSelectors();
-          if (typeof showToast === "function") {
-            showToast("✅ Liste yenilendi", "success");
-          }
-        });
-      }
+    const guideBtn = document.getElementById("openElementPickerGuide");
+    if (guideBtn) {
+      guideBtn.addEventListener("click", () => {
+        const guide = [
+          "1. Ürün sayfasına gidin.",
+          "2. Fiyat öğesine sağ tıklayın.",
+          '3. "Bu Öğeyi Fiyat Olarak Seç" seçeneğini seçin.',
+          "4. Seçici kaydedildiğinde burada listelenecek.",
+        ].join("\n");
+        alert(guide);
+      });
+    }
+  </script>
+</body>
 
-      const guideBtn = document.getElementById("openElementPickerGuide");
-      if (guideBtn) {
-        guideBtn.addEventListener("click", () => {
-          const guide = [
-            "1. Ürün sayfasına gidin.",
-            "2. Fiyat öğesine sağ tıklayın.",
-            '3. "Bu Öğeyi Fiyat Olarak Seç" seçeneğini seçin.',
-            "4. Seçici kaydedildiğinde burada listelenecek.",
-          ].join("\n");
-          alert(guide);
-        });
-      }
-    </script>
-  </body>
 </html>

@@ -1,56 +1,59 @@
+/**
+ * Material Design 3 Styles - Settings Page
+ * Fiyat Takipçisi Pro - Firefox Extension
+ */
+
+/* Import M3 Design Tokens */
+@import url('m3-tokens.css');
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Legacy variable aliases for backwards compatibility */
 :root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --primary-light: #818cf8;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #3b82f6;
+  --primary: var(--md-sys-color-primary);
+  --primary-dark: var(--md-sys-color-primary);
+  --primary-light: var(--md-sys-color-primary-container);
+  --success: var(--md-sys-color-success);
+  --danger: var(--md-sys-color-error);
+  --warning: var(--md-sys-color-warning);
+  --info: var(--md-sys-color-primary);
 
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
-  --border: #e5e7eb;
+  --bg-primary: var(--md-sys-color-surface);
+  --bg-secondary: var(--md-sys-color-surface-container-low);
+  --bg-tertiary: var(--md-sys-color-surface-container);
+  --text-primary: var(--md-sys-color-on-surface);
+  --text-secondary: var(--md-sys-color-on-surface-variant);
+  --text-tertiary: var(--md-sys-color-outline);
+  --border: var(--md-sys-color-outline-variant);
 
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --shadow-sm: var(--md-sys-elevation-level1);
+  --shadow-md: var(--md-sys-elevation-level2);
+  --shadow-lg: var(--md-sys-elevation-level3);
+  --shadow-xl: var(--md-sys-elevation-level4);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-sm: var(--md-sys-shape-corner-small);
+  --radius-md: var(--md-sys-shape-corner-medium);
+  --radius-lg: var(--md-sys-shape-corner-large);
+  --radius-xl: var(--md-sys-shape-corner-extra-large);
 
-  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body.dark-mode {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --border: #334155;
+  --transition: var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  font: var(--md-sys-typescale-body-medium-font);
+  font-family: var(--md-sys-typescale-font-family-plain);
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
   min-height: 100vh;
-  transition: background var(--transition), color var(--transition);
+  transition: background-color var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard),
+    color var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
 }
 
 .container {
@@ -61,12 +64,13 @@ body {
   flex-direction: column;
 }
 
-/* Header */
+/* ============================================
+   HEADER - M3 Top App Bar (Large)
+   ============================================ */
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  padding: 24px 32px 32px;
   position: relative;
   overflow: hidden;
 }
@@ -74,25 +78,28 @@ body {
 .header::before {
   content: "";
   position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 70%
-  );
-  animation: shimmer 8s ease-in-out infinite;
+  top: -100%;
+  right: -100%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle at center,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 50%);
+  animation: headerPulse 15s ease-in-out infinite;
+  pointer-events: none;
 }
 
-@keyframes shimmer {
+@keyframes headerPulse {
+
   0%,
   100% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translate(0, 0) scale(1);
+    opacity: 0.5;
   }
+
   50% {
-    transform: translate(-20px, -20px) rotate(10deg);
+    transform: translate(-3%, -3%) scale(1.05);
+    opacity: 0.8;
   }
 }
 
@@ -113,157 +120,202 @@ body {
 .logo-icon {
   width: 56px;
   height: 56px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 16px;
+  background: var(--md-sys-color-primary-container);
+  border-radius: var(--md-sys-shape-corner-large);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-lg);
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .logo h1 {
-  font-size: 24px;
-  font-weight: 800;
+  font: var(--md-sys-typescale-headline-medium-font);
+  font-weight: 500;
   margin-bottom: 4px;
 }
 
 .logo p {
-  font-size: 14px;
+  font: var(--md-sys-typescale-body-medium-font);
   opacity: 0.9;
 }
 
+/* M3 Icon Button */
 .icon-btn {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border: none;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  color: white;
+  background: transparent;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: inherit;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.icon-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+.icon-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-/* Content */
+.icon-btn:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.icon-btn:active::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid var(--md-sys-color-on-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   CONTENT AREA
+   ============================================ */
 .content {
   flex: 1;
-  padding: 32px;
+  padding: 24px 32px;
+  background: var(--md-sys-color-surface);
 }
 
-/* Tabs */
+/* ============================================
+   TABS - M3 Secondary Navigation Tabs
+   ============================================ */
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 32px;
-  border-bottom: 2px solid var(--border);
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   padding-bottom: 0;
 }
 
 .tab {
-  padding: 14px 20px;
+  padding: 16px 24px;
   background: transparent;
   border: none;
   border-bottom: 3px solid transparent;
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-title-small-font);
   cursor: pointer;
-  transition: all var(--transition);
   display: flex;
   align-items: center;
   gap: 8px;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--md-sys-shape-corner-small) var(--md-sys-shape-corner-small) 0 0;
   position: relative;
+  transition: color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.tab:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.tab::after {
   content: "";
   position: absolute;
-  bottom: -2px;
+  bottom: -1px;
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--primary);
+  background: var(--md-sys-color-primary);
   border-radius: 3px 3px 0 0;
   transform: scaleX(0);
-  transition: transform var(--transition);
+  transition: transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized);
 }
 
 .tab:hover {
-  color: var(--primary);
-  background: var(--bg-secondary);
+  color: var(--md-sys-color-on-surface);
 }
 
 .tab.active {
-  color: var(--primary);
+  color: var(--md-sys-color-primary);
 }
 
-.tab.active::before {
+.tab.active::after {
   transform: scaleX(1);
 }
 
-/* Tab Content */
+.tab svg,
+.tab span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   TAB CONTENT
+   ============================================ */
 .tab-content {
   display: none;
-  animation: fadeIn 0.3s ease;
+  animation: contentFadeIn var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-emphasized-decelerate);
 }
 
 .tab-content.active {
   display: block;
 }
 
-@keyframes fadeIn {
+@keyframes contentFadeIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Section */
+/* ============================================
+   SECTION - M3 Card Container
+   ============================================ */
 .section {
-  background: var(--bg-secondary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-xl);
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-extra-large);
   padding: 24px;
   margin-bottom: 24px;
 }
 
 .section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font: var(--md-sys-typescale-title-large-font);
+  color: var(--md-sys-color-on-surface);
   margin-bottom: 8px;
 }
 
 .section-description {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-surface-variant);
   margin-bottom: 24px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
-/* Setting Item */
+/* ============================================
+   SETTING ITEM - M3 List Item
+   ============================================ */
 .setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .setting-item:last-child {
@@ -281,24 +333,25 @@ body {
 }
 
 .setting-label {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font: var(--md-sys-typescale-body-large-font);
+  color: var(--md-sys-color-on-surface);
   margin-bottom: 4px;
 }
 
 .setting-description {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
 }
 
-/* Toggle Switch */
+/* ============================================
+   TOGGLE SWITCH - M3 Switch
+   ============================================ */
 .toggle {
   position: relative;
   display: inline-block;
   width: 52px;
-  height: 28px;
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -315,165 +368,221 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--border);
-  transition: var(--transition);
-  border-radius: 28px;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 2px solid var(--md-sys-color-outline);
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  border-radius: var(--md-sys-shape-corner-full);
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: var(--transition);
-  border-radius: 50%;
-  box-shadow: var(--shadow-sm);
+  height: 16px;
+  width: 16px;
+  left: 6px;
+  bottom: 6px;
+  background-color: var(--md-sys-color-outline);
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  border-radius: var(--md-sys-shape-corner-full);
 }
 
-.toggle input:checked + .toggle-slider {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+.toggle input:checked+.toggle-slider {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
 }
 
-.toggle input:checked + .toggle-slider:before {
-  transform: translateX(24px);
+.toggle input:checked+.toggle-slider:before {
+  transform: translateX(20px);
+  background-color: var(--md-sys-color-on-primary);
+  width: 24px;
+  height: 24px;
+  left: 2px;
+  bottom: 2px;
 }
 
-/* Input Group */
+.toggle input:focus-visible+.toggle-slider {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   INPUT GROUP - M3 Outlined Text Field
+   ============================================ */
 .input-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-primary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 0 12px;
-  transition: all var(--transition);
+  align-items: stretch;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  overflow: hidden;
+  transition: border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .input-group:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
 }
 
 .input-group input {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 10px 0;
-  font-size: 14px;
-  color: var(--text-primary);
+  padding: 14px 16px;
+  font: var(--md-sys-typescale-body-large-font);
+  color: var(--md-sys-color-on-surface);
   outline: none;
   width: 80px;
 }
 
 .input-suffix {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 600;
+  padding: 14px 16px;
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-large-font);
+  display: flex;
+  align-items: center;
 }
 
-/* Select Input */
+/* ============================================
+   SELECT INPUT - M3 Dropdown Menu
+   ============================================ */
 .select-input,
 .number-input {
-  padding: 10px 14px;
-  background: var(--bg-primary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  color: var(--text-primary);
+  padding: 14px 16px;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  font: var(--md-sys-typescale-body-large-font);
+  color: var(--md-sys-color-on-surface);
   cursor: pointer;
-  transition: all var(--transition);
-  min-width: 150px;
+  min-width: 160px;
+  transition: border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
 .select-input:hover,
 .number-input:hover {
-  border-color: var(--primary);
+  border-color: var(--md-sys-color-on-surface);
 }
 
 .select-input:focus,
 .number-input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: var(--md-sys-color-primary);
+  border-width: 2px;
 }
 
-/* Buttons */
+/* ============================================
+   BUTTONS - M3 Styles
+   ============================================ */
 .btn {
   padding: 12px 24px;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-large-font);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
   white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.btn:active {
-  transform: translateY(0);
+.btn:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
 }
 
+.btn:active::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.btn svg,
+.btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* M3 Filled Button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  color: white;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+  box-shadow: var(--md-sys-elevation-level1);
 }
 
+/* M3 Outlined Button */
 .btn-secondary {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-outline);
 }
 
-.btn-secondary:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.btn-secondary::before {
+  background: var(--md-sys-color-primary);
 }
 
+/* M3 Filled Tonal Button (Danger) */
 .btn-danger {
-  background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-  color: white;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
 }
 
 .btn-danger:hover {
-  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+  box-shadow: var(--md-sys-elevation-level1);
 }
 
+/* M3 Icon Button (in content) */
 .btn-icon {
+  width: 40px;
+  height: 40px;
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
+  padding: 8px;
+  border-radius: var(--md-sys-shape-corner-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.btn-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.btn-icon:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
 }
 
 .btn-icon:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  color: var(--md-sys-color-on-surface);
 }
 
-/* Action Buttons */
+/* ============================================
+   ACTION BUTTONS GRID
+   ============================================ */
 .action-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -481,53 +590,60 @@ body {
   margin-top: 16px;
 }
 
-/* Debug Stats */
+/* ============================================
+   DEBUG STATS - M3 Cards
+   ============================================ */
 .debug-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
 .debug-stat {
-  background: var(--bg-primary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
   padding: 20px;
   text-align: center;
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.debug-stat:hover {
+  box-shadow: var(--md-sys-elevation-level1);
 }
 
 .debug-stat-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font: var(--md-sys-typescale-label-medium-font);
+  color: var(--md-sys-color-on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
 }
 
 .debug-stat-value {
-  font-size: 28px;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font: var(--md-sys-typescale-headline-medium-font);
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
 }
 
-/* Debug Actions */
+/* ============================================
+   DEBUG ACTIONS
+   ============================================ */
 .debug-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
 
-/* Console */
+/* ============================================
+   CONSOLE - M3 Container
+   ============================================ */
 .console {
-  background: var(--bg-primary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
   overflow: hidden;
 }
 
@@ -536,18 +652,17 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
+  background: var(--md-sys-color-surface-container);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font: var(--md-sys-typescale-title-small-font);
+  color: var(--md-sys-color-on-surface);
 }
 
 .console-output {
   padding: 16px;
   max-height: 400px;
   overflow-y: auto;
-  font-family: "Monaco", "Menlo", "Consolas", monospace;
+  font-family: 'Google Sans Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
   font-size: 12px;
   line-height: 1.6;
 }
@@ -557,19 +672,19 @@ body {
 }
 
 .console-output::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 .console-output::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full);
 }
 
 .console-line {
   display: flex;
   gap: 12px;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .console-line:last-child {
@@ -577,63 +692,65 @@ body {
 }
 
 .console-time {
-  color: var(--text-tertiary);
-  font-weight: 600;
+  color: var(--md-sys-color-outline);
+  font-weight: 500;
   flex-shrink: 0;
 }
 
 .console-message {
-  color: var(--text-primary);
+  color: var(--md-sys-color-on-surface);
   flex: 1;
   word-break: break-word;
 }
 
 .console-line.info .console-message {
-  color: var(--info);
+  color: var(--md-sys-color-primary);
 }
 
 .console-line.success .console-message {
-  color: var(--success);
+  color: var(--md-sys-color-success);
 }
 
 .console-line.warning .console-message {
-  color: var(--warning);
+  color: var(--md-sys-color-warning);
 }
 
 .console-line.error .console-message {
-  color: var(--danger);
+  color: var(--md-sys-color-error);
 }
 
-/* Footer */
+/* ============================================
+   FOOTER - M3 Bottom Bar
+   ============================================ */
 .footer {
-  padding: 24px 32px;
-  background: var(--bg-secondary);
-  border-top: 2px solid var(--border);
+  padding: 20px 32px;
+  background: var(--md-sys-color-surface-container-low);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Toast */
+/* ============================================
+   TOAST - M3 Snackbar
+   ============================================ */
 .toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  padding: 16px 20px;
-  background: var(--text-primary);
-  color: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
+  padding: 14px 16px;
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--md-sys-shape-corner-small);
+  box-shadow: var(--md-sys-elevation-level3);
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
-  font-weight: 600;
+  font: var(--md-sys-typescale-body-medium-font);
   z-index: 1000;
   opacity: 0;
   transform: translateY(20px) scale(0.95);
-  transition: all var(--transition);
+  transition: all var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
   max-width: 400px;
 }
 
@@ -647,7 +764,745 @@ body {
   flex-shrink: 0;
 }
 
-/* Responsive */
+/* ============================================
+   M3 CHIPS
+   ============================================ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-small);
+  font: var(--md-sys-typescale-label-large-font);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.chip:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.chip.selected {
+  background: var(--md-sys-color-secondary-container);
+  border-color: transparent;
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.chip.selected::before {
+  background: var(--md-sys-color-on-secondary-container);
+}
+
+.chip-icon {
+  width: 18px;
+  height: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.chip-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Assist Chip */
+.chip-assist {
+  background: transparent;
+}
+
+/* Filter Chip */
+.chip-filter {
+  padding-left: 8px;
+}
+
+.chip-filter .chip-icon {
+  background: var(--md-sys-color-on-surface-variant);
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.chip-filter.selected .chip-icon {
+  background: var(--md-sys-color-on-secondary-container);
+}
+
+/* Input Chip */
+.chip-input {
+  padding-right: 8px;
+}
+
+.chip-input .chip-close {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+.chip-input .chip-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   M3 BADGES
+   ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-small-font);
+  font-size: 11px;
+}
+
+.badge.large {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.badge.success {
+  background: var(--md-sys-color-success);
+  color: var(--md-sys-color-on-success);
+}
+
+.badge.warning {
+  background: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning);
+}
+
+.badge.info {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  min-width: unset;
+}
+
+/* ============================================
+   M3 PROGRESS INDICATORS
+   ============================================ */
+/* Linear Progress */
+.progress-linear {
+  width: 100%;
+  height: 4px;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: var(--md-sys-shape-corner-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-linear-track {
+  height: 100%;
+  background: var(--md-sys-color-primary);
+  border-radius: inherit;
+  transition: width var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-standard);
+}
+
+.progress-linear.indeterminate .progress-linear-track {
+  width: 50%;
+  animation: progressIndeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progressIndeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Circular Progress */
+.progress-circular {
+  width: 48px;
+  height: 48px;
+  position: relative;
+}
+
+.progress-circular svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-circular circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.progress-circular .track {
+  stroke: var(--md-sys-color-surface-container-highest);
+}
+
+.progress-circular .progress {
+  stroke: var(--md-sys-color-primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-standard);
+}
+
+.progress-circular.indeterminate {
+  animation: progressCircularRotate 2s linear infinite;
+}
+
+.progress-circular.indeterminate .progress {
+  animation: progressCircularDash 1.5s ease-in-out infinite;
+}
+
+@keyframes progressCircularRotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progressCircularDash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+/* ============================================
+   M3 SEGMENTED BUTTONS
+   ============================================ */
+.segmented-buttons {
+  display: inline-flex;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  overflow: hidden;
+}
+
+.segmented-btn {
+  padding: 10px 24px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--md-sys-color-outline);
+  font: var(--md-sys-typescale-label-large-font);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.segmented-btn:last-child {
+  border-right: none;
+}
+
+.segmented-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.segmented-btn:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.segmented-btn.selected {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.segmented-btn.selected::before {
+  background: var(--md-sys-color-on-secondary-container);
+}
+
+.segmented-btn svg,
+.segmented-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   M3 DIVIDER
+   ============================================ */
+.divider {
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+  margin: 16px 0;
+}
+
+.divider.inset {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.divider.vertical {
+  width: 1px;
+  height: auto;
+  margin: 0 16px;
+  align-self: stretch;
+}
+
+/* ============================================
+   M3 LIST ITEM (Enhanced)
+   ============================================ */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: transparent;
+  border-radius: var(--md-sys-shape-corner-medium);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.list-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-on-surface);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.list-item:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+.list-item:active::before {
+  opacity: var(--md-sys-state-pressed-state-layer-opacity);
+}
+
+.list-item-leading {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.list-item-leading.avatar {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: var(--md-sys-shape-corner-full);
+}
+
+.list-item-leading.icon {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.list-item-content {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.list-item-headline {
+  font: var(--md-sys-typescale-body-large-font);
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 2px;
+}
+
+.list-item-supporting {
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.list-item-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.list-item-trailing-text {
+  font: var(--md-sys-typescale-label-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   M3 FAB (Floating Action Button)
+   ============================================ */
+.fab {
+  width: 56px;
+  height: 56px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-large);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  box-shadow: var(--md-sys-elevation-level3);
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    transform var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.fab:hover {
+  box-shadow: var(--md-sys-elevation-level4);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+.fab.small {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.fab.large {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+}
+
+.fab.extended {
+  width: auto;
+  padding: 16px 20px;
+  gap: 12px;
+}
+
+.fab.extended span {
+  font: var(--md-sys-typescale-label-large-font);
+}
+
+/* ============================================
+   M3 TOOLTIP
+   ============================================ */
+.tooltip {
+  position: relative;
+}
+
+.tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  padding: 8px 12px;
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  font: var(--md-sys-typescale-body-small-font);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+    visibility var(--md-sys-motion-duration-short4);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ============================================
+   M3 SLIDER
+   ============================================ */
+.slider {
+  width: 100%;
+  height: 4px;
+  background: var(--md-sys-color-surface-container-highest);
+  border-radius: var(--md-sys-shape-corner-full);
+  position: relative;
+  cursor: pointer;
+}
+
+.slider-track {
+  height: 100%;
+  background: var(--md-sys-color-primary);
+  border-radius: inherit;
+}
+
+.slider-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--md-sys-color-primary);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: var(--md-sys-elevation-level1);
+  cursor: grab;
+  transition: box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.slider-thumb:hover {
+  box-shadow: var(--md-sys-elevation-level2);
+}
+
+.slider-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  background: var(--md-sys-color-primary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.slider-thumb:hover::before {
+  opacity: var(--md-sys-state-hover-state-layer-opacity);
+}
+
+/* ============================================
+   ENHANCED DEBUG CONSOLE
+   ============================================ */
+.debug-panel {
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-large);
+  overflow: hidden;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--md-sys-color-surface-container-high);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.debug-panel-title {
+  font: var(--md-sys-typescale-title-medium-font);
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.debug-panel-title .status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--md-sys-color-success);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.debug-panel-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.debug-log-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-family: 'Google Sans Mono', monospace;
+  font-size: 13px;
+}
+
+.debug-log-entry:last-child {
+  border-bottom: none;
+}
+
+.debug-log-entry.log-info {
+  color: var(--md-sys-color-primary);
+}
+
+.debug-log-entry.log-success {
+  color: var(--md-sys-color-success);
+}
+
+.debug-log-entry.log-warning {
+  color: var(--md-sys-color-warning);
+}
+
+.debug-log-entry.log-error {
+  color: var(--md-sys-color-error);
+}
+
+.debug-log-timestamp {
+  color: var(--md-sys-color-outline);
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.debug-log-level {
+  padding: 2px 8px;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.debug-log-level.info {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.debug-log-level.success {
+  background: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+}
+
+.debug-log-level.warning {
+  background: var(--md-sys-color-warning-container);
+  color: var(--md-sys-color-on-warning-container);
+}
+
+.debug-log-level.error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.debug-log-message {
+  flex: 1;
+  word-break: break-word;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ============================================
+   SELECTORS LIST (Enhanced)
+   ============================================ */
+.selectors-list {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  overflow: hidden;
+}
+
+.selector-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.selector-item:last-child {
+  border-bottom: none;
+}
+
+.selector-item:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.selector-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  flex-shrink: 0;
+}
+
+.selector-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.selector-domain {
+  font: var(--md-sys-typescale-title-small-font);
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 4px;
+}
+
+.selector-path {
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.selectors-empty {
+  padding: 32px;
+  text-align: center;
+}
+
+.selectors-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.selectors-empty-text {
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
   .container {
     max-width: 100%;
@@ -658,16 +1513,35 @@ body {
   }
 
   .header {
-    padding: 24px 16px;
+    padding: 20px 16px 24px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .logo h1 {
+    font-size: 22px;
   }
 
   .tabs {
     overflow-x: auto;
     scrollbar-width: thin;
+    padding: 0 4px;
+  }
+
+  .tab {
+    padding: 12px 16px;
   }
 
   .tab span {
     display: none;
+  }
+
+  .section {
+    padding: 20px;
+    border-radius: var(--md-sys-shape-corner-large);
   }
 
   .debug-stats,
@@ -679,11 +1553,26 @@ body {
   .footer {
     padding: 16px;
   }
+
+  .segmented-buttons {
+    width: 100%;
+  }
+
+  .segmented-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .fab {
+    bottom: 80px;
+  }
 }
 
-/* Smooth transitions for theme switching */
+/* ============================================
+   SMOOTH THEME TRANSITIONS
+   ============================================ */
 * {
-  transition-property: background-color, border-color, color;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: var(--md-sys-motion-duration-short4);
+  transition-timing-function: var(--md-sys-motion-easing-standard);
 }
