@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@material/web": "^2.4.1",
+    "esbuild": "^0.27.2"
+  }
+}

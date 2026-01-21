@@ -878,6 +878,56 @@ body {
   max-width: 280px;
 }
 
+/* M3 Enhanced Empty State */
+.m3-empty-state {
+  padding: 40px 24px;
+}
+
+.empty-illustration {
+  margin-bottom: 24px;
+}
+
+.empty-icon-bg {
+  width: 88px;
+  height: 88px;
+  background: var(--md-sys-color-primary-container);
+  border-radius: var(--md-sys-shape-corner-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: var(--md-sys-color-on-primary-container);
+  animation: floatIcon 4s ease-in-out infinite;
+}
+
+.m3-empty-state .empty-title {
+  font: var(--md-sys-typescale-headline-small-font);
+  margin-bottom: 12px;
+}
+
+.m3-empty-state .empty-text {
+  max-width: 320px;
+  margin-bottom: 24px;
+}
+
+/* Alerts Header M3 */
+.alerts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.alerts-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--md-sys-typescale-title-medium-font);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
 .btn-manual-select {
   margin-top: 24px;
   padding: 12px 24px;
@@ -1071,99 +1121,579 @@ body {
 .alerts-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 2px;
+  padding-bottom: 80px;
+  /* Space for FAB */
 }
 
-.alert-card {
-  background: var(--md-sys-color-surface-container-low);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-medium);
-  padding: 14px;
-  transition: border-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
-    box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
-}
-
-.alert-card:hover {
-  border-color: var(--md-sys-color-outline);
-  box-shadow: var(--md-sys-elevation-level1);
-}
-
-.alert-card.disabled {
-  opacity: var(--md-sys-state-disabled-opacity);
-}
-
-.alert-card-header {
+/* ============================================
+   M3 ALARM CARD - Three-line List Item
+   ============================================ */
+.m3-alarm-card {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  padding: 12px 16px;
+  background: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  min-height: 88px;
+  cursor: pointer;
+  position: relative;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
 }
 
-.alert-product-name {
-  font: var(--md-sys-typescale-title-small-font);
-  color: var(--md-sys-color-on-surface);
+.m3-alarm-card:hover {
+  background: var(--md-sys-color-surface-container-highest);
+}
+
+.m3-alarm-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-primary);
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  pointer-events: none;
+}
+
+.m3-alarm-card:hover::before {
+  opacity: var(--md-sys-state-hover-opacity);
+}
+
+.m3-alarm-card.selected {
+  background: var(--md-sys-color-primary-container);
+}
+
+.m3-alarm-card.paused {
+  opacity: 0.65;
+}
+
+/* Leading Icon Container */
+.alarm-leading {
+  flex-shrink: 0;
+  margin-right: 16px;
+  padding-top: 2px;
+}
+
+.alarm-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-sys-shape-corner-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  position: relative;
+}
+
+.alarm-icon-container.active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.alarm-icon-container.triggered {
+  background: var(--md-sys-color-success-container);
+  color: var(--md-sys-color-on-success-container);
+}
+
+.alarm-icon-container.paused {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-outline);
+}
+
+.alarm-icon-container.error {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* Pulsing Status Dot */
+.status-pulse-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  border: 2px solid var(--md-sys-color-surface);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-pulse-dot.success {
+  background: var(--md-sys-color-success);
+}
+
+.status-pulse-dot.warning {
+  background: var(--md-sys-color-warning);
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.15);
+  }
+}
+
+/* Alarm Content */
+.alarm-content {
   flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.alarm-headline {
+  font: var(--md-sys-typescale-body-large-font);
+  color: var(--md-sys-color-on-surface);
+  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.alert-type-badge {
-  padding: 4px 10px;
+.alarm-supporting-text {
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.alarm-condition {
+  font-weight: 500;
+}
+
+.alarm-separator {
+  color: var(--md-sys-color-outline);
+}
+
+.alarm-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alarm-status.active {
+  color: var(--md-sys-color-primary);
+}
+
+.alarm-status.triggered {
+  color: var(--md-sys-color-success);
+  font-weight: 500;
+}
+
+.alarm-status.paused {
+  color: var(--md-sys-color-outline);
+}
+
+/* Alarm Meta Chips */
+.alarm-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.alarm-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: var(--md-sys-shape-corner-small);
+  font: var(--md-sys-typescale-label-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Trailing Actions */
+.alarm-trailing {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+/* ============================================
+   M3 SWITCH - Toggle Component
+   ============================================ */
+.m3-switch {
+  position: relative;
+  width: 52px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.m3-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.m3-switch-track {
+  position: absolute;
+  inset: 0;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: var(--md-sys-shape-corner-full);
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized);
+}
+
+.m3-switch input:checked+.m3-switch-track {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.m3-switch-handle {
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  width: 16px;
+  height: 16px;
+  background: var(--md-sys-color-outline);
+  border-radius: 50%;
+  transform: translateY(-50%);
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized);
+  box-shadow: var(--md-sys-elevation-level1);
+}
+
+.m3-switch input:checked+.m3-switch-track .m3-switch-handle {
+  left: 28px;
+  width: 24px;
+  height: 24px;
+  background: var(--md-sys-color-on-primary);
+}
+
+.m3-switch:hover .m3-switch-track::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-on-surface);
+  opacity: var(--md-sys-state-hover-opacity);
+}
+
+/* Switch with Icons */
+.m3-switch-handle-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity var(--md-sys-motion-duration-short2);
+}
+
+.m3-switch input:checked+.m3-switch-track .m3-switch-handle-icon {
+  opacity: 1;
+}
+
+/* ============================================
+   M3 FAB - Floating Action Button
+   ============================================ */
+.m3-fab {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.fab-button {
+  width: 56px;
+  height: 56px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-large);
+  box-shadow: var(--md-sys-elevation-level3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-emphasized);
+}
+
+.fab-button:hover {
+  box-shadow: var(--md-sys-elevation-level4);
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
-  border-radius: var(--md-sys-shape-corner-full);
-  font: var(--md-sys-typescale-label-small-font);
-  text-transform: uppercase;
 }
 
-.alert-type-badge.target {
-  background: var(--md-sys-color-success);
-  color: var(--md-sys-color-on-success);
+.fab-button:active {
+  box-shadow: var(--md-sys-elevation-level2);
 }
 
-.alert-type-badge.percent-down {
-  background: var(--md-sys-color-tertiary);
-  color: var(--md-sys-color-on-tertiary);
+/* Extended FAB */
+.fab-button.extended {
+  width: auto;
+  padding: 0 20px;
+  gap: 12px;
 }
 
-.alert-type-badge.percent-up {
-  background: var(--md-sys-color-warning);
-  color: var(--md-sys-color-on-warning);
+.fab-button .fab-label {
+  font: var(--md-sys-typescale-label-large-font);
+  font-weight: 600;
 }
 
-.alert-description {
-  font: var(--md-sys-typescale-body-small-font);
-  color: var(--md-sys-color-on-surface-variant);
-  margin-bottom: 12px;
+/* Mini FAB */
+.fab-button.mini {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
 }
 
-.alert-card-actions {
+/* ============================================
+   M3 BOTTOM SHEET - Modal Details
+   ============================================ */
+.m3-bottom-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.m3-bottom-sheet.show {
+  display: flex;
+}
+
+.bottom-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.32);
+  animation: scrimFadeIn var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized);
+}
+
+.bottom-sheet-container {
+  position: relative;
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-extra-large) var(--md-sys-shape-corner-extra-large) 0 0;
+  width: 100%;
+  max-width: 640px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: var(--md-sys-elevation-level3);
+  animation: bottomSheetSlideUp var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized-decelerate);
+}
+
+@keyframes scrimFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bottomSheetSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bottom-sheet-drag-handle {
+  width: 32px;
+  height: 4px;
+  background: var(--md-sys-color-on-surface-variant);
+  border-radius: 2px;
+  margin: 12px auto 8px;
+  opacity: 0.4;
+}
+
+.bottom-sheet-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.bottom-sheet-title {
+  font: var(--md-sys-typescale-title-large-font);
+  color: var(--md-sys-color-on-surface);
+}
+
+.bottom-sheet-content {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(80vh - 120px);
+}
+
+.bottom-sheet-actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* ============================================
+   M3 SNACKBAR - Confirmations
+   ============================================ */
+.m3-snackbar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 300;
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  padding: 14px 16px;
+  min-width: 300px;
+  max-width: 480px;
+  box-shadow: var(--md-sys-elevation-level3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  opacity: 0;
+  transition: all var(--md-sys-motion-duration-medium4) var(--md-sys-motion-easing-emphasized);
+}
+
+.m3-snackbar.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.snackbar-message {
+  font: var(--md-sys-typescale-body-medium-font);
+  flex: 1;
+}
+
+.snackbar-action {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-inverse-primary);
+  font: var(--md-sys-typescale-label-large-font);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--md-sys-shape-corner-small);
+  transition: background var(--md-sys-motion-duration-short4);
+}
+
+.snackbar-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================
+   SELECTION MODE
+   ============================================ */
+.m3-alarm-card .selection-checkbox {
+  display: none;
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--md-sys-motion-duration-short4);
+}
+
+.selection-mode .m3-alarm-card .selection-checkbox {
+  display: block;
+}
+
+.selection-mode .m3-alarm-card {
+  padding-left: 56px;
+}
+
+.m3-alarm-card.selected .selection-checkbox {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.m3-alarm-card.selected .selection-checkbox::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--md-sys-color-on-primary);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Selection Mode Top App Bar */
+.selection-top-bar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--md-sys-color-surface-container-high);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  align-items: center;
+  gap: 16px;
+}
+
+.selection-mode .selection-top-bar {
+  display: flex;
+}
+
+.selection-count {
+  flex: 1;
+  font: var(--md-sys-typescale-title-medium-font);
+  color: var(--md-sys-color-on-surface);
+}
+
+.selection-actions {
   display: flex;
   gap: 8px;
 }
 
-.alert-action-btn {
-  padding: 8px 14px;
-  background: var(--md-sys-color-surface-container);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-full);
-  font: var(--md-sys-typescale-label-medium-font);
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+/* ============================================
+   LINEAR PROGRESS - Checking State
+   ============================================ */
+.alarm-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--md-sys-color-surface-container-highest);
+  overflow: hidden;
+  display: none;
 }
 
-.alert-action-btn:hover {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
+.m3-alarm-card.checking .alarm-progress {
+  display: block;
 }
 
-.alert-action-btn.delete:hover {
-  background: var(--md-sys-color-error-container);
-  border-color: var(--md-sys-color-error);
-  color: var(--md-sys-color-on-error-container);
+.progress-bar {
+  height: 100%;
+  background: var(--md-sys-color-primary);
+  animation: progressIndeterminate 2s linear infinite;
+  width: 30%;
 }
+
+@keyframes progressIndeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(400%);
+  }
+}
+
 
 /* ============================================
    MODAL - M3 Dialog
@@ -1254,6 +1784,181 @@ body {
   justify-content: flex-end;
   gap: 8px;
   padding: 16px 24px 24px;
+}
+
+/* Modal Title Group */
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-icon {
+  font-size: 24px;
+}
+
+/* Product Info Card */
+.product-info-card {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--md-sys-color-primary-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.product-info-name {
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 500;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-info-price {
+  display: flex;
+  justify-content: space-between;
+  font: var(--md-sys-typescale-label-medium-font);
+}
+
+.product-info-price .label {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.8;
+}
+
+.product-info-price .value {
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 600;
+}
+
+/* Alarm Type Cards */
+.alarm-type-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.alarm-type-card {
+  padding: 12px;
+  background: var(--md-sys-color-surface-container);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.alarm-type-card:hover {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.alarm-type-card.selected {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+}
+
+.alarm-type-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.alarm-type-name {
+  font: var(--md-sys-typescale-label-medium-font);
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.alarm-type-card.selected .alarm-type-name {
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.alarm-type-desc {
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-outline);
+  margin-top: 2px;
+}
+
+.alarm-type-card.selected .alarm-type-desc {
+  color: var(--md-sys-color-on-primary-container);
+  opacity: 0.8;
+}
+
+/* Form Label with Icon */
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--md-sys-typescale-label-large-font);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 8px;
+}
+
+.form-label svg {
+  opacity: 0.7;
+}
+
+/* Form Hint */
+.form-hint {
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-outline);
+  margin-top: 8px;
+  padding-left: 4px;
+}
+
+/* Checkbox Group - M3 Style */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-medium);
+  cursor: pointer;
+  transition: background var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.checkbox-item:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.checkbox-item input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-mark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+  flex-shrink: 0;
+}
+
+.checkbox-item input:checked+.checkbox-mark {
+  background: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.checkbox-item input:checked+.checkbox-mark::after {
+  content: '✓';
+  color: var(--md-sys-color-on-primary);
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.checkbox-item span:last-child {
+  font: var(--md-sys-typescale-body-medium-font);
+  color: var(--md-sys-color-on-surface);
 }
 
 /* ============================================

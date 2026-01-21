@@ -157,6 +157,16 @@
     $("viewLogs")?.addEventListener("click", viewLogs);
     $("resetSettings")?.addEventListener("click", resetSettings);
     $("clearConsole")?.addEventListener("click", clearConsole);
+    $("copyLogs")?.addEventListener("click", copyLogsToClipboard);
+
+    // Segmented filter buttons
+    $$("#logFilter .segmented-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        $$("#logFilter .segmented-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        filterConsoleLogs(btn.dataset.filter);
+      });
+    });
 
     // Custom rules
     $("customRules")?.addEventListener("click", () => {
@@ -479,15 +489,139 @@
   }
 
   /**
-   * View logs
+   * View logs - Shows log history modal
    */
-  function viewLogs() {
-    logToConsole("Log geçmişi özelliği yakında eklenecek", "info");
-    showToast("Log geçmişi yakında eklenecek", "info");
+  async function viewLogs() {
+    try {
+      const result = await browser.storage.local.get("debugLogHistory");
+      const logHistory = result.debugLogHistory || [];
+
+      let modal = $("logHistoryModal");
+      if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "logHistoryModal";
+        modal.className = "log-history-modal";
+        modal.innerHTML = `
+          <div class="log-history-overlay"></div>
+          <div class="log-history-content">
+            <div class="log-history-header">
+              <h3>📋 Log Geçmişi</h3>
+              <div class="log-history-actions">
+                <button class="btn btn-secondary btn-sm" id="exportLogHistoryBtn">Dışa Aktar</button>
+                <button class="btn btn-danger btn-sm" id="clearLogHistoryBtn">Temizle</button>
+                <button class="btn-icon" id="closeLogHistoryBtn">✕</button>
+              </div>
+            </div>
+            <div class="log-history-stats">
+              <span class="badge info" id="logHistoryCount">0</span> kayıt - Son 7 gün
+            </div>
+            <div class="log-history-list" id="logHistoryList"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        addLogHistoryStyles();
+        
+        // Event listeners
+        modal.querySelector(".log-history-overlay").onclick = () => modal.classList.remove("show");
+        $("closeLogHistoryBtn").onclick = () => modal.classList.remove("show");
+        $("exportLogHistoryBtn").onclick = exportLogHistory;
+        $("clearLogHistoryBtn").onclick = clearLogHistory;
+      }
+
+      renderLogHistory(logHistory);
+      modal.classList.add("show");
+      logToConsole("Log geçmişi açıldı", "info");
+    } catch (error) {
+      console.error("Log history error:", error);
+      showToast("Log geçmişi yüklenemedi", "error");
+    }
+  }
+
+  function addLogHistoryStyles() {
+    if ($("logHistoryStyles")) return;
+    const style = document.createElement("style");
+    style.id = "logHistoryStyles";
+    style.textContent = `
+      .log-history-modal { display: none; position: fixed; inset: 0; z-index: 1000; }
+      .log-history-modal.show { display: block; }
+      .log-history-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+      .log-history-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 90%; max-width: 800px; max-height: 80vh; background: var(--md-sys-color-surface, #fff); border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+      .log-history-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0); }
+      .log-history-header h3 { margin: 0; font-size: 20px; }
+      .log-history-actions { display: flex; gap: 8px; }
+      .log-history-stats { padding: 12px 24px; background: var(--md-sys-color-surface-container-low, #f5f5f5); }
+      .log-history-list { flex: 1; overflow-y: auto; padding: 16px 24px; max-height: 400px; }
+      .log-history-day { margin-bottom: 20px; }
+      .log-history-day-header { font-weight: 600; color: var(--md-sys-color-primary, #6750A4); margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e0e0); }
+      .log-history-item { display: flex; gap: 12px; padding: 8px; border-radius: 8px; margin-bottom: 4px; font-family: monospace; font-size: 12px; }
+      .log-history-item:hover { background: var(--md-sys-color-surface-container-low, #f5f5f5); }
+      .log-history-item.info { border-left: 3px solid #6750A4; }
+      .log-history-item.success { border-left: 3px solid #1B8755; }
+      .log-history-item.warning { border-left: 3px solid #7C5800; }
+      .log-history-item.error { border-left: 3px solid #B3261E; }
+      .log-history-time { color: #888; min-width: 70px; }
+      .log-history-level { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; min-width: 50px; text-align: center; }
+      .log-history-level.info { background: #E8DEF8; color: #1D192B; }
+      .log-history-level.success { background: #D1FAE5; color: #065F46; }
+      .log-history-level.warning { background: #FEF3C7; color: #92400E; }
+      .log-history-level.error { background: #FEE2E2; color: #991B1B; }
+      .log-history-message { flex: 1; word-break: break-word; }
+      .log-history-empty { text-align: center; padding: 40px; color: #888; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderLogHistory(logs) {
+    const list = $("logHistoryList");
+    $("logHistoryCount").textContent = logs.length;
+
+    if (logs.length === 0) {
+      list.innerHTML = '<div class="log-history-empty"><div style="font-size:48px;margin-bottom:12px">📭</div><div>Henüz log kaydı yok</div></div>';
+      return;
+    }
+
+    const grouped = {};
+    logs.forEach(log => {
+      const day = new Date(log.timestamp).toLocaleDateString("tr-TR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(log);
+    });
+
+    list.innerHTML = Object.entries(grouped).reverse().map(([day, dayLogs]) => `
+      <div class="log-history-day">
+        <div class="log-history-day-header">${day}</div>
+        ${dayLogs.reverse().map(log => `
+          <div class="log-history-item ${log.type}">
+            <span class="log-history-time">${new Date(log.timestamp).toLocaleTimeString("tr-TR")}</span>
+            <span class="log-history-level ${log.type}">${log.type.toUpperCase()}</span>
+            <span class="log-history-message">${PriceTrackerHelpers.escapeHtml(log.message)}</span>
+          </div>
+        `).join("")}
+      </div>
+    `).join("");
+  }
+
+  async function exportLogHistory() {
+    const result = await browser.storage.local.get("debugLogHistory");
+    const logs = result.debugLogHistory || [];
+    const blob = new Blob([JSON.stringify({ exportDate: new Date().toISOString(), logs }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `log-history-${Date.now()}.json`;
+    a.click();
+    showToast(`${logs.length} log dışa aktarıldı`, "success");
+  }
+
+  async function clearLogHistory() {
+    if (confirm("Tüm log geçmişi silinecek?")) {
+      await browser.storage.local.set({ debugLogHistory: [] });
+      renderLogHistory([]);
+      showToast("Log geçmişi temizlendi", "success");
+    }
   }
 
   /**
-   * Reset settings to defaults - uses Config.DEFAULT_SETTINGS
+   * Reset settings to defaults
    */
   async function resetSettings() {
     try {
@@ -548,29 +682,111 @@
     }
   }
 
+  // Debug log storage for filtering
+  let debugLogs = [];
+  let currentLogFilter = "all";
+
   /**
-   * Log to console
+   * Log to console with M3 styling
    */
   function logToConsole(message, type = "info") {
     const output = $("consoleOutput");
     if (!output) return;
 
-    const time = new Date().toLocaleTimeString("tr-TR");
-    const line = document.createElement("div");
-    line.className = `console-line ${type}`;
-    line.innerHTML = `
-      <span class="console-time">${time}</span>
-      <span class="console-message">${PriceTrackerHelpers.escapeHtml(
-        message
-      )}</span>
-    `;
+    const time = new Date().toLocaleTimeString("tr-TR", { 
+      hour: "2-digit", 
+      minute: "2-digit", 
+      second: "2-digit" 
+    });
+    
+    const logEntry = { time, message, type, timestamp: Date.now() };
+    debugLogs.push(logEntry);
 
-    output.appendChild(line);
+    // Keep max 100 logs in memory
+    if (debugLogs.length > 100) {
+      debugLogs = debugLogs.slice(-100);
+    }
+
+    // Save to persistent storage for history
+    saveLogToHistory(message, type);
+
+    renderConsoleLogs();
+    updateLogCount();
+  }
+
+  /**
+   * Save log to persistent history storage
+   */
+  async function saveLogToHistory(message, type) {
+    try {
+      const result = await browser.storage.local.get("debugLogHistory");
+      let logHistory = result.debugLogHistory || [];
+      
+      logHistory.push({ timestamp: Date.now(), type, message });
+
+      // Keep only last 7 days
+      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      logHistory = logHistory.filter(log => log.timestamp > sevenDaysAgo);
+
+      // Keep max 500 logs
+      if (logHistory.length > 500) {
+        logHistory = logHistory.slice(-500);
+      }
+
+      await browser.storage.local.set({ debugLogHistory: logHistory });
+    } catch (e) {
+      console.debug("Save log history error:", e);
+    }
+  }
+
+  /**
+   * Render console logs with current filter
+   */
+  function renderConsoleLogs() {
+    const output = $("consoleOutput");
+    if (!output) return;
+
+    const filtered = currentLogFilter === "all" 
+      ? debugLogs 
+      : debugLogs.filter(log => log.type === currentLogFilter);
+
+    if (filtered.length === 0) {
+      output.innerHTML = `
+        <div class="debug-log-entry log-info">
+          <span class="debug-log-timestamp">--:--:--</span>
+          <span class="debug-log-level info">INFO</span>
+          <span class="debug-log-message">Log bulunamadı</span>
+        </div>
+      `;
+      return;
+    }
+
+    output.innerHTML = filtered.map(log => `
+      <div class="debug-log-entry log-${log.type}">
+        <span class="debug-log-timestamp">${log.time}</span>
+        <span class="debug-log-level ${log.type}">${log.type.toUpperCase()}</span>
+        <span class="debug-log-message">${PriceTrackerHelpers.escapeHtml(log.message)}</span>
+      </div>
+    `).join("");
+
     output.scrollTop = output.scrollHeight;
+  }
 
-    // Keep max 100 lines
-    while (output.children.length > 100) {
-      output.removeChild(output.firstChild);
+  /**
+   * Filter console logs
+   */
+  function filterConsoleLogs(filter) {
+    currentLogFilter = filter;
+    renderConsoleLogs();
+  }
+
+  /**
+   * Update log count badge
+   */
+  function updateLogCount() {
+    const badge = $("logCount");
+    if (badge) {
+      badge.textContent = debugLogs.length;
     }
   }
 
@@ -578,17 +794,31 @@
    * Clear console
    */
   function clearConsole() {
-    const output = $("consoleOutput");
-    if (output) {
-      output.innerHTML = `
-        <div class="console-line info">
-          <span class="console-time">${new Date().toLocaleTimeString(
-            "tr-TR"
-          )}</span>
-          <span class="console-message">Console temizlendi</span>
-        </div>
-      `;
-    }
+    debugLogs = [];
+    currentLogFilter = "all";
+    
+    // Reset segmented buttons
+    $$("#logFilter .segmented-btn").forEach((btn, i) => {
+      btn.classList.toggle("selected", i === 0);
+    });
+
+    logToConsole("Console temizlendi", "info");
+    showToast("Console temizlendi", "success");
+  }
+
+  /**
+   * Copy logs to clipboard
+   */
+  function copyLogsToClipboard() {
+    const text = debugLogs.map(log => 
+      `[${log.time}] [${log.type.toUpperCase()}] ${log.message}`
+    ).join("\n");
+
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Loglar panoya kopyalandı", "success");
+    }).catch(() => {
+      showToast("Kopyalama başarısız", "error");
+    });
   }
 
   /**

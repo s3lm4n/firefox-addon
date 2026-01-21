@@ -185,14 +185,84 @@
     els.cancelAlertBtn?.addEventListener("click", closeAlertModal);
     els.saveAlertBtn?.addEventListener("click", saveAlert);
     
-    // Alert type change
-    els.alertTypeSelect?.addEventListener("change", handleAlertTypeChange);
-    
     // Close modal on backdrop click
     els.addAlertModal?.querySelector(".modal-backdrop")?.addEventListener("click", closeAlertModal);
 
+    // FAB and empty state add buttons
+    $("fabAddAlert")?.addEventListener("click", openAlertModal);
+    $("emptyStateAddBtn")?.addEventListener("click", openAlertModal);
+
+    // Bottom sheet handlers
+    $("bottomSheetScrim")?.addEventListener("click", closeAlarmBottomSheet);
+    $("bottomSheetPause")?.addEventListener("click", () => {
+      const sheet = $("alarmBottomSheet");
+      const alertId = sheet?.dataset.alertId;
+      if (alertId) {
+        const alert = alerts.find(a => a.id === alertId);
+        if (alert) toggleAlertEnabled(alertId, !alert.enabled);
+        closeAlarmBottomSheet();
+      }
+    });
+    $("bottomSheetDelete")?.addEventListener("click", async () => {
+      const sheet = $("alarmBottomSheet");
+      const alertId = sheet?.dataset.alertId;
+      if (alertId && confirm('Bu alarmı silmek istediğinizden emin misiniz?')) {
+        alerts = alerts.filter(a => a.id !== alertId);
+        await browser.storage.local.set({ priceAlerts: alerts });
+        closeAlarmBottomSheet();
+        renderAlerts();
+        showSnackbar('Alarm silindi', 'Geri Al', async () => {
+          // Undo functionality would restore the deleted alert
+          showToast('Geri alma özelliği yakında', 'info');
+        });
+      }
+    });
+
+    // Selection mode handlers
+    $("cancelSelectionBtn")?.addEventListener("click", () => toggleSelectionMode(false));
+    $("deleteSelectedBtn")?.addEventListener("click", deleteSelectedAlerts);
+    $("pauseSelectedBtn")?.addEventListener("click", pauseSelectedAlerts);
+
     // Keyboard shortcuts
     document.addEventListener("keydown", handleKeyboardShortcuts);
+  }
+
+  /**
+   * Delete selected alerts
+   */
+  async function deleteSelectedAlerts() {
+    const selected = els.alertsList.querySelectorAll('.m3-alarm-card.selected');
+    if (selected.length === 0) return;
+    
+    if (!confirm(`${selected.length} alarmı silmek istediğinizden emin misiniz?`)) return;
+    
+    const idsToDelete = Array.from(selected).map(card => card.dataset.alertId);
+    alerts = alerts.filter(a => !idsToDelete.includes(a.id));
+    
+    await browser.storage.local.set({ priceAlerts: alerts });
+    toggleSelectionMode(false);
+    renderAlerts();
+    showSnackbar(`${idsToDelete.length} alarm silindi`);
+  }
+
+  /**
+   * Pause selected alerts
+   */
+  async function pauseSelectedAlerts() {
+    const selected = els.alertsList.querySelectorAll('.m3-alarm-card.selected');
+    if (selected.length === 0) return;
+    
+    const idsToModify = Array.from(selected).map(card => card.dataset.alertId);
+    
+    idsToModify.forEach(id => {
+      const alert = alerts.find(a => a.id === id);
+      if (alert) alert.enabled = false;
+    });
+    
+    await browser.storage.local.set({ priceAlerts: alerts });
+    toggleSelectionMode(false);
+    renderAlerts();
+    showSnackbar(`${idsToModify.length} alarm duraklatıldı`);
   }
 
   /**
@@ -981,51 +1051,337 @@
   }
 
   /**
-   * Render alerts list
+   * Render alerts list - M3 Pattern
    */
   function renderAlerts() {
     if (!els.alertsList) return;
 
+    // Update badge count
+    const alertsBadge = $("alertsBadge");
+    if (alertsBadge) alertsBadge.textContent = alerts.length;
+
+    // Show/hide FAB based on tab visibility
+    const fab = $("alertsFab");
+    if (fab) fab.style.display = alerts.length > 0 ? "block" : "none";
+
     if (alerts.length === 0) {
       els.alertsList.style.display = "none";
       if (els.alertsEmptyState) els.alertsEmptyState.style.display = "block";
+      const header = $("alertsHeader");
+      if (header) header.style.display = "none";
       return;
     }
 
     els.alertsList.style.display = "flex";
     if (els.alertsEmptyState) els.alertsEmptyState.style.display = "none";
+    const header = $("alertsHeader");
+    if (header) header.style.display = "flex";
 
     els.alertsList.innerHTML = alerts.map(alert => {
       const product = products.find(p => p.url === alert.productUrl);
       const productName = product?.name || alert.productName || "Bilinmeyen Ürün";
-      const description = typeof PriceAlerts !== "undefined" 
-        ? PriceAlerts.getAlertDescription(alert)
-        : getAlertDescriptionFallback(alert);
+      const currentPrice = product?.price ? `${product.price.toFixed(2)} ${product.currency || '₺'}` : '-';
       
-      const typeBadgeClass = getAlertTypeBadgeClass(alert.type);
-      const typeLabel = getAlertTypeLabel(alert.type);
+      // Get alert condition text
+      const condition = getAlertConditionText(alert);
+      
+      // Determine status
+      const status = !alert.enabled ? 'paused' : 
+                     alert.triggered ? 'triggered' : 'active';
+      
+      // Get icon for type
+      const icon = getAlertTypeIcon(alert.type);
+      
+      // Calculate time since created
+      const createdAgo = alert.createdAt ? formatTimeAgo(alert.createdAt) : 'Bilinmiyor';
 
       return `
-        <div class="alert-card ${!alert.enabled ? 'disabled' : ''}" data-alert-id="${alert.id}">
-          <div class="alert-card-header">
-            <span class="alert-product-name" title="${productName}">${truncate(productName, 35)}</span>
-            <span class="alert-type-badge ${typeBadgeClass}">${typeLabel}</span>
+        <div class="m3-alarm-card ${status}" data-alert-id="${alert.id}">
+          <div class="selection-checkbox"></div>
+          
+          <div class="alarm-leading">
+            <div class="alarm-icon-container ${status}">
+              ${icon}
+              ${status === 'active' ? '<div class="status-pulse-dot"></div>' : ''}
+              ${status === 'triggered' ? '<div class="status-pulse-dot success"></div>' : ''}
+            </div>
           </div>
-          <div class="alert-description">${description}</div>
-          <div class="alert-card-actions">
-            <button class="alert-action-btn toggle" data-action="toggle">
-              ${alert.enabled ? '⏸️ Duraklat' : '▶️ Etkinleştir'}
-            </button>
-            <button class="alert-action-btn delete" data-action="delete">🗑️ Sil</button>
+          
+          <div class="alarm-content">
+            <div class="alarm-headline">${truncate(productName, 40)}</div>
+            <div class="alarm-supporting-text">
+              <span class="alarm-condition">${condition}</span>
+              <span class="alarm-separator">•</span>
+              <span class="alarm-status ${status}">
+                ${status === 'active' ? '🟢 Aktif' : status === 'triggered' ? '✅ Tetiklendi' : '⏸️ Duraklatıldı'}
+              </span>
+            </div>
+            <div class="alarm-meta">
+              <span class="alarm-meta-chip">📅 ${createdAgo}</span>
+              <span class="alarm-meta-chip">💰 ${currentPrice}</span>
+            </div>
+          </div>
+          
+          <div class="alarm-trailing">
+            <label class="m3-switch" title="${alert.enabled ? 'Duraklat' : 'Etkinleştir'}">
+              <input type="checkbox" ${alert.enabled ? 'checked' : ''} data-action="toggle" data-id="${alert.id}">
+              <div class="m3-switch-track">
+                <div class="m3-switch-handle"></div>
+              </div>
+            </label>
+          </div>
+          
+          <div class="alarm-progress">
+            <div class="progress-bar"></div>
           </div>
         </div>
       `;
     }).join('');
 
-    // Add event listeners for alert actions
-    els.alertsList.querySelectorAll('.alert-action-btn').forEach(btn => {
-      btn.addEventListener('click', handleAlertAction);
+    // Add event listeners
+    attachAlarmCardListeners();
+  }
+
+  /**
+   * Attach event listeners to alarm cards
+   */
+  function attachAlarmCardListeners() {
+    // Card click - open bottom sheet
+    els.alertsList.querySelectorAll('.m3-alarm-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Ignore if clicking on switch or checkbox
+        if (e.target.closest('.m3-switch') || e.target.closest('.selection-checkbox')) return;
+        
+        const alertId = card.dataset.alertId;
+        const alert = alerts.find(a => a.id === alertId);
+        if (alert) openAlarmBottomSheet(alert);
+      });
+      
+      // Long press for selection mode
+      let pressTimer;
+      card.addEventListener('mousedown', () => {
+        pressTimer = setTimeout(() => toggleSelectionMode(true, card.dataset.alertId), 500);
+      });
+      card.addEventListener('mouseup', () => clearTimeout(pressTimer));
+      card.addEventListener('mouseleave', () => clearTimeout(pressTimer));
     });
+    
+    // Switch toggle
+    els.alertsList.querySelectorAll('.m3-switch input').forEach(switchInput => {
+      switchInput.addEventListener('change', async (e) => {
+        e.stopPropagation();
+        const alertId = switchInput.dataset.id;
+        await toggleAlertEnabled(alertId, switchInput.checked);
+      });
+    });
+    
+    // Selection checkboxes
+    els.alertsList.querySelectorAll('.selection-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = checkbox.closest('.m3-alarm-card');
+        card.classList.toggle('selected');
+        updateSelectionCount();
+      });
+    });
+  }
+
+  /**
+   * Get alert condition text
+   */
+  function getAlertConditionText(alert) {
+    switch (alert.type) {
+      case 'target_price':
+        return `Fiyat ₺${alert.targetPrice?.toFixed(2) || '?'} olunca`;
+      case 'percentage_drop':
+        return `%${alert.targetPercent || '?'} düşünce`;
+      case 'percentage_rise':
+        return `%${alert.targetPercent || '?'} artınca`;
+      case 'any_change':
+        return `Fiyat değişince`;
+      default:
+        return 'Alarm';
+    }
+  }
+
+  /**
+   * Get alert type icon
+   */
+  function getAlertTypeIcon(type) {
+    switch (type) {
+      case 'target_price': return '🎯';
+      case 'percentage_drop': return '📉';
+      case 'percentage_rise': return '📈';
+      case 'any_change': return '🔄';
+      default: return '🔔';
+    }
+  }
+
+  /**
+   * Format time ago
+   */
+  function formatTimeAgo(timestamp) {
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (days > 0) return `${days} gün önce`;
+    if (hours > 0) return `${hours} saat önce`;
+    if (minutes > 0) return `${minutes} dk önce`;
+    return 'Az önce';
+  }
+
+  /**
+   * Toggle alert enabled state
+   */
+  async function toggleAlertEnabled(alertId, enabled) {
+    const alert = alerts.find(a => a.id === alertId);
+    if (!alert) return;
+    
+    alert.enabled = enabled;
+    
+    try {
+      await browser.storage.local.set({ priceAlerts: alerts });
+      showSnackbar(enabled ? 'Alarm etkinleştirildi' : 'Alarm duraklatıldı');
+      renderAlerts();
+    } catch (e) {
+      console.error('Toggle alert error:', e);
+      showToast('Hata oluştu', 'error');
+    }
+  }
+
+  /**
+   * Open alarm bottom sheet
+   */
+  function openAlarmBottomSheet(alert) {
+    const sheet = $("alarmBottomSheet");
+    const title = $("bottomSheetTitle");
+    const content = $("bottomSheetContent");
+    
+    if (!sheet || !content) return;
+    
+    const product = products.find(p => p.url === alert.productUrl);
+    const productName = product?.name || alert.productName || 'Bilinmeyen Ürün';
+    const currentPrice = product?.price ? `${product.price.toFixed(2)} ${product.currency || '₺'}` : '-';
+    
+    title.textContent = 'Alarm Detayları';
+    
+    content.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="padding: 16px; background: var(--md-sys-color-surface-container); border-radius: 12px;">
+          <div style="font: var(--md-sys-typescale-title-medium-font); margin-bottom: 8px;">${productName}</div>
+          <div style="font: var(--md-sys-typescale-body-medium-font); color: var(--md-sys-color-on-surface-variant);">
+            Mevcut Fiyat: <strong>${currentPrice}</strong>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="padding: 12px; background: var(--md-sys-color-primary-container); border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">${getAlertTypeIcon(alert.type)}</div>
+            <div style="font: var(--md-sys-typescale-label-medium-font); color: var(--md-sys-color-on-primary-container);">
+              ${getAlertConditionText(alert)}
+            </div>
+          </div>
+          <div style="padding: 12px; background: var(--md-sys-color-surface-container-high); border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 4px;">${alert.enabled ? '🟢' : '⏸️'}</div>
+            <div style="font: var(--md-sys-typescale-label-medium-font);">
+              ${alert.enabled ? 'Aktif' : 'Duraklatıldı'}
+            </div>
+          </div>
+        </div>
+        
+        <div style="font: var(--md-sys-typescale-body-small-font); color: var(--md-sys-color-outline);">
+          Oluşturulma: ${alert.createdAt ? new Date(alert.createdAt).toLocaleString('tr-TR') : '-'}
+        </div>
+      </div>
+    `;
+    
+    // Store current alert ID for actions
+    sheet.dataset.alertId = alert.id;
+    sheet.classList.add('show');
+  }
+
+  /**
+   * Close alarm bottom sheet
+   */
+  function closeAlarmBottomSheet() {
+    const sheet = $("alarmBottomSheet");
+    if (sheet) sheet.classList.remove('show');
+  }
+
+  /**
+   * Show snackbar
+   */
+  function showSnackbar(message, action = null, actionCallback = null) {
+    const snackbar = $("snackbar");
+    const msgEl = $("snackbarMessage");
+    const actionBtn = $("snackbarAction");
+    
+    if (!snackbar || !msgEl) return;
+    
+    msgEl.textContent = message;
+    
+    if (action && actionCallback) {
+      actionBtn.textContent = action;
+      actionBtn.style.display = 'block';
+      actionBtn.onclick = () => {
+        actionCallback();
+        snackbar.classList.remove('show');
+      };
+    } else {
+      actionBtn.style.display = 'none';
+    }
+    
+    snackbar.classList.add('show');
+    
+    setTimeout(() => {
+      snackbar.classList.remove('show');
+    }, 4000);
+  }
+
+  // Selection mode state
+  let selectionMode = false;
+  let selectedAlerts = new Set();
+
+  /**
+   * Toggle selection mode
+   */
+  function toggleSelectionMode(enable, initialAlertId = null) {
+    selectionMode = enable;
+    selectedAlerts.clear();
+    
+    const alertsTab = $("alertsTab");
+    if (alertsTab) {
+      alertsTab.classList.toggle('selection-mode', enable);
+    }
+    
+    if (enable && initialAlertId) {
+      const card = els.alertsList.querySelector(`[data-alert-id="${initialAlertId}"]`);
+      if (card) {
+        card.classList.add('selected');
+        selectedAlerts.add(initialAlertId);
+      }
+    }
+    
+    updateSelectionCount();
+  }
+
+  /**
+   * Update selection count
+   */
+  function updateSelectionCount() {
+    const countEl = $("selectionCount");
+    const selected = els.alertsList.querySelectorAll('.m3-alarm-card.selected').length;
+    
+    if (countEl) {
+      countEl.textContent = `${selected} seçili`;
+    }
+    
+    // Exit selection mode if nothing selected
+    if (selected === 0 && selectionMode) {
+      toggleSelectionMode(false);
+    }
   }
 
   /**

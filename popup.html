@@ -207,75 +207,219 @@
       </div>
     </div>
 
-    <!-- Alerts Tab -->
+    <!-- Alerts Tab - Full M3 Pattern -->
     <div class="tab-content" id="alertsTab">
-      <div class="alerts-header">
-        <h3 class="alerts-title">Fiyat Alarmları</h3>
-        <button class="btn-add-alert" id="addAlertBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <!-- Selection Mode Top Bar -->
+      <div class="selection-top-bar">
+        <button class="btn-icon" id="cancelSelectionBtn" title="İptal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <span class="selection-count" id="selectionCount">0 seçili</span>
+        <div class="selection-actions">
+          <button class="btn btn-tonal btn-sm" id="pauseSelectedBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+            Duraklat
+          </button>
+          <button class="btn btn-danger btn-sm" id="deleteSelectedBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+            </svg>
+            Sil
+          </button>
+        </div>
+      </div>
+
+      <!-- Normal Header -->
+      <div class="alerts-header" id="alertsHeader">
+        <h3 class="alerts-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          Fiyat Alarmları
+        </h3>
+        <span class="badge info" id="alertsBadge">0</span>
+      </div>
+
+      <!-- Alerts List Container -->
+      <div class="alerts-list" id="alertsList">
+        <!-- M3 Alarm cards will be inserted here -->
+      </div>
+
+      <!-- Enhanced Empty State -->
+      <div id="alertsEmptyState">
+        <div class="empty-state m3-empty-state">
+          <div class="empty-illustration">
+            <div class="empty-icon-bg">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="empty-title">Henüz Alarm Yok</div>
+          <div class="empty-text">
+            Takip ettiğiniz ürünler için fiyat alarmları oluşturun.<br>
+            Hedef fiyata ulaşıldığında bildirim alacaksınız.
+          </div>
+          <button class="btn btn-filled" id="emptyStateAddBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            İlk Alarmı Oluştur
+          </button>
+        </div>
+      </div>
+
+      <!-- M3 FAB - Floating Action Button -->
+      <div class="m3-fab" id="alertsFab">
+        <button class="fab-button extended" id="fabAddAlert">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Yeni Alarm
+          <span class="fab-label">Yeni Alarm</span>
         </button>
-      </div>
-
-      <div class="alerts-list" id="alertsList">
-        <!-- Alerts will be inserted here -->
-      </div>
-
-      <div id="alertsEmptyState">
-        <div class="empty-state">
-          <div class="empty-icon">🔔</div>
-          <div class="empty-title">Henüz Alarm Yok</div>
-          <div class="empty-text">Bir ürün için hedef fiyat veya yüzde alarmı ekleyin</div>
-        </div>
       </div>
     </div>
   </div>
 
-  <!-- Add Alert Modal -->
+  <!-- Add Alert Modal - Enhanced M3 -->
   <div class="modal" id="addAlertModal" style="display: none;">
-    <div class="modal-backdrop"></div>
+    <div class="modal-backdrop" id="alertModalBackdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Yeni Fiyat Alarmı</h3>
-        <button class="modal-close" id="closeAlertModal">&times;</button>
+        <div class="modal-title-group">
+          <span class="modal-icon">🔔</span>
+          <h3>Fiyat Alarmı Oluştur</h3>
+        </div>
+        <button class="modal-close" id="closeAlertModal" aria-label="Kapat">×</button>
       </div>
+
       <div class="modal-body">
+        <!-- Product Selection -->
         <div class="form-group">
-          <label>Ürün</label>
+          <label class="form-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            Ürün Seçin
+          </label>
           <select id="alertProductSelect" class="form-select">
-            <option value="">Ürün seçin...</option>
+            <option value="">Bir ürün seçin...</option>
           </select>
+          <div class="product-info-card" id="selectedProductInfo" style="display: none;">
+            <div class="product-info-name" id="selectedProductName">-</div>
+            <div class="product-info-price">
+              <span class="label">Mevcut Fiyat:</span>
+              <span class="value" id="selectedProductPrice">-</span>
+            </div>
+          </div>
         </div>
+
+        <!-- Alarm Type Selection -->
         <div class="form-group">
-          <label>Alarm Türü</label>
-          <select id="alertTypeSelect" class="form-select">
-            <option value="target_price">Hedef Fiyat</option>
-            <option value="percentage_drop">Yüzde Düşüş</option>
-            <option value="percentage_rise">Yüzde Artış</option>
-            <option value="any_change">Herhangi Değişiklik</option>
-          </select>
+          <label class="form-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 6v6l4 2"></path>
+            </svg>
+            Alarm Türü
+          </label>
+          <div class="alarm-type-cards" id="alarmTypeCards">
+            <div class="alarm-type-card selected" data-type="target_price">
+              <div class="alarm-type-icon">🎯</div>
+              <div class="alarm-type-name">Hedef Fiyat</div>
+              <div class="alarm-type-desc">Belirli fiyata düşünce</div>
+            </div>
+            <div class="alarm-type-card" data-type="percentage_drop">
+              <div class="alarm-type-icon">📉</div>
+              <div class="alarm-type-name">Yüzde Düşüş</div>
+              <div class="alarm-type-desc">%X kadar düşünce</div>
+            </div>
+            <div class="alarm-type-card" data-type="percentage_rise">
+              <div class="alarm-type-icon">📈</div>
+              <div class="alarm-type-name">Yüzde Artış</div>
+              <div class="alarm-type-desc">%X kadar artınca</div>
+            </div>
+            <div class="alarm-type-card" data-type="any_change">
+              <div class="alarm-type-icon">🔄</div>
+              <div class="alarm-type-name">Herhangi Değişiklik</div>
+              <div class="alarm-type-desc">Fiyat değişince</div>
+            </div>
+          </div>
         </div>
+
+        <!-- Target Price Input -->
         <div class="form-group" id="targetPriceGroup">
-          <label>Hedef Fiyat</label>
+          <label class="form-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            Hedef Fiyat
+          </label>
           <div class="input-with-suffix">
-            <input type="number" id="alertTargetPrice" placeholder="0.00" step="0.01" min="0">
+            <input type="number" id="alertTargetPrice" placeholder="Örn: 1500" step="0.01" min="0">
             <span class="input-suffix">₺</span>
           </div>
+          <div class="form-hint" id="priceHint">Fiyat bu değere düşünce bildirim alacaksınız</div>
         </div>
+
+        <!-- Target Percent Input -->
         <div class="form-group" id="targetPercentGroup" style="display: none;">
-          <label>Hedef Yüzde</label>
+          <label class="form-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="5" x2="5" y2="19"></line>
+              <circle cx="6.5" cy="6.5" r="2.5"></circle>
+              <circle cx="17.5" cy="17.5" r="2.5"></circle>
+            </svg>
+            Değişim Oranı
+          </label>
           <div class="input-with-suffix">
-            <input type="number" id="alertTargetPercent" placeholder="10" min="1" max="100">
+            <input type="number" id="alertTargetPercent" placeholder="Örn: 10" min="1" max="99" value="10">
             <span class="input-suffix">%</span>
+          </div>
+          <div class="form-hint" id="percentHint">Fiyat %10 düşünce bildirim alacaksınız</div>
+        </div>
+
+        <!-- Notification Options -->
+        <div class="form-group">
+          <label class="form-label">Bildirim Seçenekleri</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" id="alertNotifyBrowser" checked>
+              <span class="checkbox-mark"></span>
+              <span>Tarayıcı bildirimi gönder</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="alertOneTime" checked>
+              <span class="checkbox-mark"></span>
+              <span>Tek seferlik (tetiklendikten sonra sil)</span>
+            </label>
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
-        <button class="btn-secondary" id="cancelAlertBtn">İptal</button>
-        <button class="btn-primary" id="saveAlertBtn">Kaydet</button>
+        <button class="btn btn-text" id="cancelAlertBtn">İptal</button>
+        <button class="btn btn-primary" id="saveAlertBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          Alarm Oluştur
+        </button>
       </div>
     </div>
   </div>
@@ -284,6 +428,31 @@
   <div class="toast" id="toast" role="alert" aria-live="polite">
     <span class="toast-icon" id="toastIcon"></span>
     <span id="toastMessage"></span>
+  </div>
+
+  <!-- M3 Bottom Sheet - Alarm Details -->
+  <div class="m3-bottom-sheet" id="alarmBottomSheet">
+    <div class="bottom-sheet-scrim" id="bottomSheetScrim"></div>
+    <div class="bottom-sheet-container">
+      <div class="bottom-sheet-drag-handle"></div>
+      <div class="bottom-sheet-header">
+        <h3 class="bottom-sheet-title" id="bottomSheetTitle">Alarm Detayları</h3>
+      </div>
+      <div class="bottom-sheet-content" id="bottomSheetContent">
+        <!-- Dynamic content will be inserted here -->
+      </div>
+      <div class="bottom-sheet-actions">
+        <button class="btn btn-text" id="bottomSheetEdit">Düzenle</button>
+        <button class="btn btn-tonal" id="bottomSheetPause">Duraklat</button>
+        <button class="btn btn-danger" id="bottomSheetDelete">Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- M3 Snackbar - Confirmations -->
+  <div class="m3-snackbar" id="snackbar">
+    <span class="snackbar-message" id="snackbarMessage">İşlem tamamlandı</span>
+    <button class="snackbar-action" id="snackbarAction">Geri Al</button>
   </div>
 
   <!-- Load all required libraries in correct order -->
