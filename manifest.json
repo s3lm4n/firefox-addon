@@ -4,14 +4,13 @@
   "version": "2.1.0",
   "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri, fiyat alarmları ve 50+ site desteği",
   "author": "Your Name",
-
   "applications": {
     "gecko": {
       "id": "fiyat-takipci-pro@github.io",
-      "strict_min_version": "109.0"
+      "strict_min_version": "109.0",
+      "update_url": "https://raw.githubusercontent.com/s3lm4n/firefox-app/main/updates.json"
     }
   },
-
   "permissions": [
     "storage",
     "unlimitedStorage",
@@ -23,9 +22,7 @@
     "webNavigation",
     "contextMenus"
   ],
-
   "content_security_policy": "script-src 'self'; object-src 'self';",
-
   "background": {
     "scripts": [
       "lib/config.js",
@@ -42,7 +39,6 @@
     ],
     "persistent": false
   },
-
   "browser_action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -52,21 +48,30 @@
     },
     "default_title": "Fiyat Takipçisi Pro"
   },
-
   "options_ui": {
     "page": "settings.html",
     "open_in_tab": true
   },
-
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["lib/config.js", "lib/errors.js", "lib/validators.js", "lib/cache.js", "lib/messaging.js", "lib/helpers.js", "lib/sites.js", "lib/parser.js", "content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "lib/config.js",
+        "lib/errors.js",
+        "lib/validators.js",
+        "lib/cache.js",
+        "lib/messaging.js",
+        "lib/helpers.js",
+        "lib/sites.js",
+        "lib/parser.js",
+        "content.js"
+      ],
       "run_at": "document_end",
       "all_frames": false
     }
   ],
-
   "web_accessible_resources": [
     "lib/config.js",
     "lib/errors.js",
@@ -81,7 +86,6 @@
     "debug.html",
     "picker.js"
   ],
-
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
