@@ -435,6 +435,67 @@
               isReady: state.isReady,
             };
 
+          case "getProductWithSelector":
+            logger.info("🎯 Custom selector extraction requested:", request.selector);
+            try {
+              const element = document.querySelector(request.selector);
+              if (element) {
+                const text = element.textContent.trim();
+                // Parse price - handle Turkish format (IMPROVED - matches picker.js logic)
+                let priceValue = null;
+                const pricePatterns = [
+                  // Turkish with decimals: 1.299,00 or 25.999,50
+                  { regex: /(\d{1,3}(?:\.\d{3})+,\d{2})/, handler: (match) => match.replace(/\./g, '').replace(',', '.') },
+                  
+                  // Turkish without decimals: 25.999 or 1.234.567
+                  { regex: /(\d{1,3}(?:\.\d{3})+)(?!\d)/, handler: (match) => match.replace(/\./g, '') },
+                  
+                  // English with decimals: 1,299.00
+                  { regex: /(\d{1,3}(?:,\d{3})+\.\d{2})/, handler: (match) => match.replace(/,/g, '') },
+                  
+                  // Simple decimal with comma: 1299,00
+                  { regex: /(\d+,\d{2})(?!\d)/, handler: (match) => match.replace(',', '.') },
+                  
+                  // Simple decimal with dot: 1299.00
+                  { regex: /(\d+\.\d{2})(?!\d)/, handler: (match) => match },
+                  
+                  // Just digits: 1299
+                  { regex: /(\d+)/, handler: (match) => match }
+                ];
+                
+                for (const pattern of pricePatterns) {
+                  const match = text.match(pattern.regex);
+                  if (match && match[1]) {
+                    const priceStr = pattern.handler(match[1]);
+                    priceValue = parseFloat(priceStr);
+                    logger.info(`Price extraction: "${match[1]}" → "${priceStr}" → ${priceValue}`);
+                    break;
+                  }
+                }
+                
+                if (priceValue && priceValue > 0) {
+                  // Get product name
+                  const productName = document.querySelector('h1')?.textContent?.trim() 
+                    || document.querySelector('[itemprop="name"]')?.textContent?.trim()
+                    || document.title.split('|')[0].split('-')[0].trim();
+                  
+                  return {
+                    price: priceValue,
+                    name: productName,
+                    currency: "TRY",
+                    url: window.location.href,
+                    site: request.domain,
+                    confidence: 0.9,
+                    method: "custom-selector"
+                  };
+                }
+              }
+              return { error: "Selector element not found or no price" };
+            } catch (e) {
+              logger.error("Custom selector error:", e);
+              return { error: e.message };
+            }
+
           default:
             throw new PriceTrackerErrors.ValidationError(`Unknown action: ${request.action}`);
         }

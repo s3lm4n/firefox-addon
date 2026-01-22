@@ -95,9 +95,18 @@
       const price = extractPrice(text);
 
       try {
+        const productName = getProductName ? getProductName() : document.title;
         await browserAPI.runtime.sendMessage({
           action: "manualPriceSelected",
-          data: { text, price, url: location.href, selector: saved.selector },
+          data: { 
+            text, 
+            price, 
+            url: location.href, 
+            selector: saved.selector,
+            name: productName,
+            site: domain,
+            domain: domain
+          },
         });
 
         showSuccessMessage(`Otomatik fiyat bulundu: ${text}`);
@@ -344,10 +353,64 @@
     return div.innerHTML;
   }
 
-  // Extract price from text
+  // Extract price from text - FIXED: Properly handle Turkish number format
   function extractPrice(text) {
-    const match = text.match(/[\d.,]+/);
-    return match ? match[0].replace(/[.,]/g, "") : null;
+    if (!text) return null;
+    
+    // Clean the text first
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    
+    // Match price patterns - ORDERED BY SPECIFICITY (most specific first)
+    const patterns = [
+      // Turkish with decimals: 1.299,00 or 25.999,50
+      { regex: /(\d{1,3}(?:\.\d{3})+,\d{2})/, handler: (match) => match.replace(/\./g, '').replace(',', '.') },
+      
+      // Turkish without decimals: 25.999 or 1.234.567 (thousands separated by dots)
+      { regex: /(\d{1,3}(?:\.\d{3})+)(?!\d)/, handler: (match) => match.replace(/\./g, '') },
+      
+      // English with decimals: 1,299.00
+      { regex: /(\d{1,3}(?:,\d{3})+\.\d{2})/, handler: (match) => match.replace(/,/g, '') },
+      
+      // Simple decimal with comma: 1299,00 or 999,99
+      { regex: /(\d+,\d{2})(?!\d)/, handler: (match) => match.replace(',', '.') },
+      
+      // Simple decimal with dot: 1299.00 or 999.99
+      { regex: /(\d+\.\d{2})(?!\d)/, handler: (match) => match },
+      
+      // Just digits: 1299
+      { regex: /(\d+)/, handler: (match) => match }
+    ];
+    
+    for (const pattern of patterns) {
+      const match = cleanText.match(pattern.regex);
+      if (match && match[1]) {
+        const priceStr = pattern.handler(match[1]);
+        console.log(`[Picker] Price extraction: "${match[1]}" → "${priceStr}"`);
+        return priceStr;
+      }
+    }
+    
+    return null;
+  }
+  
+  // Get product name from page
+  function getProductName() {
+    // Try various sources for product name
+    const sources = [
+      document.querySelector('h1')?.textContent,
+      document.querySelector('[itemprop="name"]')?.textContent,
+      document.querySelector('.product-title')?.textContent,
+      document.querySelector('.product-name')?.textContent,
+      document.title.split('|')[0].split('-')[0]
+    ];
+    
+    for (const source of sources) {
+      if (source && source.trim().length > 5) {
+        return source.trim().substring(0, 150);
+      }
+    }
+    
+    return document.title.trim().substring(0, 150);
   }
 
   // Generate CSS selector
@@ -623,10 +686,21 @@
             // Save selector
             await saveSelectorToStorage(selector, text);
 
-            // Send message
+            // Get proper product name
+            const productName = getProductName();
+            
+            // Send message with complete data
             await browserAPI.runtime.sendMessage({
               action: "manualPriceSelected",
-              data: { text, price, url: location.href, selector },
+              data: { 
+                text,
+                price, 
+                url: location.href, 
+                selector,
+                name: productName,
+                site: domain,
+                domain: domain
+              },
             });
 
             console.log("[Picker] ✅ Selection confirmed and saved");

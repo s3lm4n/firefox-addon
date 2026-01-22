@@ -167,8 +167,11 @@
       }
     });
 
-    // Manual select button
+    // Manual select button (in empty state)
     els.manualSelectBtn?.addEventListener("click", activateManualSelector);
+    
+    // Manual selector button (in product detected section)
+    $("manualSelectorBtn")?.addEventListener("click", activateManualSelector);
 
     // Search with debounce
     els.searchInput?.addEventListener("input", () => {
@@ -187,6 +190,18 @@
     
     // Close modal on backdrop click
     els.addAlertModal?.querySelector(".modal-backdrop")?.addEventListener("click", closeAlertModal);
+    
+    // Alarm type card selection
+    $$("#alarmTypeCards .alarm-type-card").forEach(card => {
+      card.addEventListener("click", () => {
+        $$("#alarmTypeCards .alarm-type-card").forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+        handleAlertTypeChange();
+      });
+    });
+    
+    // Product selection change
+    els.alertProductSelect?.addEventListener("change", handleProductSelectChange);
 
     // FAB and empty state add buttons
     $("fabAddAlert")?.addEventListener("click", openAlertModal);
@@ -422,6 +437,7 @@
 
   /**
    * Check current page for product - uses Validators and Messenger
+   * IMPROVED: First checks tracked products and custom selectors
    */
   async function checkCurrentPage() {
     try {
@@ -445,7 +461,56 @@
         return;
       }
 
-      // Ensure content script is loaded
+      // STEP 1: Check if this URL is already in tracked products
+      const trackedProduct = products.find(p => p.url === tab.url);
+      if (trackedProduct) {
+        console.log("[Popup] Found tracked product for this URL:", trackedProduct.name);
+        currentProduct = trackedProduct;
+        showProduct(currentProduct);
+        return;
+      }
+
+      // STEP 2: Check if there's a saved custom selector for this domain
+      const domain = new URL(tab.url).hostname.replace(/^www\./, '');
+      try {
+        const savedSelector = await browser.storage.sync.get(domain);
+        if (savedSelector[domain]?.selector) {
+          console.log("[Popup] Found saved selector for domain:", domain);
+          
+          // Try to get price using the saved selector via content script
+          const scriptLoaded = await ensureContentScript(tab.id);
+          if (scriptLoaded) {
+            // Send message to get price using custom selector
+            try {
+              const customResponse = await browser.tabs.sendMessage(tab.id, {
+                action: "getProductWithSelector",
+                selector: savedSelector[domain].selector,
+                domain: domain
+              });
+              
+              if (customResponse && customResponse.price) {
+                currentProduct = {
+                  name: customResponse.name || document.title,
+                  price: customResponse.price,
+                  currency: customResponse.currency || "TRY",
+                  url: tab.url,
+                  site: domain,
+                  confidence: 0.9,
+                  customSelector: savedSelector[domain].selector
+                };
+                showProduct(currentProduct);
+                return;
+              }
+            } catch (e) {
+              console.log("[Popup] Custom selector extraction failed, falling back:", e);
+            }
+          }
+        }
+      } catch (e) {
+        console.log("[Popup] No saved selector for domain:", domain);
+      }
+
+      // STEP 3: Ensure content script is loaded and use normal extraction
       const scriptLoaded = await ensureContentScript(tab.id);
       if (!scriptLoaded) {
         showEmpty("Sayfa yükleniyor...");
@@ -623,8 +688,11 @@
 
   /**
    * Refresh all products - uses Messenger abstraction
+   * ENHANCED: Comprehensive product status check
    */
   async function refreshAll() {
+    console.log("[Popup] refreshAll called, product count:", products.length);
+    
     if (products.length === 0) {
       showToast("ℹ️ Takip edilen ürün yok", "info");
       return;
@@ -637,7 +705,15 @@
     `;
 
     try {
+      console.log("[Popup] Calling Messenger.Actions.checkAllPrices");
+      
+      // Check if Messenger is available
+      if (typeof Messenger === "undefined" || !Messenger.Actions) {
+        throw new Error("Messenger not available");
+      }
+      
       const result = await Messenger.Actions.checkAllPrices();
+      console.log("[Popup] Refresh result:", result);
 
       if (result && !result.error) {
         els.refreshAllBtn.innerHTML = `
@@ -647,7 +723,7 @@
           <span>Tamamlandı!</span>
         `;
 
-        // Reload products
+        // Reload products from storage to get updated prices
         await loadProducts();
         updateStats();
 
@@ -674,7 +750,7 @@
       }
     } catch (error) {
       console.error("[Popup] Refresh all error:", error);
-      showToast("❌ Kontrol başarısız", "error");
+      showToast("❌ Kontrol başarısız: " + error.message, "error");
 
       els.refreshAllBtn.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1489,15 +1565,47 @@
    * Handle alert type change
    */
   function handleAlertTypeChange() {
-    const type = els.alertTypeSelect?.value;
+    const selectedCard = document.querySelector("#alarmTypeCards .alarm-type-card.selected");
+    const type = selectedCard?.dataset.type || 'target_price';
     
     if (els.targetPriceGroup) {
       els.targetPriceGroup.style.display = type === 'target_price' ? 'block' : 'none';
     }
     
     if (els.targetPercentGroup) {
-      els.targetPercentGroup.style.display = 
-        (type === 'percentage_drop' || type === 'percentage_rise') ? 'block' : 'none';
+      const showPercent = type === 'percentage_drop' || type === 'percentage_rise';
+      els.targetPercentGroup.style.display = showPercent ? 'block' : 'none';
+      
+      // Update hint text based on type
+      const percentHint = $("percentHint");
+      if (percentHint) {
+        if (type === 'percentage_drop') {
+          percentHint.textContent = 'Fiyat bu yüzde kadar düşünce bildirim alacaksınız';
+        } else if (type === 'percentage_rise') {
+          percentHint.textContent = 'Fiyat bu yüzde kadar artınca bildirim alacaksınız';
+        }
+      }
+    }
+  }
+  
+  /**
+   * Handle product selection change
+   */
+  function handleProductSelectChange() {
+    const selectedOption = els.alertProductSelect?.selectedOptions[0];
+    const productInfo = $("selectedProductInfo");
+    const productName = $("selectedProductName");
+    const productPrice = $("selectedProductPrice");
+    
+    if (selectedOption && selectedOption.value) {
+      const price = selectedOption.dataset.price;
+      const name = selectedOption.textContent;
+      
+      if (productInfo) productInfo.style.display = 'block';
+      if (productName) productName.textContent = name;
+      if (productPrice) productPrice.textContent = `₺${parseFloat(price).toFixed(2)}`;
+    } else {
+      if (productInfo) productInfo.style.display = 'none';
     }
   }
 
@@ -1506,7 +1614,8 @@
    */
   async function saveAlert() {
     const productUrl = els.alertProductSelect?.value;
-    const type = els.alertTypeSelect?.value;
+    const selectedCard = document.querySelector("#alarmTypeCards .alarm-type-card.selected");
+    const type = selectedCard?.dataset.type || 'target_price';
     const targetPrice = parseFloat(els.alertTargetPrice?.value);
     const targetPercent = parseFloat(els.alertTargetPercent?.value);
 

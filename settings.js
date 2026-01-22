@@ -32,11 +32,43 @@
       // Update debug stats
       updateDebugStats();
 
+      // Setup console capturing for debug panel
+      setupConsoleCapture();
+
       logger.success("✅ Settings page initialized");
     } catch (error) {
       logger.error("❌ Initialization error:", error);
       showToast("Başlatma hatası", "error");
     }
+  }
+
+  /**
+   * Setup console capturing to debug panel
+   */
+  function setupConsoleCapture() {
+    const originalLog = console.log.bind(console);
+    const originalWarn = console.warn.bind(console);
+    const originalError = console.error.bind(console);
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      logToConsole(message, 'info');
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      logToConsole(message, 'warning');
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      const message = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+      logToConsole(message, 'error');
+    };
+
+    logToConsole("Console capture başlatıldı - Tüm loglar bu panelde görünecek", "success");
   }
 
   /**
@@ -298,8 +330,7 @@
 
       logger.success("Settings saved:", newSettings);
 
-      // Close window after 1 second
-      setTimeout(() => window.close(), 1000);
+      // Don't auto-close - let user continue using settings page
     } catch (error) {
       logger.error("Save settings error:", error);
       showToast("❌ Kaydetme hatası", "error");

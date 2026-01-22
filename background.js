@@ -842,11 +842,117 @@
           case "manualPriceSelected":
             logger.info("🎯 Manual price selected:", request.data);
             if (request.data) {
-              const { text, price, url, selector } = request.data;
+              const { text, price, url, selector, name, site, domain: domainFromPicker } = request.data;
               logger.success(
                 `Manual selection saved: ${text} (${price}) for ${url}`
               );
 
+              // FIXED: Actually save the price to tracked products
+              try {
+                const trackedProducts = await PriceTrackerHelpers.getStorage("trackedProducts", []);
+                
+                // Parse the price - handle Turkish format (1.299,00) properly
+                let parsedPrice = null;
+                if (price) {
+                  // Price should already be in correct format from picker (e.g., "1299.00")
+                  parsedPrice = parseFloat(price);
+                  if (isNaN(parsedPrice)) {
+                    // Fallback: try to parse with cleanup
+                    const cleanPrice = price.replace(/[^\d.,]/g, '');
+                    // Check if Turkish format
+                    if (cleanPrice.includes('.') && cleanPrice.includes(',')) {
+                      parsedPrice = parseFloat(cleanPrice.replace(/\./g, '').replace(',', '.'));
+                    } else if (cleanPrice.includes(',')) {
+                      parsedPrice = parseFloat(cleanPrice.replace(',', '.'));
+                    } else {
+                      parsedPrice = parseFloat(cleanPrice);
+                    }
+                  }
+                }
+                
+                if (parsedPrice && parsedPrice > 0) {
+                  // Find if product already exists
+                  const existingIndex = trackedProducts.findIndex(p => p.url === url);
+                  
+                  // Get domain from URL if not provided
+                  const extractedDomain = domainFromPicker || new URL(url).hostname.replace(/^www\./, '');
+                  const siteName = site || SiteConfigs?.getSiteConfig(extractedDomain)?.name || extractedDomain;
+                  
+                  if (existingIndex >= 0) {
+                    // Update existing product
+                    const existingProduct = trackedProducts[existingIndex];
+                    const oldPrice = existingProduct.price;
+                    
+                    // Add to price history
+                    if (!Array.isArray(existingProduct.priceHistory)) {
+                      existingProduct.priceHistory = [];
+                    }
+                    existingProduct.priceHistory.push({
+                      price: oldPrice,
+                      date: existingProduct.lastCheck || Date.now(),
+                    });
+                    
+                    if (existingProduct.priceHistory.length > 30) {
+                      existingProduct.priceHistory = existingProduct.priceHistory.slice(-30);
+                    }
+                    
+                    existingProduct.previousPrice = oldPrice;
+                    existingProduct.price = parsedPrice;
+                    existingProduct.lastCheck = Date.now();
+                    existingProduct.lastCheckStatus = "success";
+                    existingProduct.customSelector = selector;
+                    existingProduct.site = siteName;
+                    existingProduct.domain = extractedDomain;
+                    
+                    // Update name if provided and better
+                    if (name && name.length > 5 && (!existingProduct.name || existingProduct.name === "Manuel Eklenen Ürün")) {
+                      existingProduct.name = name;
+                    }
+                    
+                    trackedProducts[existingIndex] = existingProduct;
+                    
+                    logger.info(`📊 Updated existing product price: ${oldPrice} → ${parsedPrice}`);
+                    
+                    // Send notification if price changed significantly
+                    if (settings.notifications && Math.abs(parsedPrice - oldPrice) > 0.01) {
+                      await sendPriceNotification(existingProduct, oldPrice, parsedPrice);
+                    }
+                  } else {
+                    // Add as new product with proper name and site
+                    const productName = name || text.substring(0, 100) || "Manuel Eklenen Ürün";
+                    
+                    const newProduct = {
+                      name: productName,
+                      price: parsedPrice,
+                      currency: "TRY",
+                      url: url,
+                      site: siteName,
+                      domain: extractedDomain,
+                      initialPrice: parsedPrice,
+                      previousPrice: null,
+                      priceHistory: [],
+                      addedDate: Date.now(),
+                      lastCheck: Date.now(),
+                      lastCheckStatus: "success",
+                      confidence: 0.9,
+                      customSelector: selector,
+                    };
+                    
+                    trackedProducts.push(newProduct);
+                    logger.info(`📦 Added new product: ${newProduct.name} at ${parsedPrice} from ${siteName}`);
+                  }
+                  
+                  // Save to storage
+                  await PriceTrackerHelpers.setStorage("trackedProducts", trackedProducts);
+                  logger.success("✅ Products saved to storage");
+                } else {
+                  logger.warn("⚠️ Invalid price value:", price);
+                }
+              } catch (e) {
+                logger.error("❌ Error saving product:", e);
+              }
+
+              // Notify content script about the result
               try {
                 const tabs = await browser.tabs.query({
                   active: true,
