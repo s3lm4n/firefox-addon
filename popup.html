@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fiyat Takipçisi Pro</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
   <link rel="stylesheet" href="m3-tokens.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -23,33 +24,17 @@
         <span>Fiyat Takipçisi</span>
       </div>
       <div class="header-actions">
+        <button class="icon-btn" id="accountBtn" title="Hesap" aria-label="Hesap">
+          <span class="material-icons-outlined">account_circle</span>
+        </button>
         <button class="icon-btn" id="themeToggle" title="Tema Değiştir" aria-label="Tema Değiştir">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-          </svg>
+          <span class="material-icons-outlined">brightness_6</span>
         </button>
         <button class="icon-btn" id="debugBtn" title="Debug Konsolu" aria-label="Debug Konsolu">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-          </svg>
+          <span class="material-icons-outlined">bug_report</span>
         </button>
         <button class="icon-btn" id="settingsBtn" title="Ayarlar" aria-label="Ayarlar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path
-              d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m-1.4 1.4l-4.2 4.2M23 12h-6m-6 0H1m18.8-5.2l-4.2 4.2m-1.4 1.4l-4.2 4.2">
-            </path>
-          </svg>
+          <span class="material-icons-outlined">settings</span>
         </button>
       </div>
     </div>
@@ -454,6 +439,112 @@
   <div class="toast" id="toast" role="alert" aria-live="polite">
     <span class="toast-icon" id="toastIcon"></span>
     <span id="toastMessage"></span>
+  </div>
+
+  <!-- Account Modal -->
+  <div class="modal" id="accountModal" style="display: none;">
+    <div class="modal-backdrop" id="accountModalBackdrop"></div>
+    <div class="modal-content account-modal">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <span class="material-icons-outlined">account_circle</span>
+          <h3>Hesap</h3>
+        </div>
+        <button class="modal-close" id="closeAccountModal" aria-label="Kapat">×</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- User Profile Section -->
+        <div class="account-profile">
+          <div class="account-avatar">
+            <span class="material-icons-outlined"
+              style="font-size: 56px; color: var(--md-sys-color-primary);">account_circle</span>
+          </div>
+          <div class="account-info">
+            <div class="account-name">Kullanıcı</div>
+            <div class="account-status">
+              <span class="status-dot active"></span>
+              <span>Aktif</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Usage Statistics -->
+        <div class="account-section">
+          <h4 class="account-section-title">
+            <span class="material-icons-outlined">assessment</span>
+            Kullanım İstatistikleri
+          </h4>
+          <div class="account-stats">
+            <div class="account-stat-item">
+              <div class="account-stat-value" id="accountProductCount">0</div>
+              <div class="account-stat-label">Takip Edilen Ürün</div>
+            </div>
+            <div class="account-stat-item">
+              <div class="account-stat-value" id="accountAlertCount">0</div>
+              <div class="account-stat-label">Aktif Alarm</div>
+            </div>
+            <div class="account-stat-item">
+              <div class="account-stat-value" id="accountSavings">0₺</div>
+              <div class="account-stat-label">Toplam Tasarruf</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="account-section">
+          <h4 class="account-section-title">
+            <span class="material-icons-outlined">flash_on</span>
+            Hızlı İşlemler
+          </h4>
+          <div class="account-actions">
+            <button class="account-action-btn" id="accountExportData">
+              <span class="material-icons-outlined">download</span>
+              <span>Verileri Dışa Aktar</span>
+            </button>
+            <button class="account-action-btn" id="accountImportData">
+              <span class="material-icons-outlined">upload</span>
+              <span>Verileri İçe Aktar</span>
+            </button>
+            <button class="account-action-btn" id="accountBackup">
+              <span class="material-icons-outlined">backup</span>
+              <span>Yedekle</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Links -->
+        <div class="account-section">
+          <h4 class="account-section-title">
+            <span class="material-icons-outlined">link</span>
+            Bağlantılar
+          </h4>
+          <div class="account-links">
+            <a href="#" class="account-link" id="accountHelp">
+              <span class="material-icons-outlined">help</span>
+              <span>Yardım & Destek</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </a>
+            <a href="#" class="account-link" id="accountPrivacy">
+              <span class="material-icons-outlined">privacy_tip</span>
+              <span>Gizlilik Politikası</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </a>
+            <a href="#" class="account-link" id="accountFeedback">
+              <span class="material-icons-outlined">feedback</span>
+              <span>Geri Bildirim</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- App Info -->
+        <div class="account-footer">
+          <div class="app-version">Fiyat Takipçisi Pro v1.0.0</div>
+          <div class="app-copyright">© 2024 Tüm hakları saklıdır</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Load all required libraries in correct order -->

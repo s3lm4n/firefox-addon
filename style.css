@@ -2416,4 +2416,228 @@ body {
   transition-property: background-color, border-color, color, box-shadow;
   transition-duration: var(--md-sys-motion-duration-short4);
   transition-timing-function: var(--md-sys-motion-easing-standard);
+}/* ============================================
+   MATERIAL ICONS OUTLINED SUPPORT
+   ============================================ */
+.material-icons-outlined {
+    font-family: 'Material Icons Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+}
+
+.icon-btn .material-icons-outlined {
+    font-size: 20px;
+}
+
+/* ============================================
+   ACCOUNT MODAL - M3 Dialog
+   ============================================ */
+.account-modal {
+    max-width: 360px;
+    width: 100%;
+}
+
+.account-modal .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.account-modal .modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.account-modal .modal-title-group .material-icons-outlined {
+    font-size: 24px;
+    color: var(--md-sys-color-primary);
+}
+
+.account-modal .modal-body {
+    padding: 0;
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+/* Account Profile */
+.account-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 20px;
+    background: var(--md-sys-color-primary-container);
+}
+
+.account-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-info {
+    flex: 1;
+}
+
+.account-name {
+    font: var(--md-sys-typescale-title-large-font);
+    color: var(--md-sys-color-on-primary-container);
+    margin-bottom: 4px;
+}
+
+.account-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: var(--md-sys-typescale-body-small-font);
+    color: var(--md-sys-color-on-primary-container);
+    opacity: 0.8;
+}
+
+.account-status .status-dot.active {
+    background: var(--md-sys-color-success);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Account Section */
+.account-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.account-section-title {
+    font: var(--md-sys-typescale-title-small-font);
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-section-title .material-icons-outlined {
+    font-size: 18px;
+    color: var(--md-sys-color-primary);
+}
+
+/* Account Stats */
+.account-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.account-stat-item {
+    text-align: center;
+    padding: 12px 8px;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-medium);
+}
+
+.account-stat-value {
+    font: var(--md-sys-typescale-headline-small-font);
+    font-weight: 700;
+    color: var(--md-sys-color-primary);
+    margin-bottom: 4px;
+}
+
+.account-stat-label {
+    font: var(--md-sys-typescale-label-small-font);
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Account Actions */
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.account-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--md-sys-color-secondary-container);
+    color: var(--md-sys-color-on-secondary-container);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-full);
+    font: var(--md-sys-typescale-label-large-font);
+    cursor: pointer;
+    transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard),
+        box-shadow var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.account-action-btn:hover {
+    box-shadow: var(--md-sys-elevation-level1);
+}
+
+.account-action-btn .material-icons-outlined {
+    font-size: 20px;
+}
+
+/* Account Links */
+.account-links {
+    display: flex;
+    flex-direction: column;
+}
+
+.account-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    color: var(--md-sys-color-on-surface);
+    text-decoration: none;
+    font: var(--md-sys-typescale-body-medium-font);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.account-link:last-child {
+    border-bottom: none;
+}
+
+.account-link:hover {
+    background: var(--md-sys-color-surface-container);
+    margin: 0 -20px;
+    padding: 12px 20px;
+}
+
+.account-link .material-icons-outlined:first-child {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.account-link span:nth-child(2) {
+    flex: 1;
+}
+
+.account-link .material-icons-outlined:last-child {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 18px;
+}
+
+/* Account Footer */
+.account-footer {
+    padding: 20px;
+    text-align: center;
+}
+
+.app-version {
+    font: var(--md-sys-typescale-body-small-font);
+    color: var(--md-sys-color-on-surface);
+    margin-bottom: 4px;
+}
+
+.app-copyright {
+    font: var(--md-sys-typescale-label-small-font);
+    color: var(--md-sys-color-on-surface-variant);
 }

@@ -154,6 +154,11 @@
     // Settings button
     els.settingsBtn?.addEventListener("click", openSettings);
 
+    // Account button
+    $("accountBtn")?.addEventListener("click", openAccountModal);
+    $("closeAccountModal")?.addEventListener("click", closeAccountModal);
+    $("accountModalBackdrop")?.addEventListener("click", closeAccountModal);
+
     // Add product button
     els.addProductBtn?.addEventListener("click", addProduct);
 
@@ -314,6 +319,42 @@
    */
   function openSettings() {
     browser.runtime.openOptionsPage();
+  }
+
+  /**
+   * Open account modal
+   */
+  function openAccountModal() {
+    const modal = $("accountModal");
+    if (!modal) return;
+
+    // Update statistics
+    $("accountProductCount").textContent = products.length;
+    $("accountAlertCount").textContent = alerts.length;
+    
+    // Calculate total savings
+    let totalSavings = 0;
+    products.forEach(p => {
+      if (p.initialPrice && p.price && p.price < p.initialPrice) {
+        totalSavings += p.initialPrice - p.price;
+      }
+    });
+    $("accountSavings").textContent = `${totalSavings.toFixed(0)}₺`;
+
+    // Show modal
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  /**
+   * Close account modal
+   */
+  function closeAccountModal() {
+    const modal = $("accountModal");
+    if (modal) {
+      modal.style.display = "none";
+      document.body.style.overflow = "";
+    }
   }
 
   /**
