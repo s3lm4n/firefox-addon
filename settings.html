@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ayarlar - Fiyat Takipçisi Pro</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+  <link rel="stylesheet" href="lib/cropper.min.css" />
   <link rel="stylesheet" href="m3-tokens.css" />
   <link rel="stylesheet" href="settings.css" />
 </head>
@@ -37,6 +38,10 @@
     <div class="content">
       <!-- Tabs -->
       <div class="tabs">
+        <button class="tab" data-tab="account">
+          <span class="material-icons-outlined">account_circle</span>
+          <span>Hesap</span>
+        </button>
         <button class="tab active" data-tab="general">
           <span class="material-icons-outlined">build</span>
           <span>Genel</span>
@@ -53,6 +58,64 @@
           <span class="material-icons-outlined">bug_report</span>
           <span>Debug</span>
         </button>
+      </div>
+
+      <!-- Account Tab -->
+      <div class="tab-content" id="accountTab">
+        <div class="section">
+          <h2 class="section-title">Profil Bilgileri</h2>
+          
+          <!-- Profile Photo Section -->
+          <div class="account-profile-card">
+            <div class="profile-photo-section">
+              <div class="profile-photo-wrapper" id="settingsProfilePhoto">
+                <span class="profile-photo-letter" id="settingsPhotoLetter">K</span>
+                <img class="profile-photo-image" id="settingsPhotoImage" src="" alt="Profil" />
+              </div>
+              <div class="profile-photo-actions">
+                <button class="photo-action-btn primary" id="changePhotoBtn">
+                  <span class="material-icons-outlined">add_photo_alternate</span>
+                  Fotoğraf Seç
+                </button>
+                <button class="photo-action-btn secondary" id="removePhotoBtn" style="display: none;">
+                  <span class="material-icons-outlined">delete</span>
+                  Kaldır
+                </button>
+              </div>
+              <input type="file" id="settingsPhotoInput" accept="image/jpeg,image/png,image/webp" hidden />
+            </div>
+            
+            <div class="profile-name-section">
+              <div class="mui-textfield filled">
+                <input type="text" id="settingsAccountName" placeholder=" " />
+                <label for="settingsAccountName">Kullanıcı Adı</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Veri Yönetimi</h2>
+          
+          <div class="account-data-section">
+            <h3><span class="material-icons-outlined">folder</span> Verileriniz</h3>
+            <div class="data-actions">
+              <button class="data-action-btn" id="accountExportBtn">
+                <span class="material-icons-outlined">download</span>
+                Dışa Aktar
+              </button>
+              <button class="data-action-btn" id="accountImportBtn">
+                <span class="material-icons-outlined">upload</span>
+                İçe Aktar
+              </button>
+              <button class="data-action-btn danger" id="accountClearBtn">
+                <span class="material-icons-outlined">delete_forever</span>
+                Tümünü Sil
+              </button>
+            </div>
+            <input type="file" id="accountFileInput" accept=".json" hidden />
+          </div>
+        </div>
       </div>
 
       <!-- Tab Contents -->
@@ -285,36 +348,66 @@
             </button>
           </div>
 
-          <div style="margin-top: 24px">
-            <div
-              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative;">
-              <div class="list-item-headline"
-                style="font: var(--md-sys-typescale-title-small-font); color: var(--md-sys-color-on-surface);">
-                Kayıtlı Seçiciler
-                <span class="badge info" id="selectorCount" style="margin-left: 8px;">0</span>
+          <!-- Redesigned Selectors Panel - MUI Style -->
+          <div class="selectors-panel">
+            <!-- Panel Header -->
+            <div class="selectors-panel-header">
+              <div class="selectors-panel-title">
+                <span class="material-icons-outlined">colorize</span>
+                <span>Kayıtlı Seçiciler</span>
+                <span class="selectors-count-badge" id="selectorBadge">
+                  <span id="selectorCount">0</span>
+                </span>
               </div>
-              <div class="refresh-btn-container">
-                <button class="btn-icon tooltip" id="refreshSelectors" data-tooltip="Listeyi yenile">
-                  <span class="material-icons-outlined" id="refreshIcon">refresh</span>
+              <div class="selectors-panel-actions">
+                <button class="btn-icon-sm" id="refreshSelectors" title="Yenile">
+                  <span class="material-icons-outlined" id="refreshIcon">sync</span>
                 </button>
-                <!-- Floating Info Card -->
-                <div class="selector-info-card" id="selectorInfoCard">
-                  <span class="material-icons-outlined" id="selectorInfoIcon">info</span>
-                  <span id="selectorInfoText">Henüz seçici yok</span>
-                </div>
               </div>
             </div>
 
+            <!-- Search & Filter Bar -->
+            <div class="selectors-toolbar">
+              <div class="selectors-search">
+                <span class="material-icons-outlined">search</span>
+                <input type="text" id="selectorSearchInput" placeholder="Domain ara..." />
+                <button class="selectors-search-clear" id="selectorSearchClear" style="display: none;">
+                  <span class="material-icons-outlined">close</span>
+                </button>
+              </div>
+              <div class="selectors-sort">
+                <select id="selectorSortSelect" class="selectors-sort-select">
+                  <option value="recent">Son Eklenen</option>
+                  <option value="alpha">A-Z Sırala</option>
+                  <option value="alpha-desc">Z-A Sırala</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Selectors List -->
             <div id="custom-selectors-list" class="selectors-list">
-              <div class="selectors-empty">
+              <!-- Loading State -->
+              <div class="selectors-loading" id="selectorsLoading" style="display: none;">
+                <div class="selectors-loading-spinner"></div>
+                <span>Seçiciler yükleniyor...</span>
+              </div>
+
+              <!-- Empty State -->
+              <div class="selectors-empty" id="selectorsEmpty">
                 <div class="selectors-empty-icon">
-                  <span class="material-icons-outlined"
-                    style="font-size: 48px; color: var(--md-sys-color-primary);">colorize</span>
+                  <span class="material-icons-outlined">touch_app</span>
                 </div>
-                <div class="selectors-empty-text">Yükleniyor...</div>
-                <div class="progress-linear-determinate" id="selectorProgressBar" style="margin-top: 16px;">
-                  <div class="progress-linear-determinate-bar" id="selectorProgressBarFill" style="width: 0%;"></div>
-                </div>
+                <h4>Henüz Seçici Yok</h4>
+                <p>Bir ürün sayfasında sağ tıklayıp<br/>"Bu Öğeyi Fiyat Olarak Seç" seçeneğini kullanın.</p>
+                <button class="btn btn-tonal btn-sm" id="openPickerGuideBtn">
+                  <span class="material-icons-outlined">help_outline</span>
+                  Nasıl Kullanılır?
+                </button>
+              </div>
+
+              <!-- Selector Items Container -->
+              <div class="selectors-items" id="selectorsItems">
+                <!-- Selector items will be dynamically inserted here -->
               </div>
             </div>
           </div>
@@ -697,7 +790,35 @@
     </div>
   </div>
 
+  <!-- Cropper Modal -->
+  <div class="cropper-modal-overlay" id="settingsCropperModal">
+    <div class="cropper-modal-content">
+      <div class="cropper-modal-header">
+        <h3>
+          <span class="material-icons-outlined">crop</span>
+          Fotoğrafı Kırp
+        </h3>
+        <button type="button" class="cropper-modal-close" id="settingsCropperClose">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="cropper-modal-body">
+        <div class="cropper-image-container">
+          <img id="settingsCropperImage" src="" alt="Kırpılacak fotoğraf" />
+        </div>
+      </div>
+      <div class="cropper-modal-footer">
+        <button class="cropper-modal-btn secondary" id="settingsCropperCancel">İptal</button>
+        <button class="cropper-modal-btn primary" id="settingsCropperSave">
+          <span class="material-icons-outlined">check</span>
+          Kaydet
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Load all required libraries in correct order -->
+  <script src="lib/cropper.min.js"></script>
   <script src="lib/config.js"></script>
   <script src="lib/errors.js"></script>
   <script src="lib/validators.js"></script>

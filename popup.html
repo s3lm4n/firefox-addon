@@ -454,17 +454,42 @@
       </div>
 
       <div class="modal-body">
-        <!-- User Profile Section -->
-        <div class="account-profile">
-          <div class="account-avatar">
-            <span class="material-icons-outlined"
-              style="font-size: 56px; color: var(--md-sys-color-primary);">account_circle</span>
+        <!-- User Profile Section - Display Only -->
+        <div class="account-profile-header">
+          <div class="profile-avatar" id="profileAvatar">
+            <span class="avatar-letter" id="avatarLetter">U</span>
+            <img class="avatar-photo" id="avatarPhoto" src="" alt="" />
           </div>
-          <div class="account-info">
-            <div class="account-name">Kullanıcı</div>
-            <div class="account-status">
-              <span class="status-dot active"></span>
-              <span>Aktif</span>
+          <div class="profile-info">
+            <div class="profile-name" id="profileDisplayName">Kullanıcı</div>
+            <div class="profile-status">
+              <span class="status-indicator active"></span>
+              <span>Premium Kullanıcı</span>
+            </div>
+            <a href="#" class="edit-profile-link" id="editProfileLink">
+              <span class="material-icons-outlined">edit</span>
+              Profili Düzenle
+            </a>
+          </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="account-section">
+          <h4 class="account-section-title">
+            <span class="material-icons-outlined">notifications</span>
+            Bildirimler
+            <span class="notification-badge" id="notificationBadge">
+              <span class="badge-dot-indicator"></span>
+            </span>
+          </h4>
+          <div class="notification-list">
+            <div class="notification-item unread">
+              <span class="material-icons-outlined notification-icon">trending_down</span>
+              <div class="notification-content">
+                <span class="notification-title">Fiyat Düşüşü!</span>
+                <span class="notification-text">Bir ürünün fiyatı düştü</span>
+              </div>
+              <span class="notification-time">2dk</span>
             </div>
           </div>
         </div>
@@ -472,43 +497,84 @@
         <!-- Usage Statistics -->
         <div class="account-section">
           <h4 class="account-section-title">
-            <span class="material-icons-outlined">assessment</span>
-            Kullanım İstatistikleri
+            <span class="material-icons-outlined">insights</span>
+            İstatistikler
           </h4>
           <div class="account-stats">
             <div class="account-stat-item">
-              <div class="account-stat-value" id="accountProductCount">0</div>
-              <div class="account-stat-label">Takip Edilen Ürün</div>
+              <span class="material-icons-outlined stat-icon">shopping_bag</span>
+              <div class="stat-content">
+                <div class="stat-value" id="accountProductCount">0</div>
+                <div class="stat-label">Takip</div>
+              </div>
             </div>
             <div class="account-stat-item">
-              <div class="account-stat-value" id="accountAlertCount">0</div>
-              <div class="account-stat-label">Aktif Alarm</div>
+              <span class="material-icons-outlined stat-icon">notifications_active</span>
+              <div class="stat-content">
+                <div class="stat-value" id="accountAlertCount">0</div>
+                <div class="stat-label">Alarm</div>
+              </div>
             </div>
             <div class="account-stat-item">
-              <div class="account-stat-value" id="accountSavings">0₺</div>
-              <div class="account-stat-label">Toplam Tasarruf</div>
+              <span class="material-icons-outlined stat-icon">savings</span>
+              <div class="stat-content">
+                <div class="stat-value" id="accountSavings">0₺</div>
+                <div class="stat-label">Tasarruf</div>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="account-section">
+          <h4 class="account-section-title">
+            <span class="material-icons-outlined">tune</span>
+            Ayarlar
+          </h4>
+          <div class="settings-list">
+            <button class="settings-item" id="themeSettingBtn">
+              <span class="material-icons-outlined">dark_mode</span>
+              <span class="settings-item-text">Tema</span>
+              <span class="settings-item-value" id="currentThemeValue">Sistem</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
+            <button class="settings-item" id="syncSettingBtn">
+              <span class="material-icons-outlined">sync</span>
+              <span class="settings-item-text">Senkronizasyon</span>
+              <span class="settings-item-value">Açık</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
+            <button class="settings-item" id="storageSettingBtn">
+              <span class="material-icons-outlined">storage</span>
+              <span class="settings-item-text">Depolama</span>
+              <span class="settings-item-value" id="storageUsage">0 KB</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </button>
           </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="account-section">
           <h4 class="account-section-title">
-            <span class="material-icons-outlined">flash_on</span>
+            <span class="material-icons-outlined">bolt</span>
             Hızlı İşlemler
           </h4>
-          <div class="account-actions">
-            <button class="account-action-btn" id="accountExportData">
+          <div class="quick-action-grid">
+            <button class="quick-action-card" id="accountExportData">
               <span class="material-icons-outlined">download</span>
-              <span>Verileri Dışa Aktar</span>
+              <span>Dışa Aktar</span>
             </button>
-            <button class="account-action-btn" id="accountImportData">
+            <button class="quick-action-card" id="accountImportData">
               <span class="material-icons-outlined">upload</span>
-              <span>Verileri İçe Aktar</span>
+              <span>İçe Aktar</span>
             </button>
-            <button class="account-action-btn" id="accountBackup">
-              <span class="material-icons-outlined">backup</span>
+            <button class="quick-action-card" id="accountBackup">
+              <span class="material-icons-outlined">cloud_upload</span>
               <span>Yedekle</span>
+            </button>
+            <button class="quick-action-card" id="accountClearData">
+              <span class="material-icons-outlined">delete_sweep</span>
+              <span>Temizle</span>
             </button>
           </div>
         </div>
@@ -516,32 +582,41 @@
         <!-- Links -->
         <div class="account-section">
           <h4 class="account-section-title">
-            <span class="material-icons-outlined">link</span>
-            Bağlantılar
+            <span class="material-icons-outlined">info</span>
+            Hakkında
           </h4>
-          <div class="account-links">
-            <a href="#" class="account-link" id="accountHelp">
+          <div class="links-list">
+            <a href="#" class="link-item" id="accountHelp">
               <span class="material-icons-outlined">help</span>
               <span>Yardım & Destek</span>
-              <span class="material-icons-outlined">chevron_right</span>
+              <span class="material-icons-outlined">open_in_new</span>
             </a>
-            <a href="#" class="account-link" id="accountPrivacy">
+            <a href="#" class="link-item" id="accountPrivacy">
               <span class="material-icons-outlined">privacy_tip</span>
               <span>Gizlilik Politikası</span>
-              <span class="material-icons-outlined">chevron_right</span>
+              <span class="material-icons-outlined">open_in_new</span>
             </a>
-            <a href="#" class="account-link" id="accountFeedback">
-              <span class="material-icons-outlined">feedback</span>
-              <span>Geri Bildirim</span>
-              <span class="material-icons-outlined">chevron_right</span>
+            <a href="#" class="link-item" id="accountFeedback">
+              <span class="material-icons-outlined">rate_review</span>
+              <span>Geri Bildirim Gönder</span>
+              <span class="material-icons-outlined">open_in_new</span>
+            </a>
+            <a href="#" class="link-item" id="accountRate">
+              <span class="material-icons-outlined">star</span>
+              <span>Eklentiyi Değerlendir</span>
+              <span class="material-icons-outlined">open_in_new</span>
             </a>
           </div>
         </div>
 
-        <!-- App Info -->
+        <!-- App Info Footer -->
         <div class="account-footer">
-          <div class="app-version">Fiyat Takipçisi Pro v1.0.0</div>
-          <div class="app-copyright">© 2024 Tüm hakları saklıdır</div>
+          <div class="app-logo">
+            <span class="material-icons-outlined">sell</span>
+          </div>
+          <div class="app-version">Fiyat Takipçisi Pro</div>
+          <div class="app-version-number">Versiyon 1.0.0</div>
+          <div class="app-copyright">© 2026 Tüm hakları saklıdır</div>
         </div>
       </div>
     </div>

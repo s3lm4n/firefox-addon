@@ -43,10 +43,34 @@
       // Initialize Performance Monitor
       initPerformanceMonitor();
 
+      // Check URL hash for direct tab navigation
+      handleUrlHash();
+
       logger.success("✅ Settings page initialized");
     } catch (error) {
       logger.error("❌ Initialization error:", error);
       showToast("Başlatma hatası", "error");
+    }
+  }
+
+  /**
+   * Handle URL hash for direct tab navigation
+   */
+  function handleUrlHash() {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      const tabMap = {
+        "account": "accountTab",
+        "general": "generalTab",
+        "notifications": "notificationsTab",
+        "advanced": "advancedTab",
+        "debug": "debugTab"
+      };
+      
+      const tabId = tabMap[hash];
+      if (tabId) {
+        switchTab(hash);
+      }
     }
   }
 
@@ -213,6 +237,9 @@
     // Backup actions
     $("manualBackup")?.addEventListener("click", createManualBackup);
     $("viewBackups")?.addEventListener("click", viewBackups);
+
+    // Account/Profile handlers
+    setupAccountHandlers();
 
     // Debug actions
     $("testExtraction")?.addEventListener("click", testExtraction);
@@ -927,183 +954,376 @@
     });
   }
 
+  // ============================================
+  // SELECTORS PANEL - Complete Rewrite
+  // ============================================
+  
+  let allSelectors = []; // Store all selectors for filtering
+  let currentSortMethod = 'recent';
+  let currentSearchQuery = '';
+
+  /**
+   * Initialize selectors panel
+   */
+  function initSelectorsPanel() {
+    // Setup event listeners
+    setupSelectorsEventListeners();
+    
+    // Load selectors
+    loadCustomSelectors();
+  }
+
+  /**
+   * Setup selectors panel event listeners
+   */
+  function setupSelectorsEventListeners() {
+    // Refresh button
+    $("refreshSelectors")?.addEventListener("click", () => {
+      animateSelectorRefresh();
+      loadCustomSelectors();
+    });
+
+    // Search input
+    const searchInput = $("selectorSearchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        currentSearchQuery = e.target.value.trim().toLowerCase();
+        const clearBtn = $("selectorSearchClear");
+        if (clearBtn) {
+          clearBtn.style.display = currentSearchQuery ? "flex" : "none";
+        }
+        renderSelectors();
+      });
+    }
+
+    // Search clear button
+    $("selectorSearchClear")?.addEventListener("click", () => {
+      const searchInput = $("selectorSearchInput");
+      if (searchInput) {
+        searchInput.value = "";
+        currentSearchQuery = "";
+        $("selectorSearchClear").style.display = "none";
+        renderSelectors();
+      }
+    });
+
+    // Sort select
+    $("selectorSortSelect")?.addEventListener("change", (e) => {
+      currentSortMethod = e.target.value;
+      renderSelectors();
+    });
+
+    // Guide button
+    $("openPickerGuideBtn")?.addEventListener("click", () => {
+      const guideModal = $("guideModalOverlay");
+      if (guideModal) guideModal.classList.add("active");
+    });
+  }
+
   /**
    * Load custom selectors from storage
    */
   async function loadCustomSelectors() {
-    const list = $("custom-selectors-list");
-    if (!list) return;
+    const loadingEl = $("selectorsLoading");
+    const emptyEl = $("selectorsEmpty");
+    const itemsEl = $("selectorsItems");
+
+    // Show loading
+    if (loadingEl) loadingEl.style.display = "flex";
+    if (emptyEl) emptyEl.style.display = "none";
+    if (itemsEl) itemsEl.innerHTML = "";
 
     try {
+      // Small delay for smooth UX
+      await new Promise(r => setTimeout(r, 300));
+
       // Get all saved selectors from sync storage
       const data = await browser.storage.sync.get(null);
       
       // Filter for site selectors (they have selector property)
-      const selectors = Object.entries(data)
+      allSelectors = Object.entries(data)
         .filter(([key, value]) => value && value.selector)
         .map(([domain, value]) => ({
           domain,
           selector: value.selector,
           exampleText: value.exampleText || '',
-          lastSaved: value.lastSaved || 0
+          lastSaved: value.lastSaved || Date.now()
         }));
 
-      if (selectors.length === 0) {
-        list.innerHTML = '<p style="color: #6b7280; text-align: center;">Henüz kaydedilmiş seçici yok</p>';
-        return;
-      }
+      // Update badge count
+      const badge = $("selectorCount");
+      if (badge) badge.textContent = allSelectors.length;
 
-      list.innerHTML = selectors.map(s => `
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary, #f3f4f6); border-radius: 8px; margin-bottom: 8px;">
-          <div>
-            <div style="font-weight: 600; color: var(--text-primary, #111827);">${PriceTrackerHelpers.escapeHtml(s.domain)}</div>
-            <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${PriceTrackerHelpers.escapeHtml(s.exampleText.substring(0, 50))}${s.exampleText.length > 50 ? '...' : ''}</div>
-          </div>
-          <button class="btn-icon delete-selector" data-domain="${PriceTrackerHelpers.escapeHtml(s.domain)}" title="Sil" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer;">
-            🗑️
-          </button>
-        </div>
-      `).join('');
-
-      // Add delete handlers
-      list.querySelectorAll('.delete-selector').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const domain = btn.dataset.domain;
-          if (confirm(`"${domain}" için kaydedilen seçici silinsin mi?`)) {
-            await browser.storage.sync.remove(domain);
-            loadCustomSelectors();
-            showToast('✅ Seçici silindi', 'success');
-          }
-        });
-      });
+      // Render selectors
+      renderSelectors();
 
     } catch (error) {
       logger.error('Load custom selectors error:', error);
-      list.innerHTML = '<p style="color: #ef4444; text-align: center;">Yükleme hatası</p>';
+      showSelectorsError();
+    } finally {
+      if (loadingEl) loadingEl.style.display = "none";
     }
   }
 
-  // Make loadCustomSelectors available globally for settings.html inline script
-  window.loadCustomSelectors = loadCustomSelectors;
-
   /**
-   * Animate selector refresh with determinate progress bar (Material-UI style)
-   * Enhanced: Now includes spinning icon, progress bar, and info card animation
+   * Render selectors based on current filter and sort
    */
-  function animateSelectorRefresh() {
-    const progressBar = $("selectorProgressBar");
-    const progressFill = $("selectorProgressBarFill");
-    const refreshBtn = $("refreshSelectors");
-    const infoCard = $("selectorInfoCard");
-    const infoIcon = $("selectorInfoIcon");
-    const infoText = $("selectorInfoText");
-    
-    if (!progressBar || !progressFill) {
-      console.log("Progress bar elements not found");
+  function renderSelectors() {
+    const emptyEl = $("selectorsEmpty");
+    const itemsEl = $("selectorsItems");
+
+    if (!itemsEl) return;
+
+    // Filter selectors
+    let filtered = allSelectors;
+    if (currentSearchQuery) {
+      filtered = allSelectors.filter(s => 
+        s.domain.toLowerCase().includes(currentSearchQuery) ||
+        s.exampleText.toLowerCase().includes(currentSearchQuery)
+      );
+    }
+
+    // Sort selectors
+    filtered = sortSelectors(filtered, currentSortMethod);
+
+    // Check if empty
+    if (allSelectors.length === 0) {
+      if (emptyEl) emptyEl.style.display = "flex";
+      itemsEl.innerHTML = "";
       return;
     }
 
-    // Step 1: Start spinning the refresh icon
-    refreshBtn?.classList.add("spinning");
-    
-    // Reset and show progress bar
-    progressFill.style.width = "0%";
-    progressBar.style.display = "block";
-    
-    let progress = 0;
-    
-    const timer = setInterval(() => {
-      // Check if we've reached 100%
-      if (progress >= 100) {
-        clearInterval(timer);
-        // Complete animation - set to 100% briefly
-        progressFill.style.width = "100%";
-        
-        // Step 2: Stop spinning and hide progress bar
-        setTimeout(() => {
-          refreshBtn?.classList.remove("spinning");
-          progressBar.style.display = "none";
-          progressFill.style.width = "0%";
-          
-          // Step 3: Show the info card with selector status
-          showSelectorInfoCard(infoCard, infoIcon, infoText);
-        }, 300);
-        return;
-      }
-      
-      // Random increment between 5 and 15 (faster than original)
-      const diff = Math.random() * 10 + 5;
-      progress = Math.min(progress + diff, 100);
-      
-      // Update progress bar width with smooth transition
-      progressFill.style.width = `${progress}%`;
-    }, 200); // Update every 200ms for smoother animation
+    if (emptyEl) emptyEl.style.display = "none";
+
+    // Check if no results from search
+    if (filtered.length === 0 && currentSearchQuery) {
+      itemsEl.innerHTML = `
+        <div class="selectors-no-results">
+          <span class="material-icons-outlined">search_off</span>
+          <p>"${PriceTrackerHelpers.escapeHtml(currentSearchQuery)}" için sonuç bulunamadı</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Render selector items
+    itemsEl.innerHTML = filtered.map((s, index) => `
+      <div class="selector-item" data-domain="${PriceTrackerHelpers.escapeHtml(s.domain)}" style="animation-delay: ${index * 50}ms">
+        <div class="selector-favicon">
+          <img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(s.domain)}&sz=32" 
+               alt="" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <span class="material-icons-outlined" style="display: none;">language</span>
+        </div>
+        <div class="selector-info">
+          <div class="selector-domain">${PriceTrackerHelpers.escapeHtml(s.domain)}</div>
+          <div class="selector-preview">${PriceTrackerHelpers.escapeHtml(s.exampleText.substring(0, 40))}${s.exampleText.length > 40 ? '...' : ''}</div>
+          <div class="selector-meta">
+            <span class="selector-date">${formatSelectorDate(s.lastSaved)}</span>
+          </div>
+        </div>
+        <div class="selector-actions">
+          <button class="selector-action-btn selector-test-btn" data-domain="${PriceTrackerHelpers.escapeHtml(s.domain)}" title="Seçiciyi Test Et">
+            <span class="material-icons-outlined">play_arrow</span>
+          </button>
+          <button class="selector-action-btn selector-delete-btn" data-domain="${PriceTrackerHelpers.escapeHtml(s.domain)}" title="Sil">
+            <span class="material-icons-outlined">delete</span>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Add event listeners
+    itemsEl.querySelectorAll('.selector-test-btn').forEach(btn => {
+      btn.addEventListener('click', () => testSelector(btn.dataset.domain));
+    });
+
+    itemsEl.querySelectorAll('.selector-delete-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteSelector(btn.dataset.domain));
+    });
   }
 
   /**
-   * Show the floating info card with selector count
+   * Sort selectors by method
    */
-  async function showSelectorInfoCard(infoCard, infoIcon, infoText) {
-    if (!infoCard || !infoIcon || !infoText) return;
+  function sortSelectors(selectors, method) {
+    const sorted = [...selectors];
+    switch (method) {
+      case 'recent':
+        return sorted.sort((a, b) => b.lastSaved - a.lastSaved);
+      case 'alpha':
+        return sorted.sort((a, b) => a.domain.localeCompare(b.domain));
+      case 'alpha-desc':
+        return sorted.sort((a, b) => b.domain.localeCompare(a.domain));
+      default:
+        return sorted;
+    }
+  }
+
+  /**
+   * Format selector date
+   */
+  function formatSelectorDate(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Az önce';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} dk önce`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} saat önce`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} gün önce`;
+    
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+  }
+
+  /**
+   * Test a selector
+   */
+  async function testSelector(domain) {
+    try {
+      logToConsole(`"${domain}" için seçici test ediliyor...`, "info");
+      showToast("🧪 Seçici test ediliyor...", "info");
+
+      // Get the selector data
+      const data = await browser.storage.sync.get(domain);
+      const selectorData = data[domain];
+
+      if (!selectorData || !selectorData.selector) {
+        showToast("Seçici bulunamadı", "error");
+        return;
+      }
+
+      // Get active tab
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      if (!tabs || !tabs[0]) {
+        showToast("Aktif sekme bulunamadı", "warning");
+        return;
+      }
+
+      // Check if current tab matches the domain
+      const currentUrl = new URL(tabs[0].url);
+      if (!currentUrl.hostname.includes(domain.replace('www.', ''))) {
+        showToast(`Test için ${domain} adresine gidin`, "warning");
+        logToConsole(`Test için doğru siteye gidin: ${domain}`, "warning");
+        return;
+      }
+
+      // Try to find element with selector
+      const result = await browser.tabs.executeScript(tabs[0].id, {
+        code: `
+          (function() {
+            const el = document.querySelector('${selectorData.selector.replace(/'/g, "\\'")}');
+            if (el) {
+              // Highlight element briefly
+              const originalBg = el.style.backgroundColor;
+              const originalOutline = el.style.outline;
+              el.style.backgroundColor = 'rgba(103, 80, 164, 0.2)';
+              el.style.outline = '2px solid #6750A4';
+              setTimeout(() => {
+                el.style.backgroundColor = originalBg;
+                el.style.outline = originalOutline;
+              }, 2000);
+              return { found: true, text: el.textContent.trim().substring(0, 100) };
+            }
+            return { found: false };
+          })()
+        `
+      });
+
+      if (result && result[0] && result[0].found) {
+        showToast("✅ Seçici çalışıyor!", "success");
+        logToConsole(`Bulunan değer: ${result[0].text}`, "success");
+      } else {
+        showToast("❌ Element bulunamadı", "error");
+        logToConsole("Seçici ile element bulunamadı", "error");
+      }
+
+    } catch (error) {
+      logger.error('Test selector error:', error);
+      showToast("Test başarısız", "error");
+      logToConsole(`Hata: ${error.message}`, "error");
+    }
+  }
+
+  /**
+   * Delete a selector
+   */
+  async function deleteSelector(domain) {
+    if (!confirm(`"${domain}" için kaydedilen seçici silinsin mi?`)) {
+      return;
+    }
 
     try {
-      // Get selector count
-      const data = await browser.storage.sync.get(null);
-      const selectors = Object.entries(data)
-        .filter(([key, value]) => value && value.selector)
-        .length;
+      // Add delete animation
+      const item = document.querySelector(`.selector-item[data-domain="${domain}"]`);
+      if (item) {
+        item.classList.add('deleting');
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Remove from storage
+      await browser.storage.sync.remove(domain);
+
+      // Remove from local array
+      allSelectors = allSelectors.filter(s => s.domain !== domain);
 
       // Update badge
       const badge = $("selectorCount");
-      if (badge) badge.textContent = selectors;
+      if (badge) badge.textContent = allSelectors.length;
 
-      // Set card content based on count
-      if (selectors > 0) {
-        infoCard.className = "selector-info-card success";
-        infoIcon.textContent = "check_circle";
-        infoText.textContent = `${selectors} seçici kayıtlı`;
-      } else {
-        infoCard.className = "selector-info-card warning";
-        infoIcon.textContent = "info";
-        infoText.textContent = "Henüz seçici yok";
-      }
+      // Re-render
+      renderSelectors();
 
-      // Show card with slide-up animation
-      infoCard.classList.add("show");
-
-      // Hide after 2 seconds
-      setTimeout(() => {
-        infoCard.classList.remove("show");
-      }, 2000);
+      showToast('Seçici silindi', 'success');
+      logToConsole(`"${domain}" seçicisi silindi`, 'info');
 
     } catch (error) {
-      console.error("Error getting selector count:", error);
-      infoCard.className = "selector-info-card";
-      infoIcon.textContent = "error";
-      infoText.textContent = "Yükleme hatası";
-      infoCard.classList.add("show");
-      setTimeout(() => infoCard.classList.remove("show"), 2000);
+      logger.error('Delete selector error:', error);
+      showToast('Silme başarısız', 'error');
     }
   }
 
   /**
-   * Setup refresh selectors button
+   * Show selectors error state
    */
-  function setupRefreshSelectorsButton() {
-    const refreshBtn = $("refreshSelectors");
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", () => {
-        animateSelectorRefresh();
-        loadCustomSelectors();
-      });
+  function showSelectorsError() {
+    const itemsEl = $("selectorsItems");
+    const emptyEl = $("selectorsEmpty");
+    
+    if (emptyEl) emptyEl.style.display = "none";
+    if (itemsEl) {
+      itemsEl.innerHTML = `
+        <div class="selectors-no-results">
+          <span class="material-icons-outlined">error_outline</span>
+          <p>Seçiciler yüklenirken bir hata oluştu</p>
+        </div>
+      `;
     }
   }
 
-  // Initialize refresh button on page load
+  /**
+   * Animate selector refresh
+   */
+  function animateSelectorRefresh() {
+    const refreshBtn = $("refreshSelectors");
+    if (!refreshBtn) return;
+
+    refreshBtn.classList.add("spinning");
+    
+    setTimeout(() => {
+      refreshBtn.classList.remove("spinning");
+    }, 1000);
+  }
+
+  // Make functions available globally
+  window.loadCustomSelectors = loadCustomSelectors;
+
+  // Initialize selectors panel on page load
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupRefreshSelectorsButton);
+    document.addEventListener("DOMContentLoaded", initSelectorsPanel);
   } else {
-    setupRefreshSelectorsButton();
+    initSelectorsPanel();
   }
 
   /**
@@ -1117,13 +1337,14 @@
     if (!toast || !icon || !msg) return;
 
     const icons = {
-      success: "✅",
-      error: "❌",
-      info: "ℹ️",
-      warning: "⚠️",
+      success: "check_circle",
+      error: "error",
+      info: "info",
+      warning: "warning",
     };
 
     icon.textContent = icons[type] || icons.info;
+    icon.className = "toast-icon material-icons-outlined";
     msg.textContent = message;
 
     toast.classList.add("show");
@@ -1755,7 +1976,302 @@
     if (perfMonitorInterval) {
       clearInterval(perfMonitorInterval);
     }
+    // Cleanup cropper
+    if (cropperInstance) {
+      cropperInstance.destroy();
+    }
   });
+
+  // ============================================
+  // ACCOUNT / PROFILE MANAGEMENT WITH CROPPER.JS
+  // ============================================
+
+  let cropperInstance = null;
+
+  /**
+   * Setup account handlers for profile photo and name
+   */
+  function setupAccountHandlers() {
+    // Change photo button
+    $("changePhotoBtn")?.addEventListener("click", () => {
+      $("settingsPhotoInput")?.click();
+    });
+
+    // Remove photo button
+    $("removePhotoBtn")?.addEventListener("click", removeProfilePhoto);
+
+    // File input change
+    $("settingsPhotoInput")?.addEventListener("change", handlePhotoSelect);
+
+    // Account name save on blur
+    $("settingsAccountName")?.addEventListener("blur", saveAccountName);
+    $("settingsAccountName")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.target.blur();
+      }
+    });
+
+    // Cropper modal controls
+    $("settingsCropperClose")?.addEventListener("click", closeCropperModal);
+    $("settingsCropperCancel")?.addEventListener("click", closeCropperModal);
+    $("settingsCropperSave")?.addEventListener("click", saveCroppedImage);
+
+    // Close modal on backdrop click
+    $("settingsCropperModal")?.addEventListener("click", (e) => {
+      if (e.target.id === "settingsCropperModal") {
+        closeCropperModal();
+      }
+    });
+
+    // ESC key to close modal
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && $("settingsCropperModal")?.classList.contains("active")) {
+        closeCropperModal();
+      }
+    });
+
+    // Account data management buttons
+    $("accountExportBtn")?.addEventListener("click", exportData);
+    $("accountImportBtn")?.addEventListener("click", () => $("accountFileInput")?.click());
+    $("accountFileInput")?.addEventListener("change", importData);
+    $("accountClearBtn")?.addEventListener("click", clearAllData);
+
+    // Load saved profile
+    loadAccountProfile();
+  }
+
+  /**
+   * Handle photo file selection
+   */
+  function handlePhotoSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
+      showToast("Sadece JPG, PNG veya WebP", "error");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Dosya çok büyük (max 5MB)", "error");
+      return;
+    }
+
+    // Read file and open cropper
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      openCropperModal(event.target.result);
+    };
+    reader.onerror = () => {
+      showToast("Dosya okunamadı", "error");
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input for re-selection
+    e.target.value = "";
+  }
+
+  /**
+   * Open cropper modal with image
+   */
+  function openCropperModal(imageSrc) {
+    const modal = $("settingsCropperModal");
+    const image = $("settingsCropperImage");
+    if (!modal || !image) return;
+
+    // Set image source
+    image.src = imageSrc;
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    // Initialize cropper after image loads
+    image.onload = () => {
+      // Destroy existing instance
+      if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+      }
+
+      // Create new cropper
+      cropperInstance = new Cropper(image, {
+        aspectRatio: 1,
+        viewMode: 1,
+        dragMode: "move",
+        autoCropArea: 0.9,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        responsive: true,
+        background: true
+      });
+    };
+  }
+
+  /**
+   * Close cropper modal
+   */
+  function closeCropperModal() {
+    const modal = $("settingsCropperModal");
+    const image = $("settingsCropperImage");
+
+    // Destroy cropper
+    if (cropperInstance) {
+      cropperInstance.destroy();
+      cropperInstance = null;
+    }
+
+    // Clear image
+    if (image) {
+      image.src = "";
+      image.onload = null;
+    }
+
+    // Hide modal
+    if (modal) {
+      modal.classList.remove("active");
+    }
+    document.body.style.overflow = "";
+  }
+
+  /**
+   * Save cropped image to storage
+   */
+  async function saveCroppedImage() {
+    if (!cropperInstance) {
+      showToast("Kırpıcı hazır değil", "error");
+      return;
+    }
+
+    try {
+      // Get 200x200 cropped canvas
+      const canvas = cropperInstance.getCroppedCanvas({
+        width: 200,
+        height: 200,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: "high"
+      });
+
+      if (!canvas) {
+        showToast("Kırpma başarısız", "error");
+        return;
+      }
+
+      // Convert to base64 JPEG
+      const base64 = canvas.toDataURL("image/jpeg", 0.9);
+
+      // Save to storage
+      await browser.storage.local.set({ profilePic: base64 });
+
+      // Update UI
+      updateProfilePhotoUI(base64);
+
+      // Close modal
+      closeCropperModal();
+
+      showToast("Fotoğraf kaydedildi ✨", "success");
+      logToConsole("Profil fotoğrafı güncellendi", "success");
+
+    } catch (error) {
+      console.error("Save photo error:", error);
+      showToast("Fotoğraf kaydedilemedi", "error");
+    }
+  }
+
+  /**
+   * Remove profile photo
+   */
+  async function removeProfilePhoto() {
+    try {
+      await browser.storage.local.remove("profilePic");
+      updateProfilePhotoUI(null);
+      showToast("Fotoğraf kaldırıldı", "info");
+      logToConsole("Profil fotoğrafı silindi", "info");
+    } catch (error) {
+      console.error("Remove photo error:", error);
+      showToast("Fotoğraf silinemedi", "error");
+    }
+  }
+
+  /**
+   * Update profile photo UI
+   */
+  function updateProfilePhotoUI(src) {
+    const wrapper = $("settingsProfilePhoto");
+    const image = $("settingsPhotoImage");
+    const letter = $("settingsPhotoLetter");
+    const removeBtn = $("removePhotoBtn");
+
+    if (src) {
+      if (image) {
+        image.src = src;
+        image.style.display = "block";
+      }
+      if (letter) letter.style.display = "none";
+      if (wrapper) wrapper.classList.add("has-photo");
+      if (removeBtn) removeBtn.style.display = "flex";
+    } else {
+      if (image) {
+        image.src = "";
+        image.style.display = "none";
+      }
+      if (letter) letter.style.display = "flex";
+      if (wrapper) wrapper.classList.remove("has-photo");
+      if (removeBtn) removeBtn.style.display = "none";
+    }
+  }
+
+  /**
+   * Save account name
+   */
+  async function saveAccountName() {
+    const input = $("settingsAccountName");
+    if (!input) return;
+
+    const name = input.value.trim() || "Kullanıcı";
+
+    try {
+      await browser.storage.local.set({ accountName: name });
+
+      // Update letter
+      const letter = $("settingsPhotoLetter");
+      if (letter) letter.textContent = name.charAt(0).toUpperCase();
+
+      logToConsole(`Hesap adı güncellendi: ${name}`, "success");
+    } catch (error) {
+      console.error("Save name error:", error);
+    }
+  }
+
+  /**
+   * Load account profile from storage
+   */
+  async function loadAccountProfile() {
+    try {
+      const data = await browser.storage.local.get(["accountName", "profilePic"]);
+
+      // Name
+      const nameInput = $("settingsAccountName");
+      const letter = $("settingsPhotoLetter");
+
+      if (data.accountName) {
+        if (nameInput) nameInput.value = data.accountName;
+        if (letter) letter.textContent = data.accountName.charAt(0).toUpperCase();
+      }
+
+      // Photo
+      updateProfilePhotoUI(data.profilePic || null);
+
+    } catch (error) {
+      console.error("Load profile error:", error);
+    }
+  }
 
   // Initialize when DOM is ready
   if (document.readyState === "loading") {

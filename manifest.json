@@ -3,12 +3,15 @@
   "name": "Fiyat Takipçisi Pro",
   "version": "2.1.0",
   "description": "Akıllı fiyat takibi - Gelişmiş algoritmalar, fiyat grafikleri, fiyat alarmları ve 50+ site desteği",
-  "author": "Your Name",
-  "applications": {
+  "author": "JustSelo",
+  "browser_specific_settings": {
     "gecko": {
       "id": "fiyat-takipci-pro@github.io",
       "strict_min_version": "109.0",
-      "update_url": "https://raw.githubusercontent.com/s3lm4n/firefox-app/main/updates.json"
+      "update_url": "https://raw.githubusercontent.com/s3lm4n/firefox-app/main/updates.json",
+      "data_collection_permissions": {
+        "required": false
+      }
     }
   },
   "permissions": [
@@ -83,6 +86,8 @@
     "lib/parser.js",
     "lib/alerts.js",
     "lib/data-manager.js",
+    "lib/cropper.min.js",
+    "lib/cropper.min.css",
     "debug.html",
     "picker.js"
   ],

@@ -93,6 +93,9 @@
       // Update header stats
       updateStats();
 
+      // Setup account profile handlers
+      setupAccountHandlers();
+
       console.log("[Popup] ✅ Initialization complete");
     } catch (error) {
       console.error("[Popup] ❌ Initialization error:", error);
@@ -354,6 +357,76 @@
     if (modal) {
       modal.style.display = "none";
       document.body.style.overflow = "";
+    }
+  }
+
+  // ============================================
+  // PROFILE - Display Only (Edit in Settings)
+  // ============================================
+
+  /**
+   * Setup account handlers - simplified
+   */
+  function setupAccountHandlers() {
+    // Edit profile link opens settings with Account tab
+    const editLink = document.getElementById("editProfileLink");
+    if (editLink) {
+      editLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        // Open settings page directly to Account tab
+        browser.tabs.create({ url: browser.runtime.getURL("settings.html#account") });
+      });
+    }
+
+    // Load saved profile
+    loadAccountProfile();
+
+    // Listen for storage changes to update profile in real-time
+    browser.storage.onChanged.addListener((changes, area) => {
+      if (area === "local") {
+        if (changes.profilePic || changes.accountName) {
+          loadAccountProfile();
+        }
+      }
+    });
+  }
+
+  /**
+   * Load account profile from storage
+   */
+  async function loadAccountProfile() {
+    try {
+      const data = await browser.storage.local.get(["accountName", "profilePic"]);
+
+      // Update name display
+      const nameDisplay = document.getElementById("profileDisplayName");
+      const letter = document.getElementById("avatarLetter");
+      const name = data.accountName || "Kullanıcı";
+
+      if (nameDisplay) nameDisplay.textContent = name;
+      if (letter) letter.textContent = name.charAt(0).toUpperCase();
+
+      // Update photo
+      const avatar = document.getElementById("profileAvatar");
+      const photo = document.getElementById("avatarPhoto");
+
+      if (data.profilePic) {
+        if (photo) {
+          photo.src = data.profilePic;
+          photo.style.display = "block";
+        }
+        if (letter) letter.style.display = "none";
+        if (avatar) avatar.classList.add("has-photo");
+      } else {
+        if (photo) {
+          photo.src = "";
+          photo.style.display = "none";
+        }
+        if (letter) letter.style.display = "flex";
+        if (avatar) avatar.classList.remove("has-photo");
+      }
+    } catch (error) {
+      console.error("Load profile error:", error);
     }
   }
 
