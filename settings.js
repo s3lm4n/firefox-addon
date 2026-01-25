@@ -1562,7 +1562,7 @@
     let usedKB = 0;
     let percent = 0;
     let detail = "";
-    const maxStorageKB = 5120; // 5MB sync storage limit
+    const maxStorageKB = 102400; // 100MB limit (100 * 1024)
 
     try {
       const localData = await browser.storage.local.get(null);
@@ -1574,8 +1574,11 @@
       usedKB = localSize + syncSize;
       percent = Math.min((usedKB / maxStorageKB) * 100, 100);
 
+      const maxMB = maxStorageKB / 1024; // 100 MB
+      const usedDisplay = usedKB >= 1000 ? `${(usedKB / 1000).toFixed(1)} MB` : `${usedKB.toFixed(1)} KB`;
+
       if (percent < 30) {
-        detail = `${usedKB.toFixed(1)} KB / 5 MB`;
+        detail = `${usedDisplay} / ${maxMB} MB`;
       } else if (percent < 60) {
         detail = `%${percent.toFixed(0)} kullanılıyor`;
       } else if (percent < 85) {
@@ -1695,7 +1698,13 @@
    */
   function updateStorageStat(info) {
     if ($("perfStorageUsage")) {
-      $("perfStorageUsage").textContent = `${info.usedKB.toFixed(1)} KB`;
+      // Convert to MB if >= 1000 KB
+      if (info.usedKB >= 1000) {
+        const usedMB = info.usedKB / 1000;
+        $("perfStorageUsage").textContent = `${usedMB.toFixed(1)} MB`;
+      } else {
+        $("perfStorageUsage").textContent = `${info.usedKB.toFixed(1)} KB`;
+      }
     }
     if ($("perfStorageBar")) {
       $("perfStorageBar").style.width = `${info.percent}%`;
