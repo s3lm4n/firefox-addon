@@ -404,6 +404,7 @@
     let checked = 0;
     let updated = 0;
     let errors = 0;
+    const originalCount = products.length;
 
     for (let i = 0; i < products.length; i++) {
       try {
@@ -422,8 +423,12 @@
       }
     }
 
-    if (checked > 0) {
+    // FIXED: Only save if we still have products and didn't lose any
+    if (checked > 0 && products.length === originalCount) {
       await PriceTrackerHelpers.setStorage("trackedProducts", products);
+      logger.info(`💾 Saved ${products.length} products after check`);
+    } else if (products.length !== originalCount) {
+      logger.error(`❌ Product count mismatch! Original: ${originalCount}, Current: ${products.length}. NOT saving to prevent data loss.`);
     }
 
     logger.success(
@@ -918,28 +923,35 @@
                       await sendPriceNotification(existingProduct, oldPrice, parsedPrice);
                     }
                   } else {
-                    // Add as new product with proper name and site
-                    const productName = name || text.substring(0, 100) || "Manuel Eklenen Ürün";
-                    
-                    const newProduct = {
-                      name: productName,
-                      price: parsedPrice,
-                      currency: "TRY",
-                      url: url,
-                      site: siteName,
-                      domain: extractedDomain,
-                      initialPrice: parsedPrice,
-                      previousPrice: null,
-                      priceHistory: [],
-                      addedDate: Date.now(),
-                      lastCheck: Date.now(),
-                      lastCheckStatus: "success",
-                      confidence: 0.9,
-                      customSelector: selector,
-                    };
-                    
-                    trackedProducts.push(newProduct);
-                    logger.info(`📦 Added new product: ${newProduct.name} at ${parsedPrice} from ${siteName}`);
+                    // Check maximum product limit before adding new product
+                    const maxProducts = (typeof Config !== "undefined" && Config.VALIDATION?.MAX_PRODUCTS) || 50;
+                    if (trackedProducts.length >= maxProducts) {
+                      logger.warn(`⚠️ Maximum product limit reached (${maxProducts})`);
+                      // Still continue but don't add the product
+                    } else {
+                      // Add as new product with proper name and site
+                      const productName = name || text.substring(0, 100) || "Manuel Eklenen Ürün";
+                      
+                      const newProduct = {
+                        name: productName,
+                        price: parsedPrice,
+                        currency: "TRY",
+                        url: url,
+                        site: siteName,
+                        domain: extractedDomain,
+                        initialPrice: parsedPrice,
+                        previousPrice: null,
+                        priceHistory: [],
+                        addedDate: Date.now(),
+                        lastCheck: Date.now(),
+                        lastCheckStatus: "success",
+                        confidence: 0.9,
+                        customSelector: selector,
+                      };
+                      
+                      trackedProducts.push(newProduct);
+                      logger.info(`📦 Added new product: ${newProduct.name} at ${parsedPrice} from ${siteName}`);
+                    }
                   }
                   
                   // Save to storage

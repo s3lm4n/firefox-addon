@@ -233,6 +233,7 @@
     $("importData")?.addEventListener("click", () => $("fileInput").click());
     $("fileInput")?.addEventListener("change", importData);
     $("clearAllData")?.addEventListener("click", clearAllData);
+    $("restoreBackup")?.addEventListener("click", restoreFromBackup);
 
     // Backup actions
     $("manualBackup")?.addEventListener("click", createManualBackup);
@@ -532,6 +533,7 @@
 
   /**
    * Clear all data - uses Messenger
+   * IMPROVED: Creates backup before clearing
    */
   async function clearAllData() {
     try {
@@ -540,6 +542,18 @@
       );
 
       if (!confirmed) return;
+
+      // Create backup before clearing
+      const existing = await browser.storage.local.get("trackedProducts");
+      const existingProducts = existing.trackedProducts || [];
+      
+      if (existingProducts.length > 0) {
+        await browser.storage.local.set({
+          trackedProducts_manualBackup: existingProducts,
+          trackedProducts_manualBackup_time: Date.now()
+        });
+        logToConsole(`💾 ${existingProducts.length} ürün yedeklendi (trackedProducts_manualBackup)`, "info");
+      }
 
       // Clear storage
       await PriceTrackerHelpers.setStorage("trackedProducts", []);
@@ -553,6 +567,127 @@
     } catch (error) {
       logger.error("Clear data error:", error);
       showToast("❌ Silme hatası", "error");
+    }
+  }
+
+  /**
+   * Restore products from backup
+   * Checks for available backups and allows user to restore
+   */
+  async function restoreFromBackup() {
+    try {
+      // Get all available backups
+      const storage = await browser.storage.local.get(null);
+      const backups = [];
+
+      // Check for different backup types
+      if (storage.trackedProducts_backup && Array.isArray(storage.trackedProducts_backup)) {
+        backups.push({
+          key: "trackedProducts_backup",
+          name: "Popup Yedek",
+          count: storage.trackedProducts_backup.length,
+          time: storage.trackedProducts_backup_time || 0
+        });
+      }
+
+      if (storage.trackedProducts_autoBackup && Array.isArray(storage.trackedProducts_autoBackup)) {
+        backups.push({
+          key: "trackedProducts_autoBackup",
+          name: "Otomatik Yedek",
+          count: storage.trackedProducts_autoBackup.length,
+          time: storage.trackedProducts_autoBackup_time || 0
+        });
+      }
+
+      if (storage.trackedProducts_manualBackup && Array.isArray(storage.trackedProducts_manualBackup)) {
+        backups.push({
+          key: "trackedProducts_manualBackup",
+          name: "Manuel Yedek",
+          count: storage.trackedProducts_manualBackup.length,
+          time: storage.trackedProducts_manualBackup_time || 0
+        });
+      }
+
+      // Check DataManager backups
+      if (typeof DataManager !== "undefined") {
+        const dmBackups = await DataManager.listAutoBackups();
+        for (const b of dmBackups) {
+          backups.push({
+            key: b.key,
+            name: "DataManager Yedek",
+            count: b.productCount,
+            time: b.date.getTime()
+          });
+        }
+      }
+
+      if (backups.length === 0) {
+        showToast("Yedek bulunamadı", "warning");
+        logToConsole("Hiçbir yedek dosyası bulunamadı", "warning");
+        return;
+      }
+
+      // Sort by time (newest first)
+      backups.sort((a, b) => b.time - a.time);
+
+      // Show backup selection
+      const backupList = backups.map((b, i) => {
+        const date = b.time ? new Date(b.time).toLocaleString("tr-TR") : "Bilinmiyor";
+        return `${i + 1}. ${b.name} - ${b.count} ürün (${date})`;
+      }).join("\n");
+
+      const selection = prompt(
+        `Mevcut Yedekler:\n\n${backupList}\n\nGeri yüklemek istediğiniz yedeğin numarasını girin (1-${backups.length}):`
+      );
+
+      if (!selection) return;
+
+      const index = parseInt(selection) - 1;
+      if (isNaN(index) || index < 0 || index >= backups.length) {
+        showToast("Geçersiz seçim", "error");
+        return;
+      }
+
+      const selectedBackup = backups[index];
+
+      // Confirm restore
+      const confirmed = confirm(
+        `"${selectedBackup.name}" yedeği (${selectedBackup.count} ürün) geri yüklenecek.\n\nMevcut ürünler değiştirilecek. Devam edilsin mi?`
+      );
+
+      if (!confirmed) return;
+
+      // Restore the backup
+      let backupData;
+      if (selectedBackup.key.startsWith("autoBackup_")) {
+        // DataManager backup
+        if (typeof DataManager !== "undefined") {
+          await DataManager.restoreFromAutoBackup(selectedBackup.key);
+          await loadProducts();
+          updateDebugStats();
+          showToast(`✅ ${selectedBackup.count} ürün geri yüklendi`, "success");
+          logToConsole(`Yedek geri yüklendi: ${selectedBackup.count} ürün`, "success");
+          return;
+        }
+      } else {
+        // Direct storage backup
+        backupData = storage[selectedBackup.key];
+      }
+
+      if (backupData && Array.isArray(backupData)) {
+        await browser.storage.local.set({ trackedProducts: backupData });
+        products = backupData;
+        updateDebugStats();
+        showToast(`✅ ${backupData.length} ürün geri yüklendi`, "success");
+        logToConsole(`Yedek geri yüklendi: ${backupData.length} ürün`, "success");
+      } else {
+        throw new Error("Yedek verisi geçersiz");
+      }
+
+    } catch (error) {
+      logger.error("Restore backup error:", error);
+      showToast("❌ Geri yükleme hatası", "error");
+      logToConsole(`Hata: ${error.message}`, "error");
     }
   }
 

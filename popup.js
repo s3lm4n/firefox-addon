@@ -577,33 +577,78 @@
 
   /**
    * Load products from storage - uses centralized Validators
+   * FIXED: Better error handling to prevent data loss
    */
   async function loadProducts() {
     try {
       const result = await browser.storage.local.get("trackedProducts");
       const stored = result.trackedProducts || [];
 
-      // Validate and sanitize products using centralized Validators
-      products = stored
-        .map((p) => Validators.sanitizeProductData(p))
-        .filter((p) => p !== null);
+      console.log("[Popup] 📦 Raw products from storage:", stored.length);
 
-      console.log("[Popup] 📦 Loaded", products.length, "products");
+      // Validate and sanitize products using centralized Validators
+      // IMPORTANT: Keep track of filtered products for debugging
+      const validProducts = [];
+      const invalidProducts = [];
+
+      for (const p of stored) {
+        const sanitized = Validators.sanitizeProductData(p);
+        if (sanitized !== null) {
+          validProducts.push(sanitized);
+        } else {
+          invalidProducts.push(p);
+        }
+      }
+
+      // Log any filtered products for debugging
+      if (invalidProducts.length > 0) {
+        console.warn("[Popup] ⚠️ Filtered invalid products:", invalidProducts.length, invalidProducts);
+      }
+
+      products = validProducts;
+      console.log("[Popup] 📦 Valid products loaded:", products.length);
 
       // Render products list
       renderProducts();
     } catch (error) {
       console.error("[Popup] Load products error:", error);
-      products = [];
+      // DON'T reset products on error - keep existing data
+      // products = [];
       renderProducts();
     }
   }
 
   /**
    * Save products to storage
+   * FIXED: Added validation and backup before saving to prevent data loss
    */
   async function saveProducts() {
     try {
+      // Validate products array before saving
+      if (!Array.isArray(products)) {
+        console.error("[Popup] ❌ Invalid products array, aborting save");
+        return false;
+      }
+
+      // Don't save empty array if we previously had products (potential data loss)
+      const existing = await browser.storage.local.get("trackedProducts");
+      const existingCount = (existing.trackedProducts || []).length;
+      
+      if (products.length === 0 && existingCount > 0) {
+        console.warn("[Popup] ⚠️ Attempting to save empty products array when we had", existingCount, "products");
+        // Create backup before clearing
+        if (existingCount > 0) {
+          await browser.storage.local.set({ 
+            trackedProducts_backup: existing.trackedProducts,
+            trackedProducts_backup_time: Date.now()
+          });
+          console.log("[Popup] 💾 Created backup before clearing products");
+        }
+      }
+
+      // Log the save operation
+      console.log("[Popup] 💾 Saving", products.length, "products to storage");
+
       await browser.storage.local.set({ trackedProducts: products });
       return true;
     } catch (error) {
@@ -802,6 +847,13 @@
    */
   async function addProduct() {
     if (!currentProduct) return;
+
+    // Check maximum product limit
+    const maxProducts = (typeof Config !== "undefined" && Config.VALIDATION?.MAX_PRODUCTS) || 50;
+    if (products.length >= maxProducts) {
+      showToast(`❌ Maksimum ${maxProducts} ürün ekleyebilirsiniz`, "error");
+      return;
+    }
 
     els.addProductBtn.disabled = true;
     els.addProductBtn.innerHTML = `
