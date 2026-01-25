@@ -2003,6 +2003,13 @@
     // File input change
     $("settingsPhotoInput")?.addEventListener("change", handlePhotoSelect);
 
+    // Background image handlers
+    $("changeBgBtn")?.addEventListener("click", () => {
+      $("settingsBgInput")?.click();
+    });
+    $("removeBgBtn")?.addEventListener("click", removeProfileBg);
+    $("settingsBgInput")?.addEventListener("change", handleBgSelect);
+
     // Account name save on blur
     $("settingsAccountName")?.addEventListener("blur", saveAccountName);
     $("settingsAccountName")?.addEventListener("keydown", (e) => {
@@ -2042,30 +2049,179 @@
   }
 
   /**
+   * Handle background file selection
+   */
+  function handleBgSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if it's a video or GIF
+    const isVideo = file.type.match(/^video\/(mp4|webm)$/);
+    const isGif = file.type === 'image/gif';
+    const isStaticImage = file.type.match(/^image\/(jpeg|png|webp)$/);
+
+    // Validate file type
+    if (!isVideo && !isGif && !isStaticImage) {
+      showToast("Desteklenen formatlar: JPG, PNG, WebP, GIF, MP4, WebM", "error");
+      return;
+    }
+
+    // Validate file size (max 15MB for background)
+    if (file.size > 15 * 1024 * 1024) {
+      showToast("Dosya çok büyük (max 15MB)", "error");
+      return;
+    }
+
+    // Read file
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target.result;
+      
+      try {
+        const bgType = isVideo ? 'video' : (isGif ? 'gif' : 'image');
+        await browser.storage.local.set({ 
+          profileBg: dataUrl,
+          profileBgType: bgType
+        });
+        updateProfileBgUI(dataUrl, bgType);
+        showToast("Arka plan kaydedildi ✨", "success");
+        logToConsole("Profil arka planı güncellendi", "success");
+      } catch (error) {
+        console.error("Save background error:", error);
+        showToast("Arka plan kaydedilemedi", "error");
+      }
+    };
+    reader.onerror = () => {
+      showToast("Dosya okunamadı", "error");
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input for re-selection
+    e.target.value = "";
+  }
+
+  /**
+   * Remove profile background
+   */
+  async function removeProfileBg() {
+    try {
+      await browser.storage.local.remove(["profileBg", "profileBgType"]);
+      updateProfileBgUI(null);
+      showToast("Arka plan kaldırıldı", "info");
+      logToConsole("Profil arka planı silindi", "info");
+    } catch (error) {
+      console.error("Remove background error:", error);
+      showToast("Arka plan silinemedi", "error");
+    }
+  }
+
+  /**
+   * Update profile background UI
+   */
+  function updateProfileBgUI(src, type = 'image') {
+    const preview = $("settingsProfileBgPreview");
+    const image = $("settingsBgImage");
+    const video = $("settingsBgVideo");
+    const removeBtn = $("removeBgBtn");
+    const placeholder = preview?.querySelector(".profile-bg-placeholder");
+
+    // Reset media elements
+    if (image) {
+      image.src = "";
+      image.style.display = "none";
+    }
+    if (video) {
+      video.src = "";
+      video.style.display = "none";
+      video.pause();
+    }
+
+    if (src) {
+      if (type === 'video') {
+        if (video) {
+          video.src = src;
+          video.style.display = "block";
+          video.play().catch(() => {});
+        }
+      } else {
+        if (image) {
+          image.src = src;
+          image.style.display = "block";
+        }
+      }
+      if (placeholder) placeholder.style.display = "none";
+      if (preview) {
+        preview.classList.add("has-bg");
+        preview.classList.toggle("has-video", type === 'video');
+      }
+      if (removeBtn) removeBtn.style.display = "flex";
+    } else {
+      if (placeholder) placeholder.style.display = "flex";
+      if (preview) preview.classList.remove("has-bg", "has-video");
+      if (removeBtn) removeBtn.style.display = "none";
+    }
+  }
+
+  /**
    * Handle photo file selection
    */
   function handlePhotoSelect(e) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+
+    console.log("File selected:", file.name, file.type, file.size);
+
+    // Check if it's a video or GIF
+    const isVideo = file.type.match(/^video\/(mp4|webm)$/);
+    const isGif = file.type === 'image/gif';
+    const isStaticImage = file.type.match(/^image\/(jpeg|png|webp)$/);
+
+    console.log("File type detection:", { isVideo, isGif, isStaticImage });
 
     // Validate file type
-    if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
-      showToast("Sadece JPG, PNG veya WebP", "error");
+    if (!isVideo && !isGif && !isStaticImage) {
+      showToast("Desteklenen formatlar: JPG, PNG, WebP, GIF, MP4, WebM", "error");
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("Dosya çok büyük (max 5MB)", "error");
+    // Validate file size (max 10MB for video/gif, 5MB for images)
+    const maxSize = (isVideo || isGif) ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showToast(`Dosya çok büyük (max ${(isVideo || isGif) ? '10' : '5'}MB)`, "error");
       return;
     }
 
-    // Read file and open cropper
+    // Read file
     const reader = new FileReader();
-    reader.onload = (event) => {
-      openCropperModal(event.target.result);
+    reader.onload = async (event) => {
+      const dataUrl = event.target.result;
+      console.log("File read complete, data length:", dataUrl?.length);
+      
+      if (isVideo || isGif) {
+        // For video and GIF, save directly without cropping
+        try {
+          await browser.storage.local.set({ 
+            profilePic: dataUrl,
+            profilePicType: isVideo ? 'video' : 'gif'
+          });
+          updateProfilePhotoUI(dataUrl, isVideo ? 'video' : 'gif');
+          showToast(isVideo ? "Video kaydedildi ✨" : "GIF kaydedildi ✨", "success");
+          logToConsole(`Profil ${isVideo ? 'videosu' : 'GIF\'i'} güncellendi`, "success");
+        } catch (error) {
+          console.error("Save media error:", error);
+          showToast("Dosya kaydedilemedi", "error");
+        }
+      } else {
+        // For static images, open cropper
+        console.log("Opening cropper modal for static image");
+        openCropperModal(dataUrl);
+      }
     };
-    reader.onerror = () => {
+    reader.onerror = (error) => {
+      console.error("FileReader error:", error);
       showToast("Dosya okunamadı", "error");
     };
     reader.readAsDataURL(file);
@@ -2080,10 +2236,24 @@
   function openCropperModal(imageSrc) {
     const modal = $("settingsCropperModal");
     const image = $("settingsCropperImage");
-    if (!modal || !image) return;
+    
+    if (!modal || !image) {
+      console.error("Cropper modal elements not found");
+      showToast("Kırpıcı yüklenemedi", "error");
+      return;
+    }
 
-    // Set image source
+    // Check if Cropper is available
+    if (typeof Cropper === 'undefined') {
+      console.error("Cropper library not loaded");
+      showToast("Kırpıcı kütüphanesi yüklenemedi", "error");
+      return;
+    }
+
+    // Set image source first
     image.src = imageSrc;
+    
+    // Show modal
     modal.classList.add("active");
     document.body.style.overflow = "hidden";
 
@@ -2095,22 +2265,36 @@
         cropperInstance = null;
       }
 
-      // Create new cropper
-      cropperInstance = new Cropper(image, {
-        aspectRatio: 1,
-        viewMode: 1,
-        dragMode: "move",
-        autoCropArea: 0.9,
-        restore: false,
-        guides: true,
-        center: true,
-        highlight: false,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-        responsive: true,
-        background: true
-      });
+      // Create new cropper with slight delay for DOM update
+      setTimeout(() => {
+        try {
+          cropperInstance = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: "move",
+            autoCropArea: 0.9,
+            restore: false,
+            guides: true,
+            center: true,
+            highlight: false,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            toggleDragModeOnDblclick: false,
+            responsive: true,
+            background: true
+          });
+        } catch (error) {
+          console.error("Cropper init error:", error);
+          showToast("Kırpıcı başlatılamadı", "error");
+          closeCropperModal();
+        }
+      }, 100);
+    };
+
+    image.onerror = () => {
+      console.error("Image load error");
+      showToast("Resim yüklenemedi", "error");
+      closeCropperModal();
     };
   }
 
@@ -2166,8 +2350,8 @@
       // Convert to base64 JPEG
       const base64 = canvas.toDataURL("image/jpeg", 0.9);
 
-      // Save to storage
-      await browser.storage.local.set({ profilePic: base64 });
+      // Save to storage (type: image for static images)
+      await browser.storage.local.set({ profilePic: base64, profilePicType: 'image' });
 
       // Update UI
       updateProfilePhotoUI(base64);
@@ -2189,40 +2373,65 @@
    */
   async function removeProfilePhoto() {
     try {
-      await browser.storage.local.remove("profilePic");
+      await browser.storage.local.remove(["profilePic", "profilePicType"]);
       updateProfilePhotoUI(null);
-      showToast("Fotoğraf kaldırıldı", "info");
-      logToConsole("Profil fotoğrafı silindi", "info");
+      showToast("Medya kaldırıldı", "info");
+      logToConsole("Profil medyası silindi", "info");
     } catch (error) {
       console.error("Remove photo error:", error);
-      showToast("Fotoğraf silinemedi", "error");
+      showToast("Medya silinemedi", "error");
     }
   }
 
   /**
    * Update profile photo UI
+   * @param {string|null} src - Media source URL
+   * @param {string} type - 'image', 'gif', or 'video'
    */
-  function updateProfilePhotoUI(src) {
+  function updateProfilePhotoUI(src, type = 'image') {
     const wrapper = $("settingsProfilePhoto");
     const image = $("settingsPhotoImage");
+    const video = $("settingsPhotoVideo");
     const letter = $("settingsPhotoLetter");
     const removeBtn = $("removePhotoBtn");
 
+    // Reset all media elements
+    if (image) {
+      image.src = "";
+      image.style.display = "none";
+    }
+    if (video) {
+      video.src = "";
+      video.style.display = "none";
+      video.pause();
+    }
+
     if (src) {
-      if (image) {
-        image.src = src;
-        image.style.display = "block";
+      if (type === 'video') {
+        // Show video
+        if (video) {
+          video.src = src;
+          video.style.display = "block";
+          video.play().catch(() => {});
+        }
+      } else {
+        // Show image (including GIF)
+        if (image) {
+          image.src = src;
+          image.style.display = "block";
+        }
       }
       if (letter) letter.style.display = "none";
-      if (wrapper) wrapper.classList.add("has-photo");
+      if (wrapper) {
+        wrapper.classList.add("has-photo");
+        wrapper.classList.toggle("has-video", type === 'video');
+      }
       if (removeBtn) removeBtn.style.display = "flex";
     } else {
-      if (image) {
-        image.src = "";
-        image.style.display = "none";
-      }
       if (letter) letter.style.display = "flex";
-      if (wrapper) wrapper.classList.remove("has-photo");
+      if (wrapper) {
+        wrapper.classList.remove("has-photo", "has-video");
+      }
       if (removeBtn) removeBtn.style.display = "none";
     }
   }
@@ -2254,7 +2463,7 @@
    */
   async function loadAccountProfile() {
     try {
-      const data = await browser.storage.local.get(["accountName", "profilePic"]);
+      const data = await browser.storage.local.get(["accountName", "profilePic", "profilePicType", "profileBg", "profileBgType"]);
 
       // Name
       const nameInput = $("settingsAccountName");
@@ -2265,8 +2474,11 @@
         if (letter) letter.textContent = data.accountName.charAt(0).toUpperCase();
       }
 
-      // Photo
-      updateProfilePhotoUI(data.profilePic || null);
+      // Photo/Video
+      updateProfilePhotoUI(data.profilePic || null, data.profilePicType || 'image');
+
+      // Background
+      updateProfileBgUI(data.profileBg || null, data.profileBgType || 'image');
 
     } catch (error) {
       console.error("Load profile error:", error);

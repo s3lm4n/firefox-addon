@@ -3167,6 +3167,96 @@ button .material-icons-outlined,
   gap: 24px;
 }
 
+/* Profile Background Section */
+.profile-bg-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-bg-preview {
+  width: 100%;
+  height: 120px;
+  border-radius: var(--md-sys-shape-corner-large);
+  background: var(--md-sys-color-surface-container);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--md-sys-color-outline-variant);
+  transition: all var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard);
+}
+
+.profile-bg-preview:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.profile-bg-preview.has-bg {
+  border-style: solid;
+  border-color: transparent;
+}
+
+.profile-bg-preview-image,
+.profile-bg-preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.profile-bg-preview.has-bg .profile-bg-preview-image {
+  display: block;
+}
+
+.profile-bg-preview.has-video .profile-bg-preview-image {
+  display: none;
+}
+
+.profile-bg-preview.has-video .profile-bg-preview-video {
+  display: block;
+}
+
+.profile-bg-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.profile-bg-placeholder .material-icons-outlined {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.profile-bg-placeholder span:last-child {
+  font: var(--md-sys-typescale-label-medium-font);
+  opacity: 0.7;
+}
+
+.profile-bg-preview.has-bg .profile-bg-placeholder {
+  display: none;
+}
+
+.profile-bg-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.photo-action-btn.outline {
+  background: transparent;
+  border: 1px solid var(--md-sys-color-outline);
+  color: var(--md-sys-color-primary);
+}
+
+.photo-action-btn.outline:hover {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+}
+
 /* Profile Photo Section */
 .profile-photo-section {
   display: flex;
@@ -3209,7 +3299,23 @@ button .material-icons-outlined,
   display: none;
 }
 
+.profile-photo-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  border-radius: 50%;
+}
+
 .profile-photo-wrapper.has-photo .profile-photo-image {
+  display: block;
+}
+
+.profile-photo-wrapper.has-video .profile-photo-image {
+  display: none;
+}
+
+.profile-photo-wrapper.has-video .profile-photo-video {
   display: block;
 }
 

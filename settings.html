@@ -67,22 +67,45 @@
           
           <!-- Profile Photo Section -->
           <div class="account-profile-card">
+            <!-- Background Image Section -->
+            <div class="profile-bg-section" id="settingsProfileBgSection">
+              <div class="profile-bg-preview" id="settingsProfileBgPreview">
+                <img class="profile-bg-preview-image" id="settingsBgImage" src="" alt="" />
+                <video class="profile-bg-preview-video" id="settingsBgVideo" src="" muted loop playsinline></video>
+                <div class="profile-bg-placeholder">
+                  <span class="material-icons-outlined">wallpaper</span>
+                  <span>Arka Plan Resmi</span>
+                </div>
+              </div>
+              <div class="profile-bg-actions">
+                <button class="photo-action-btn outline" id="changeBgBtn">
+                  <span class="material-icons-outlined">add_photo_alternate</span>
+                  Arka Plan Seç
+                </button>
+                <button class="photo-action-btn secondary" id="removeBgBtn" style="display: none;">
+                  <span class="material-icons-outlined">delete</span>
+                </button>
+              </div>
+              <input type="file" id="settingsBgInput" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" hidden />
+            </div>
+
             <div class="profile-photo-section">
               <div class="profile-photo-wrapper" id="settingsProfilePhoto">
                 <span class="profile-photo-letter" id="settingsPhotoLetter">K</span>
                 <img class="profile-photo-image" id="settingsPhotoImage" src="" alt="Profil" />
+                <video class="profile-photo-video" id="settingsPhotoVideo" src="" muted loop playsinline></video>
               </div>
               <div class="profile-photo-actions">
                 <button class="photo-action-btn primary" id="changePhotoBtn">
                   <span class="material-icons-outlined">add_photo_alternate</span>
-                  Fotoğraf Seç
+                  Fotoğraf / Video Seç
                 </button>
                 <button class="photo-action-btn secondary" id="removePhotoBtn" style="display: none;">
                   <span class="material-icons-outlined">delete</span>
                   Kaldır
                 </button>
               </div>
-              <input type="file" id="settingsPhotoInput" accept="image/jpeg,image/png,image/webp" hidden />
+              <input type="file" id="settingsPhotoInput" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" hidden />
             </div>
             
             <div class="profile-name-section">

@@ -368,10 +368,10 @@
    * Setup account handlers - simplified
    */
   function setupAccountHandlers() {
-    // Edit profile link opens settings with Account tab
-    const editLink = document.getElementById("editProfileLink");
-    if (editLink) {
-      editLink.addEventListener("click", (e) => {
+    // Edit profile button opens settings with Account tab
+    const editBtn = document.getElementById("editProfileBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", (e) => {
         e.preventDefault();
         // Open settings page directly to Account tab
         browser.tabs.create({ url: browser.runtime.getURL("settings.html#account") });
@@ -384,7 +384,7 @@
     // Listen for storage changes to update profile in real-time
     browser.storage.onChanged.addListener((changes, area) => {
       if (area === "local") {
-        if (changes.profilePic || changes.accountName) {
+        if (changes.profilePic || changes.accountName || changes.profileBg || changes.profileBgType) {
           loadAccountProfile();
         }
       }
@@ -396,7 +396,7 @@
    */
   async function loadAccountProfile() {
     try {
-      const data = await browser.storage.local.get(["accountName", "profilePic"]);
+      const data = await browser.storage.local.get(["accountName", "profilePic", "profilePicType", "profileBg", "profileBgType"]);
 
       // Update name display
       const nameDisplay = document.getElementById("profileDisplayName");
@@ -406,24 +406,87 @@
       if (nameDisplay) nameDisplay.textContent = name;
       if (letter) letter.textContent = name.charAt(0).toUpperCase();
 
-      // Update photo
+      // Update background
+      const headerBg = document.getElementById("profileHeaderBg");
+      const bgImage = document.getElementById("profileBgImage");
+      const bgVideo = document.getElementById("profileBgVideo");
+      const bgType = data.profileBgType || 'image';
+
+      // Reset background elements
+      if (bgImage) {
+        bgImage.src = "";
+        bgImage.style.display = "none";
+      }
+      if (bgVideo) {
+        bgVideo.src = "";
+        bgVideo.style.display = "none";
+        bgVideo.pause();
+      }
+
+      if (data.profileBg) {
+        if (bgType === 'video') {
+          if (bgVideo) {
+            bgVideo.src = data.profileBg;
+            bgVideo.style.display = "block";
+            bgVideo.play().catch(() => {});
+          }
+          if (headerBg) {
+            headerBg.classList.add("has-bg", "has-video");
+          }
+        } else {
+          if (bgImage) {
+            bgImage.src = data.profileBg;
+            bgImage.style.display = "block";
+          }
+          if (headerBg) {
+            headerBg.classList.add("has-bg");
+            headerBg.classList.remove("has-video");
+          }
+        }
+      } else {
+        if (headerBg) headerBg.classList.remove("has-bg", "has-video");
+      }
+
+      // Update photo/video
       const avatar = document.getElementById("profileAvatar");
       const photo = document.getElementById("avatarPhoto");
+      const video = document.getElementById("avatarVideo");
+      const mediaType = data.profilePicType || 'image';
+
+      // Reset both media elements
+      if (photo) {
+        photo.src = "";
+        photo.style.display = "none";
+      }
+      if (video) {
+        video.src = "";
+        video.style.display = "none";
+        video.pause();
+      }
 
       if (data.profilePic) {
-        if (photo) {
-          photo.src = data.profilePic;
-          photo.style.display = "block";
+        if (mediaType === 'video') {
+          // Show video
+          if (video) {
+            video.src = data.profilePic;
+            video.style.display = "block";
+            video.play().catch(() => {});
+          }
+        } else {
+          // Show image (including GIF)
+          if (photo) {
+            photo.src = data.profilePic;
+            photo.style.display = "block";
+          }
         }
         if (letter) letter.style.display = "none";
-        if (avatar) avatar.classList.add("has-photo");
-      } else {
-        if (photo) {
-          photo.src = "";
-          photo.style.display = "none";
+        if (avatar) {
+          avatar.classList.add("has-photo");
+          avatar.classList.toggle("has-video", mediaType === 'video');
         }
+      } else {
         if (letter) letter.style.display = "flex";
-        if (avatar) avatar.classList.remove("has-photo");
+        if (avatar) avatar.classList.remove("has-photo", "has-video");
       }
     } catch (error) {
       console.error("Load profile error:", error);

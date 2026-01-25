@@ -455,21 +455,28 @@
 
       <div class="modal-body">
         <!-- User Profile Section - Display Only -->
-        <div class="account-profile-header">
-          <div class="profile-avatar" id="profileAvatar">
-            <span class="avatar-letter" id="avatarLetter">U</span>
-            <img class="avatar-photo" id="avatarPhoto" src="" alt="" />
+        <div class="account-profile-header" id="accountProfileHeader">
+          <div class="profile-header-background" id="profileHeaderBg">
+            <img class="profile-bg-image" id="profileBgImage" src="" alt="" />
+            <video class="profile-bg-video" id="profileBgVideo" src="" muted loop playsinline></video>
+            <div class="profile-bg-overlay"></div>
           </div>
-          <div class="profile-info">
-            <div class="profile-name" id="profileDisplayName">Kullanıcı</div>
-            <div class="profile-status">
-              <span class="status-indicator active"></span>
-              <span>Premium Kullanıcı</span>
+          <button class="edit-profile-btn" id="editProfileBtn" title="Profili Düzenle">
+            <span class="material-icons-outlined">edit</span>
+          </button>
+          <div class="profile-content">
+            <div class="profile-avatar" id="profileAvatar">
+              <span class="avatar-letter" id="avatarLetter">U</span>
+              <img class="avatar-photo" id="avatarPhoto" src="" alt="" />
+              <video class="avatar-video" id="avatarVideo" src="" muted loop playsinline></video>
             </div>
-            <a href="#" class="edit-profile-link" id="editProfileLink">
-              <span class="material-icons-outlined">edit</span>
-              Profili Düzenle
-            </a>
+            <div class="profile-info">
+              <div class="profile-name" id="profileDisplayName">Kullanıcı</div>
+              <div class="profile-status">
+                <span class="status-indicator active"></span>
+                <span>Premium Kullanıcı</span>
+              </div>
+            </div>
           </div>
         </div>
 

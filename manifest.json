@@ -7,12 +7,11 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "fiyat-takipci-pro@github.io",
-      "strict_min_version": "109.0",
-      "update_url": "https://raw.githubusercontent.com/s3lm4n/firefox-app/main/updates.json",
-      "data_collection_permissions": {
-        "required": false
-      }
+      "strict_min_version": "109.0"
     }
+  },
+  "data_collection_permissions": {
+    "required": []
   },
   "permissions": [
     "storage",

@@ -2762,11 +2762,99 @@ body {
 
 /* Profile Header */
 .account-profile-header {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    min-height: 140px;
+    overflow: hidden;
+    border-radius: var(--md-sys-shape-corner-large) var(--md-sys-shape-corner-large) 0 0;
+}
+
+/* Profile Header Background */
+.profile-header-background {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-primary-container) 100%);
+    z-index: 0;
+}
+
+.profile-header-background.has-bg .profile-bg-overlay {
+    opacity: 1;
+}
+
+.profile-bg-image,
+.profile-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.profile-header-background.has-bg .profile-bg-image {
+    display: block;
+}
+
+.profile-header-background.has-video .profile-bg-image {
+    display: none;
+}
+
+.profile-header-background.has-video .profile-bg-video {
+    display: block;
+}
+
+.profile-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Edit Profile Button - MUI FAB Style */
+.edit-profile-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.edit-profile-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.edit-profile-btn:active {
+    transform: scale(0.95);
+}
+
+.edit-profile-btn .material-icons-outlined {
+    font-size: 20px;
+}
+
+/* Profile Content */
+.profile-content {
+    position: relative;
+    z-index: 5;
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 24px 20px;
-    background: linear-gradient(135deg, var(--md-sys-color-primary) 0%, var(--md-sys-color-primary-container) 100%);
 }
 
 /* Avatar Wrapper */
@@ -2844,7 +2932,24 @@ body {
     display: none;
 }
 
+/* Avatar Video */
+.avatar-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    border-radius: 50%;
+}
+
 .profile-avatar.has-photo .avatar-photo {
+    display: block;
+}
+
+.profile-avatar.has-video .avatar-photo {
+    display: none;
+}
+
+.profile-avatar.has-video .avatar-video {
     display: block;
 }
 
@@ -3143,6 +3248,13 @@ body {
     flex: 1;
 }
 
+.profile-name {
+    font: var(--md-sys-typescale-title-large-font);
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
 .profile-name-input {
     background: transparent;
     border: none;
@@ -3179,6 +3291,7 @@ body {
     margin-top: 4px;
     font: var(--md-sys-typescale-body-small-font);
     color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .status-indicator {
